@@ -2,16 +2,21 @@ CC = cc
 # 优先使用正式标准名称，旧编译器可能只接受 c2x。
 CSTD := $(shell printf 'int main(void) { return 0; }\n' | $(CC) -std=c23 -x c -fsyntax-only - >/dev/null 2>&1 && echo c23 || echo c2x)
 CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -g
-SOURCES := $(wildcard src/*.c src/basics/*.c src/advanced/*.c)
+SOURCES := $(wildcard src/*.c src/basics/*.c src/advanced/*.c src/ml/*.c)
+ML_PROGRAMS := $(patsubst src/%.c,build/%,$(wildcard src/ml/*.c))
 PROGRAMS := $(patsubst src/%.c,build/%,$(SOURCES))
 MODULE_SOURCES := $(wildcard src/modules/*.c)
 PROGRAMS += build/modules_demo
 
-.PHONY: all run test lint clean advanced sanitize
+.PHONY: all run test lint clean advanced sanitize ml
 all: $(PROGRAMS)
 
 # POSIX 线程 API 与 ISO C 原子操作分开：仅线程示例需要 -pthread。
 build/advanced/05_atomics: CFLAGS += -pthread
+$(ML_PROGRAMS): LDLIBS += -lm
+
+ml: $(ML_PROGRAMS)
+	@set -e; for program in $(ML_PROGRAMS); do "$$program"; done
 
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done

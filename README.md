@@ -14,6 +14,7 @@ make lint      # 严格警告与语法检查
 make clean     # 删除示例可执行文件
 make advanced  # 只构建并运行深入示例
 make sanitize  # 对深入示例执行地址与未定义行为检查
+make ml        # 构建并运行机器学习案例
 ```
 
 `src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
@@ -60,6 +61,19 @@ make build/basics/01_types
 | `05_atomics.c` | 双线程原子计数与 release/acquire 发布 |
 
 线程示例采用 POSIX API，需要 macOS/Linux 等支持环境；其他深入示例使用 ISO C 接口。消毒器命令要求编译器支持 `-fsanitize=address,undefined`，生成物放在 `build/sanitize/`。
+
+## 机器学习入门案例
+
+`src/ml/` 提供四个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
+
+| 文件 | 学习目标 |
+| --- | --- |
+| `01_linear_regression.c` | 梯度下降拟合直线、均方误差与预测 |
+| `02_logistic_regression.c` | 二分类、sigmoid、交叉熵及数值稳定性 |
+| `03_knn.c` | 距离排序、邻居投票与平局处理 |
+| `04_kmeans.c` | 无监督聚类、中心更新与空簇处理 |
+
+这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 
 ## C23 新特性示例
 
