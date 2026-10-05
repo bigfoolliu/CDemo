@@ -12,6 +12,8 @@ make run       # 按编号运行示例
 make test      # 运行示例及其中的行为断言
 make lint      # 严格警告与语法检查
 make clean     # 删除示例可执行文件
+make advanced  # 只构建并运行深入示例
+make sanitize  # 对深入示例执行地址与未定义行为检查
 ```
 
 `src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
@@ -44,6 +46,20 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 make build/basics/01_types
 ./build/basics/01_types
 ```
+
+## 深入示例
+
+阅读 [深入 C 语言学习说明](docs/c_advanced.md)，了解接口契约、边界测试与扩展练习。
+
+| 文件（位于 `src/advanced/`） | 核心问题 |
+| --- | --- |
+| `01_vector.c` | 动态数组、所有权、扩容及分配失败注入 |
+| `02_parser.c` | 严格整数解析、极值与溢出前检查 |
+| `03_binary_protocol.c` | 字节序、截断检测、零拷贝视图生命周期 |
+| `04_callbacks.c` | 回调与上下文、策略复用、提前终止 |
+| `05_atomics.c` | 双线程原子计数与 release/acquire 发布 |
+
+线程示例采用 POSIX API，需要 macOS/Linux 等支持环境；其他深入示例使用 ISO C 接口。消毒器命令要求编译器支持 `-fsanitize=address,undefined`，生成物放在 `build/sanitize/`。
 
 ## C23 新特性示例
 

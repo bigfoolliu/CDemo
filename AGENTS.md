@@ -6,6 +6,8 @@
 
 ## 构建、测试与开发命令
 
+深入示例放在 `src/advanced/`，对应讲解位于 `docs/c_advanced.md`。新增示例需同步学习目录，并说明接口契约、所有权、不变量和失败行为。线程示例使用 POSIX API，须与 ISO C 特性明确区分。
+
 需要 C 编译器和 Make，无第三方依赖。在仓库根目录运行：
 
 - `make`：编译全部示例。
@@ -13,6 +15,8 @@
 - `make test`：运行示例及其中的行为断言。
 - `make lint`：执行严格警告与语法检查。
 - `make clean`：删除示例可执行文件。
+- `make advanced`：构建并运行深入示例。
+- `make sanitize`：用地址与未定义行为消毒器验证深入示例，生成物位于 `build/sanitize/`。
 
 用 `make CC=clang` 指定编译器；切换工具链或编译参数前执行 `make clean`。构建优先使用 `-std=c23`，不支持此名称时使用 `-std=c2x`。接受标准选项不代表完整实现全部特性。
 
