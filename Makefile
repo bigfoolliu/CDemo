@@ -8,9 +8,34 @@ PROGRAMS := $(patsubst src/%.c,build/%,$(SOURCES))
 MODULE_SOURCES := $(wildcard src/modules/*.c)
 PROGRAMS += build/modules_demo
 GAME_PROGRAM := build/games/snake
+AI_PROGRAM := build/games/snake_ai
+AI_HEADERS := $(wildcard src/games/*.h)
 
 .PHONY: all run test lint clean advanced sanitize ml snake test-snake-terminal
-all: $(PROGRAMS) $(GAME_PROGRAM)
+all: $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
+
+.PHONY: snake-ai
+snake-ai: $(AI_PROGRAM)
+
+build/tests/snake_ai_test: tests/snake_ai_test.c src/games/snake_ai.c $(AI_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+.PHONY: test-snake-ai sanitize-snake-ai
+test-snake-ai: $(AI_PROGRAM) build/tests/snake_ai_test
+	./build/tests/snake_ai_test
+	python3 tests/snake_ai_integration_test.py
+
+sanitize-snake-ai:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/snake_ai_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/snake_ai_test
+	./build/sanitize/snake_ai_test
+
+$(GAME_PROGRAM): src/games/snake_env.h src/games/snake_terminal.h
+
+$(AI_PROGRAM): src/games/snake_ai.c $(AI_HEADERS) src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $< $(LDFLAGS) $(LDLIBS) -lm -o $@
 
 snake: $(GAME_PROGRAM)
 	./$(GAME_PROGRAM)
@@ -48,14 +73,18 @@ build/modules_demo: $(MODULE_SOURCES) src/modules/arithmetic.h Makefile
 run: all
 	@set -e; for program in $(PROGRAMS); do echo "运行 $$program"; "$$program"; done
 
-test: run $(GAME_PROGRAM)
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test
 	$(GAME_PROGRAM) --test
+	./build/tests/snake_ai_test
 
 lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake_ai.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/snake_ai_test.c
 	@set -e; for source in $(SOURCES); do $(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only "$$source"; done
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
-	rm -f $(PROGRAMS) $(GAME_PROGRAM)
+	rm -f $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
+	rm -f build/tests/snake_ai_test build/sanitize/snake_ai_test
 	rm -f $(patsubst src/advanced/%.c,build/sanitize/%,$(wildcard src/advanced/*.c))

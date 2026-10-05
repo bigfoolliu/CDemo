@@ -87,6 +87,20 @@ make build/basics/01_types
 
 阅读顺序：先看注释，再预测输出，最后编译运行。测试依赖 `assert`，验证时不要设置 `-DNDEBUG`。
 
+## 深度强化学习自动玩贪吃蛇
+
+纯 C 手写的 `11 → 64 → 64 → 3` 神经网络使用 DQN、经验回放和 Adam，训练时复用人工游戏规则。详见 [实现讲解与运行步骤](docs/snake_ai.md)。
+
+```sh
+make snake-ai
+./build/games/snake_ai train --seconds 180 --seed 42
+# 将实际输出的运行目录替换到模型路径中：
+./build/games/snake_ai eval --model sessions/snake-ai/run-XXXXXX/best.model
+./build/games/snake_ai play --model sessions/snake-ai/run-XXXXXX/best.model
+```
+
+实验日志、CSV 指标和模型放在独立的 `sessions/snake-ai/` 目录；AI 得分与人工历史分开。训练追求分数提升，不保证每局满分。`make test-snake-ai` 验证数值计算与终端自动游戏。
+
 ## 终端小游戏
 
 运行 `make snake` 玩实时贪吃蛇：方向键或 WASD 转向，无需回车，蛇持续自动移动；撞墙或撞到自身后一秒自动重开。界面显示当前分数、历史最高及最近五局，历史追加保存至 `snake_scores.log`。Q 或 Ctrl+C 退出。源码位于 `src/games/snake.c`，详见 [游戏说明](docs/snake.md)。适用于 macOS/Linux 交互终端，普通 `make run` 不启动游戏；`make test` 验证规则，`make test-snake-terminal` 执行伪终端集成测试（需要 Python 3）。

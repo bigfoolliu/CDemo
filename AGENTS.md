@@ -6,6 +6,8 @@
 
 ## 构建、测试与开发命令
 
+人工与 AI 贪吃蛇共用 `src/games/snake_env.h` 规则和 `snake_terminal.h` 终端模块。纯 C DQN 位于 `snake_ai.c` 与 `snake_ai_network.h`，教程为 `docs/snake_ai.md`。`make snake-ai` 只构建；长训练不加入默认测试。`make test-snake-ai` 运行数值及集成测试，`make sanitize-snake-ai` 验证内存与未定义行为。训练产物位于独立的 `sessions/snake-ai/`，不得覆盖旧实验或人工得分。
+
 `src/games/` 存放交互游戏，`make snake` 启动使用 POSIX 终端 API 的实时贪吃蛇。游戏不加入自动运行的示例列表；通过 `--test` 测试规则并接入 `make test`。`make test-snake-terminal` 使用 Python 3 伪终端验证输入、自动重开、得分持久化及终端恢复，测试使用临时历史文件。保留用户已有 `snake_scores.log`。对应说明位于 `docs/snake.md`。
 
 深入示例放在 `src/advanced/`，对应讲解位于 `docs/c_advanced.md`。新增示例需同步学习目录，并说明接口契约、所有权、不变量和失败行为。线程示例使用 POSIX API，须与 ISO C 特性明确区分。
