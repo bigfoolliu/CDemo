@@ -6,6 +6,8 @@
 
 ## 构建、测试与开发命令
 
+`src/games/` 存放交互游戏，`make snake` 启动使用 POSIX 终端 API 的实时贪吃蛇。游戏不加入自动运行的示例列表；通过 `--test` 测试规则并接入 `make test`。`make test-snake-terminal` 使用 Python 3 伪终端验证输入、自动重开、得分持久化及终端恢复，测试使用临时历史文件。保留用户已有 `snake_scores.log`。对应说明位于 `docs/snake.md`。
+
 深入示例放在 `src/advanced/`，对应讲解位于 `docs/c_advanced.md`。新增示例需同步学习目录，并说明接口契约、所有权、不变量和失败行为。线程示例使用 POSIX API，须与 ISO C 特性明确区分。
 
 需要 C 编译器和 Make，无第三方依赖。在仓库根目录运行：

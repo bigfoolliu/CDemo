@@ -7,9 +7,16 @@ ML_PROGRAMS := $(patsubst src/%.c,build/%,$(wildcard src/ml/*.c))
 PROGRAMS := $(patsubst src/%.c,build/%,$(SOURCES))
 MODULE_SOURCES := $(wildcard src/modules/*.c)
 PROGRAMS += build/modules_demo
+GAME_PROGRAM := build/games/snake
 
-.PHONY: all run test lint clean advanced sanitize ml
-all: $(PROGRAMS)
+.PHONY: all run test lint clean advanced sanitize ml snake test-snake-terminal
+all: $(PROGRAMS) $(GAME_PROGRAM)
+
+snake: $(GAME_PROGRAM)
+	./$(GAME_PROGRAM)
+
+test-snake-terminal: $(GAME_PROGRAM)
+	python3 tests/snake_terminal_test.py
 
 # POSIX 线程 API 与 ISO C 原子操作分开：仅线程示例需要 -pthread。
 build/advanced/05_atomics: CFLAGS += -pthread
@@ -41,12 +48,14 @@ build/modules_demo: $(MODULE_SOURCES) src/modules/arithmetic.h Makefile
 run: all
 	@set -e; for program in $(PROGRAMS); do echo "运行 $$program"; "$$program"; done
 
-test: run
+test: run $(GAME_PROGRAM)
+	$(GAME_PROGRAM) --test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
 	@set -e; for source in $(SOURCES); do $(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only "$$source"; done
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
-	rm -f $(PROGRAMS)
+	rm -f $(PROGRAMS) $(GAME_PROGRAM)
 	rm -f $(patsubst src/advanced/%.c,build/sanitize/%,$(wildcard src/advanced/*.c))

@@ -87,6 +87,10 @@ make build/basics/01_types
 
 阅读顺序：先看注释，再预测输出，最后编译运行。测试依赖 `assert`，验证时不要设置 `-DNDEBUG`。
 
+## 终端小游戏
+
+运行 `make snake` 玩实时贪吃蛇：方向键或 WASD 转向，无需回车，蛇持续自动移动；撞墙或撞到自身后一秒自动重开。界面显示当前分数、历史最高及最近五局，历史追加保存至 `snake_scores.log`。Q 或 Ctrl+C 退出。源码位于 `src/games/snake.c`，详见 [游戏说明](docs/snake.md)。适用于 macOS/Linux 交互终端，普通 `make run` 不启动游戏；`make test` 验证规则，`make test-snake-terminal` 执行伪终端集成测试（需要 Python 3）。
+
 ## 后续学习路线
 
 1. 完成基础示例及手册练习，深入理解对象生命周期与未定义行为。
