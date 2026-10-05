@@ -1,0 +1,69 @@
+# 现代 C 语言学习示例
+
+本项目通过短小、可运行的程序学习 C 语言，以最新正式标准 **C23（ISO/IEC 9899:2024）** 为目标。C2y 是下一版标准的工作名称，相关实验特性应单独讨论。
+
+## 快速开始
+
+需要 C 编译器和 Make，无第三方依赖。在仓库根目录运行：
+
+```sh
+make           # 编译所有示例
+make run       # 按编号运行示例
+make test      # 运行示例及其中的行为断言
+make lint      # 严格警告与语法检查
+make clean     # 删除示例可执行文件
+```
+
+`src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
+
+Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接受标准选项并不代表完整实现 C23。示例使用真正的新语法，缺少支持时会编译失败，以便明确识别工具链限制。macOS 上名为 `gcc` 的命令也可能实际是 Apple Clang。
+
+## 基础语法学习目录
+
+先阅读 [C 语言基础学习手册](docs/c_basics.md)，再按下表学习。手册包含概念说明、易错点、练习及尚未提供独立示例的深入主题。
+
+| 示例路径（相对于 `src/`） | 内容 |
+| --- | --- |
+| `basics/01_types.c` | 类型、声明、初始化、常量、sizeof |
+| `basics/02_operators.c` | 算术、逻辑、位运算、转换、短路 |
+| `basics/03_control_flow.c` | 分支、循环、break、continue |
+| `basics/04_functions.c` | 函数原型、按值传参、递归、回调 |
+| `basics/05_arrays_strings.c` | 数组、多维数组、字符串及缓冲区 |
+| `basics/06_pointers.c` | 地址、解引用、指针算术、const |
+| `basics/07_aggregate_types.c` | struct、union、enum、typedef |
+| `basics/08_scope_storage.c` | 作用域、生命周期与 static |
+| `basics/09_dynamic_memory.c` | 分配、扩容、释放及失败处理 |
+| `basics/10_preprocessor.c` | 宏、条件编译与 inline 函数 |
+| `basics/11_io_errors.c` | 文本解析、文件读写、错误处理 |
+| `basics/12_generic_variadic.c` | 泛型选择与可变参数 |
+| `modules/` | 头文件、翻译单元、接口与链接 |
+
+例如，单独编译运行第一个基础示例：
+
+```sh
+make build/basics/01_types
+./build/basics/01_types
+```
+
+## C23 新特性示例
+
+| 文件 | 学习内容 | 建议实验 |
+| --- | --- | --- |
+| `src/01_bool_nullptr.c` | `bool`、`true`、`false`、`nullptr`、`static_assert` | 改变布尔状态，观察断言失败 |
+| `src/02_literals.c` | 二进制字面量与数字分隔符 | 改变二进制位并计算十进制结果 |
+| `src/03_bitint.c` | `_BitInt(N)` 与无符号整数回绕 | 修改位宽及初始值，预测输出 |
+
+阅读顺序：先看注释，再预测输出，最后编译运行。测试依赖 `assert`，验证时不要设置 `-DNDEBUG`。
+
+## 后续学习路线
+
+1. 完成基础示例及手册练习，深入理解对象生命周期与未定义行为。
+2. C23 语言特性：`constexpr`、`typeof`、`auto` 类型推导、标准属性、`#embed`。
+3. C23 标准库：`<stdckdint.h>` 检查整数溢出、`<stdbit.h>` 位操作。标准库支持需要单独验证。
+4. 综合练习：文件处理、错误处理和多文件组织，并使用消毒器检查内存问题。
+
+## 参考资料
+
+- [ISO C23 标准信息](https://www.iso.org/standard/82075.html)
+- [WG14 标准委员会与公开文档](https://www.open-std.org/jtc1/sc22/wg14/)
+- [Clang C 语言特性支持状态](https://clang.llvm.org/c_status.html)
