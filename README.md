@@ -75,6 +75,8 @@ make build/basics/01_types
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 
+线性回归的详细日志同时输出到屏幕和当前目录的 `linear_regression.log`，多次运行会追加。用 `less linear_regression.log` 分页查看，或运行 `./build/ml/01_linear_regression build/training.log` 指定日志文件。
+
 ## C23 新特性示例
 
 | 文件 | 学习内容 | 建议实验 |

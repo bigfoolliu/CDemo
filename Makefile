@@ -14,6 +14,7 @@ all: $(PROGRAMS)
 # POSIX 线程 API 与 ISO C 原子操作分开：仅线程示例需要 -pthread。
 build/advanced/05_atomics: CFLAGS += -pthread
 $(ML_PROGRAMS): LDLIBS += -lm
+build/ml/01_linear_regression: src/common/logger.h
 
 ml: $(ML_PROGRAMS)
 	@set -e; for program in $(ML_PROGRAMS); do "$$program"; done
