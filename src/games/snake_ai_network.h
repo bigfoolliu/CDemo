@@ -1,6 +1,9 @@
 #ifndef CDEMO_SNAKE_AI_NETWORK_H
 #define CDEMO_SNAKE_AI_NETWORK_H
 
+/* 网络数值层：初始化 → 前向预测 → 反向求导 → 参数更新 → 保存/加载。
+ * static inline 使这些函数可被多个独立示例包含，无需额外链接实现文件。 */
+
 #include "snake_env.h"
 #include <math.h>
 #include <stdio.h>
@@ -12,13 +15,15 @@ enum { HIDDEN = 64, W1 = 0, B1 = 704, W2 = 768, B2 = 4864,
 static_assert(B1 == FEATURES * HIDDEN && W2 == B1 + HIDDEN);
 static_assert(B2 == W2 + HIDDEN * HIDDEN && W3 == B2 + HIDDEN);
 static_assert(B3 == W3 + ACTIONS * HIDDEN && PARAMETERS == B3 + ACTIONS);
-typedef struct { double p[PARAMETERS]; } Network;
+typedef struct { double p[PARAMETERS]; } Network; /* 平坦数组同时保存权重与偏置。 */
+/* 前向缓存供反向传播使用，q 是动作价值，不是概率。 */
 typedef struct {
     double input[FEATURES];
     double h1[HIDDEN];
     double h2[HIDDEN];
     double q[ACTIONS];
 } Forward;
+/* Adam 保存梯度及梯度平方的滑动平均，跨批次保留历史。 */
 typedef struct {
     double m[PARAMETERS];
     double v[PARAMETERS];
@@ -27,12 +32,14 @@ typedef struct {
     size_t updates;
 } Adam;
 
+/* Box–Muller 将伪随机数转换为标准正态样本；u 严格大于零以避免 log(0)。 */
 static inline double gaussian(uint32_t *rng)
 {
     double u = ((double)snake_random(rng) + 1) / 4294967297.0;
     return sqrt(-2 * log(u)) * cos(6.283185307179586 * snake_uniform(rng));
 }
 
+/* 偏置清零；ReLU 层用 He 缩放，线性输出层用较小的方差。 */
 static inline void network_init(Network *net, uint32_t *rng)
 {
     *net = (Network){0};
@@ -47,6 +54,7 @@ static inline void network_init(Network *net, uint32_t *rng)
     }
 }
 
+/* 一层全连接：result[row] = Σ weights[row,column] * input[column] + bias[row]。 */
 static inline void dense(const double *weights, const double *bias, const double *input,
                          int inputs, int outputs, double *result, bool relu)
 {
@@ -59,6 +67,7 @@ static inline void dense(const double *weights, const double *bias, const double
     }
 }
 
+/* 两层 ReLU 提取特征，线性层输出三个动作的预计折扣收益。 */
 static inline void network_forward(const Network *net, const double state[FEATURES], Forward *cache)
 {
     memcpy(cache->input, state, sizeof(cache->input));
@@ -67,6 +76,7 @@ static inline void network_forward(const Network *net, const double state[FEATUR
     dense(net->p + W3, net->p + B3, cache->h2, HIDDEN, ACTIONS, cache->q, false);
 }
 
+/* 选择最大 Q 值；平局取较小编号，不额外屏蔽危险动作。 */
 static inline int greedy_action(const Network *net, const double state[FEATURES])
 {
     Forward cache;
@@ -80,6 +90,7 @@ static inline int greedy_action(const Network *net, const double state[FEATURES]
     return best;
 }
 
+/* 小误差用平方项，大误差用线性项，减弱异常 TD 误差的影响。 */
 static inline double huber(double error)
 {
     return fabs(error) <= 1 ? 0.5 * error * error : fabs(error) - 0.5;
@@ -91,6 +102,7 @@ static inline double network_gradient(const Network *net, const Forward *cache,
 {
     double error = cache->q[action] - target;
     double derivative = fmax(-1, fmin(1, error));
+    /* 链式法则从输出层倒推；+= 将多个样本的梯度累积到同一批次。 */
     gradient->p[B3 + action] += derivative;
     double delta2[HIDDEN];
     for (int i = 0; i < HIDDEN; ++i) {
@@ -102,6 +114,7 @@ static inline double network_gradient(const Network *net, const Forward *cache,
         }
     }
     for (int j = 0; j < HIDDEN; ++j) {
+        /* 汇总第二隐藏层传来的梯度，再乘第一层 ReLU 的导数。 */
         double delta1 = 0;
         for (int i = 0; i < HIDDEN; ++i) {
             delta1 += delta2[i] * net->p[W2 + i * HIDDEN + j];
@@ -117,6 +130,7 @@ static inline double network_gradient(const Network *net, const Forward *cache,
     return huber(error);
 }
 
+/* batch 必须大于零；先平均梯度并裁剪整体范数，再执行 Adam。 */
 static inline bool adam_update(Network *net, Adam *adam, Network *gradient, size_t batch)
 {
     double norm_squared = 0;
@@ -143,6 +157,7 @@ static inline bool adam_update(Network *net, Adam *adam, Network *gradient, size
         adam->m[i] = 0.9 * adam->m[i] + 0.1 * g;
         adam->v[i] = 0.999 * adam->v[i] + 0.001 * g * g;
         double m = adam->m[i] / (1 - adam->beta1_power);
+        /* 偏差校正抵消滑动平均从零初始化造成的早期偏小；1e-8 防止除零。 */
         double v = adam->v[i] / (1 - adam->beta2_power);
         net->p[i] -= 0.001 * m / (sqrt(v) + 1e-8);
         if (!isfinite(net->p[i])) {
@@ -161,6 +176,7 @@ static inline bool network_save(const Network *net, const char *path)
         return false;
     }
     FILE *file = fopen(temporary, "wx");
+    /* wx 拒绝覆盖已有临时文件；写入完整后再替换正式模型。 */
     if (file == nullptr) {
         return false;
     }
@@ -180,6 +196,7 @@ static inline bool network_save(const Network *net, const char *path)
     return ok;
 }
 
+/* 先读入候选副本，版本、参数和文件结尾全部校验成功才更新 net。 */
 static inline bool network_load(Network *net, const char *path)
 {
     FILE *file = fopen(path, "r");

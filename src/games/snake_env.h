@@ -1,11 +1,14 @@
 #ifndef CDEMO_SNAKE_ENV_H
 #define CDEMO_SNAKE_ENV_H
 
+/* 纯规则层：不依赖屏幕、计时或文件，人工游戏和训练共用同一实现。 */
+
 #include <stdint.h>
 #include <stdlib.h>
 
 enum { WIDTH = 20, HEIGHT = 10, CAPACITY = WIDTH * HEIGHT, FEATURES = 11, ACTIONS = 3 };
 typedef struct { int x; int y; } Point;
+/* body[0] 是蛇头；仅 [0,length) 有效；rng 属于这局环境。 */
 typedef struct {
     Point body[CAPACITY];
     size_t length;
@@ -25,16 +28,19 @@ static inline uint32_t snake_random(uint32_t *state)
     return x;
 }
 
+/* 生成 [0,1) 内的数，供训练器判断是否随机探索。 */
 static inline double snake_uniform(uint32_t *state)
 {
     return (double)snake_random(state) / 4294967296.0;
 }
 
+/* 比较坐标值，不比较结构体的内存字节（其中可能有填充）。 */
 static inline bool equal(Point a, Point b)
 {
     return a.x == b.x && a.y == b.y;
 }
 
+/* 只扫描前 count 节身体，碰撞检测可借此排除即将离开的尾节。 */
 static inline bool occupied(const Game *game, Point point, size_t count)
 {
     for (size_t i = 0; i < count; ++i) {
@@ -45,6 +51,7 @@ static inline bool occupied(const Game *game, Point point, size_t count)
     return false;
 }
 
+/* 随机选择第几个空格，再扫描定位；不会把食物放在蛇身上。 */
 static inline void place_food(Game *game)
 {
     if (game->length == CAPACITY) {
@@ -65,6 +72,7 @@ static inline void place_food(Game *game)
     }
 }
 
+/* 固定初始蛇形与方向；相同种子产生相同的初始食物。 */
 static inline Game snake_reset(uint32_t seed)
 {
     Game game = {.body = {{10, 5}, {9, 5}, {8, 5}}, .length = 3,
@@ -73,6 +81,7 @@ static inline Game snake_reset(uint32_t seed)
     return game;
 }
 
+/* 只预测下一步是否碰撞，不移动蛇；direction 应为单位方向。 */
 static inline bool snake_collision(const Game *game, Point direction)
 {
     Point head = {game->body[0].x + direction.x, game->body[0].y + direction.y};
@@ -97,6 +106,7 @@ static inline bool step(Game *game, Point direction)
     bool eating = equal(head, game->food);
     size_t length = game->length + (eating ? 1u : 0u);
     for (size_t i = length - 1; i > 0; --i) {
+        /* 从尾向头移动，避免覆盖仍需要复制的旧坐标。 */
         game->body[i] = game->body[i - 1];
     }
     game->body[0] = head;
@@ -120,6 +130,8 @@ static inline Point snake_direction(Point current, int action)
     return current;
 }
 
+/* 11 个 0/1 特征：三方向危险 + 当前四方向 + 食物四方位。
+ * 这是简化观测，无法表示完整蛇身布局。 */
 static inline void snake_observe(const Game *game, double state[FEATURES])
 {
     for (int action = 0; action < ACTIONS; ++action) {
@@ -135,14 +147,17 @@ static inline void snake_observe(const Game *game, double state[FEATURES])
     state[10] = game->food.y > game->body[0].y;
 }
 
+/* 负的归一化曼哈顿距离：离食物越近，势越接近零。 */
 static inline double snake_potential(const Game *game)
 {
     int distance = abs(game->food.x - game->body[0].x) + abs(game->food.y - game->body[0].y);
     return -(double)distance / (WIDTH + HEIGHT);
 }
 
+/* terminated 只表示死亡或获胜；时间上限由训练器单独处理。 */
 typedef struct { double reward; bool terminated; bool won; } SnakeResult;
 
+/* 将合法相对动作（0..2）转成方向，执行一步并计算基础奖励与塑形奖励。 */
 static inline SnakeResult snake_act(Game *game, int action)
 {
     double previous = snake_potential(game);

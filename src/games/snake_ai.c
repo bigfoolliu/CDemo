@@ -1,3 +1,5 @@
+/* 阅读顺序：main → train → learn_batch → 网络头文件；play 展示训练后的策略。
+ * train 学习参数，eval 独立测分，play 只推理、不更新网络。 */
 #define _POSIX_C_SOURCE 200809L
 #ifdef __APPLE__
 #define _DARWIN_C_SOURCE 1
@@ -9,6 +11,7 @@
 #include <sys/stat.h>
 
 enum { REPLAY_CAPACITY = 10000, BATCH = 32, MAX_STEPS = 4000 };
+/* 一条经验记录一次动作前后的观测；terminated 不包含时间上限截断。 */
 typedef struct {
     double state[FEATURES];
     double next[FEATURES];
@@ -16,11 +19,13 @@ typedef struct {
     int action;
     bool terminated;
 } Transition;
+/* 环形经验池：count 是有效条数，cursor 是下次写入位置。 */
 typedef struct {
     Transition data[REPLAY_CAPACITY];
     size_t count;
     size_t cursor;
 } Replay;
+/* online 参与学习，target 提供稳定目标；三条随机流互不干扰。 */
 typedef struct {
     Network online;
     Network target;
@@ -30,6 +35,7 @@ typedef struct {
     uint32_t sample_rng;
     uint32_t environment_rng;
 } Learner;
+/* 评分统计；平均分用于比较策略，最高分只表示本次样本中的最好结果。 */
 typedef struct {
     double mean;
     size_t maximum;
@@ -37,6 +43,7 @@ typedef struct {
     size_t won;
     size_t games;
 } Evaluation;
+/* 命令行配置；训练达到任一预算即停止，model 是借用的参数字符串。 */
 typedef struct {
     double seconds;
     uint32_t seed;
@@ -45,6 +52,7 @@ typedef struct {
     const char *model;
 } Options;
 
+/* 满容量后覆盖最旧经验，不再分配内存。 */
 static void replay_push(Replay *replay, const Transition *transition)
 {
     replay->data[replay->cursor] = *transition;
@@ -54,6 +62,7 @@ static void replay_push(Replay *replay, const Transition *transition)
     }
 }
 
+/* 贝尔曼目标：即时奖励 + 折扣后的下一状态最大 Q 值。 */
 static double td_target(const Transition *transition, const Network *target)
 {
     if (transition->terminated) {
@@ -69,11 +78,13 @@ static double td_target(const Transition *transition, const Network *target)
     return transition->reward + 0.95 * maximum;
 }
 
+/* 有效经验池非空时调用：抽样 → 前向 → 累积梯度 → Adam 更新。 */
 static bool learn_batch(Learner *learner, double *loss)
 {
     Network gradient = {0};
     double total = 0;
     for (int i = 0; i < BATCH; ++i) {
+        /* 有放回抽样：一个批次可重复选到同一条经验。 */
         size_t index = snake_random(&learner->sample_rng) % learner->replay.count;
         const Transition *transition = &learner->replay.data[index];
         Forward cache;
@@ -86,11 +97,13 @@ static bool learn_batch(Learner *learner, double *loss)
         return false;
     }
     if (learner->adam.updates % 500 == 0) {
+        /* 同步周期按参数更新次数计数，而不是环境步数。 */
         learner->target = learner->online;
     }
     return true;
 }
 
+/* ε 是随机动作概率：前 50000 步线性下降，此后保持 0.05。 */
 static double exploration(size_t steps)
 {
     return 1 - 0.95 * fmin(1, (double)steps / 50000);
@@ -130,6 +143,7 @@ static Evaluation evaluate(const Network *net, bool random_policy, uint32_t seed
     return result;
 }
 
+/* 将评估统计转换为可读摘要，不参与训练。 */
 static void log_evaluation(Logger *logger, const char *label, Evaluation result)
 {
     logger_write(logger, "%s：%zu 局，平均分=%.3f，最高分=%zu，截断=%.1f%%，满分=%zu\n",
@@ -137,6 +151,7 @@ static void log_evaluation(Logger *logger, const char *label, Evaluation result)
                  100.0 * (double)result.truncated / (double)result.games, result.won);
 }
 
+/* 创建本次运行的独立产物目录，避免覆盖已有实验。 */
 static bool make_session(char directory[256])
 {
     if (mkdir("sessions", 0755) != 0 && errno != EEXIST) {
@@ -149,12 +164,14 @@ static bool make_session(char directory[256])
     return mkdtemp(directory) != nullptr;
 }
 
+/* 拼接路径并检查是否截断；path 必须至少容纳 512 字节。 */
 static bool artifact(char path[512], const char *directory, const char *name)
 {
     int length = snprintf(path, 512, "%s/%s", directory, name);
     return length >= 0 && length < 512;
 }
 
+/* 保存预算与超参数，方便将训练结果与配置对应起来。 */
 static bool write_config(const char *directory, const Options *options)
 {
     char path[512];
@@ -180,6 +197,7 @@ static bool write_config(const char *directory, const Options *options)
     return ok;
 }
 
+/* 训练主流程：初始化 → 采样学习 → 验证选模 → 独立测试 → 释放资源。 */
 static int train(const Options *options)
 {
     char directory[256], log_path[512], csv_path[512], best_path[512], final_path[512];
@@ -195,6 +213,7 @@ static int train(const Options *options)
         return EXIT_FAILURE;
     }
     FILE *csv = fopen(csv_path, "wx");
+    /* 经验池较大，放在堆上；calloc 同时清零 Adam 和环形池状态。 */
     Learner *learner = calloc(1, sizeof(*learner));
     if (csv == nullptr || learner == nullptr) {
         if (csv != nullptr) {
@@ -206,7 +225,7 @@ static int train(const Options *options)
     }
     uint32_t init_rng = options->seed;
     network_init(&learner->online, &init_rng);
-    Network initial = learner->online;
+    Network initial = learner->online; /* 留下未训练副本用于最终对照。 */
     learner->target = learner->online;
     learner->actions_rng = options->seed ^ UINT32_C(0x342de871);
     learner->sample_rng = options->seed ^ UINT32_C(0xcafef00d);
@@ -217,6 +236,7 @@ static int train(const Options *options)
     logger_write(&logger, "纯 C DQN：11→64→64→3，训练预算 %.1f 秒，种子 %u\n运行目录：%s\n",
                  options->seconds, options->seed, directory);
     log_evaluation(&logger, "初始验证", best);
+    /* 初始验证不计入预算；训练期间的周期验证计入预算。 */
     double start = monotonic_time();
     size_t total_steps = 0;
     size_t episodes = 0;
@@ -244,9 +264,11 @@ static int train(const Options *options)
             Transition transition = {0};
             snake_observe(&game, transition.state);
             double epsilon = exploration(total_steps);
+            /* ε-greedy：有时随机探索，否则选择当前网络最看好的动作。 */
             transition.action = snake_uniform(&learner->actions_rng) < epsilon ?
                 (int)(snake_random(&learner->actions_rng) % ACTIONS) :
                 greedy_action(&learner->online, transition.state);
+            /* 环境执行动作并给奖励；下一状态必须在动作执行后编码。 */
             SnakeResult outcome = snake_act(&game, transition.action);
             transition.reward = outcome.reward;
             transition.terminated = outcome.terminated;
@@ -255,6 +277,7 @@ static int train(const Options *options)
             total_reward += outcome.reward;
             ++total_steps;
             ++episode_steps;
+            /* 先收集 1000 步经验，再每四步训练一次，减少相邻样本相关性。 */
             if (total_steps >= 1000 && total_steps % 4 == 0) {
                 if (!learn_batch(learner, &last_loss)) {
                     ok = false;
@@ -267,7 +290,7 @@ static int train(const Options *options)
             }
         }
         bool truncated = !terminated && episode_steps == MAX_STEPS;
-        bool partial = !terminated && !truncated;
+        bool partial = !terminated && !truncated; /* 总预算或信号导致的未完成局。 */
         if (episode_steps == 0 || !ok) {
             break;
         }
@@ -280,6 +303,7 @@ static int train(const Options *options)
         ok = fprintf(csv, "%zu,%zu,%zu,%.9g,%.9g,%.9g,%zu,%d,%d,%.3f\n",
             episodes, episode_steps, score, total_reward, exploration(total_steps), last_loss,
             learner->adam.updates, terminated, truncated, elapsed) >= 0 && fflush(csv) == 0;
+        /* 文件记录每局，终端每 20 局打印，兼顾完整性与可读性。 */
         logger.console = episodes % 20 == 0 ? stdout : nullptr;
         logger_write(&logger, "局=%zu 步=%zu 分=%zu 训练最高=%zu ε=%.3f 损失=%.5f 更新=%zu 时间=%.1fs%s\n",
             episodes, total_steps, score, training_best, exploration(total_steps), last_loss,
@@ -289,6 +313,7 @@ static int train(const Options *options)
         if (ok && episodes % 200 == 0 && !partial && !stopped) {
             Evaluation validation = evaluate(&learner->online, false, 1000001, 30);
             log_evaluation(&logger, "验证集", validation);
+            /* 仅按验证平均分选模；不根据训练最高分或测试集选模。 */
             if (validation.mean > best.mean) {
                 best = validation;
                 ok = network_save(&learner->online, best_path);
@@ -307,6 +332,7 @@ static int train(const Options *options)
         }
         ok = network_save(&learner->online, final_path) && ok;
     }
+    /* 最佳模型可能不是最后的参数；三种策略使用同一独立测试种子列表。 */
     Network selected;
     if (ok && network_load(&selected, best_path)) {
         char report_path[512];
@@ -340,6 +366,7 @@ static int train(const Options *options)
     return ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+/* 演示不训练：每个时钟周期预测动作，终止后记分并自动重开。 */
 static int play(const Network *net, uint32_t seed)
 {
     char directory[256], path[512];
@@ -387,6 +414,7 @@ static int play(const Network *net, uint32_t seed)
             draw_mode(&game, &scores, message, true);
             continue;
         }
+        /* 输入不会重置 deadline，因此按键不会改变蛇的移动速度。 */
         double wait = deadline - now;
         struct timeval timeout = {.tv_sec = (time_t)wait,
             .tv_usec = (suseconds_t)((wait - (double)(time_t)wait) * 1e6)};
@@ -415,6 +443,7 @@ static int play(const Network *net, uint32_t seed)
             }
         }
     }
+    /* 等待重开的局已记录；主动退出只补记仍在进行的一局。 */
     if (result == EXIT_SUCCESS && !restarting && !save_score(path, &scores, game.length - 3)) {
         result = EXIT_FAILURE;
     }
@@ -423,6 +452,7 @@ static int play(const Network *net, uint32_t seed)
     return result;
 }
 
+/* 要求整个字符串都是非负十进制数，并检查转换溢出。 */
 static bool parse_number(const char *text, unsigned long *value)
 {
     if (*text < '0' || *text > '9') {
@@ -434,6 +464,7 @@ static bool parse_number(const char *text, unsigned long *value)
     return errno == 0 && *end == '\0';
 }
 
+/* 参数按“选项 值”解析；先检查输入，再分派到训练、评估或演示。 */
 int main(int argc, char *argv[])
 {
     Options options = {.seconds = 180, .seed = 42, .episodes = 20000, .steps = SIZE_MAX};

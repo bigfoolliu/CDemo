@@ -13,6 +13,7 @@ typedef struct {
     bool failed;
 } Logger;
 
+/* 父目录由调用者准备；console 为 nullptr 时只写文件。 */
 static inline bool logger_open(Logger *logger, const char *path, FILE *console)
 {
     *logger = (Logger){.console = console};
@@ -24,6 +25,7 @@ static inline bool logger_open(Logger *logger, const char *path, FILE *console)
     return true;
 }
 
+/* printf 风格接口；每个有效目标分别输出并刷新，换行由调用者提供。 */
 static inline void logger_write(Logger *logger, const char *format, ...)
 {
     va_list arguments;
@@ -47,6 +49,7 @@ static inline void logger_write(Logger *logger, const char *format, ...)
     va_end(arguments);
 }
 
+/* 只关闭拥有的文件，不关闭借用的终端流；返回累计的成功状态。 */
 static inline bool logger_close(Logger *logger)
 {
     if (logger->file != nullptr) {

@@ -1,6 +1,8 @@
 #ifndef CDEMO_SNAKE_TERMINAL_H
 #define CDEMO_SNAKE_TERMINAL_H
 
+/* POSIX 终端层：得分记录、即时输入和渲染；不参与模型参数学习。 */
+
 #include "snake_env.h"
 #include <errno.h>
 #include <signal.h>
@@ -11,12 +13,14 @@
 #include <time.h>
 #include <unistd.h>
 
+/* 最近五局按新到旧排列；完整历史保留在文件里。 */
 typedef struct {
     size_t best;
     size_t games;
     size_t recent[5];
 } Scores;
 
+/* 更新内存中的统计；不执行文件写入。 */
 static inline void add_score(Scores *scores, size_t score)
 {
     for (size_t i = 4; i > 0; --i) {
@@ -29,6 +33,7 @@ static inline void add_score(Scores *scores, size_t score)
     }
 }
 
+/* 文件不存在视为没有历史；跳过无效记录，其他读取错误返回失败。 */
 static inline bool load_scores(const char *path, Scores *scores)
 {
     FILE *file = fopen(path, "r");
@@ -62,6 +67,7 @@ static inline bool load_scores(const char *path, Scores *scores)
     return success;
 }
 
+/* 追加并关闭文件成功后才更新内存统计，避免显示未保存的得分。 */
 static inline bool save_score(const char *path, Scores *scores, size_t score)
 {
     FILE *file = fopen(path, "a");
@@ -80,14 +86,16 @@ static inline bool save_score(const char *path, Scores *scores, size_t score)
 
 static struct termios saved_terminal;
 static bool terminal_active;
-static volatile sig_atomic_t stopped;
+static volatile sig_atomic_t stopped; /* 信号处理器与主循环共用的退出标志。 */
 
+/* 信号中只设置标志，恢复终端和保存文件留给主循环处理。 */
 static inline void stop_game(int signal_number)
 {
     (void)signal_number;
     stopped = 1;
 }
 
+/* 恢复输入模式、光标和原屏幕；可重复调用，也注册为退出回调。 */
 static inline void restore_terminal(void)
 {
     if (terminal_active) {
@@ -98,6 +106,7 @@ static inline void restore_terminal(void)
     }
 }
 
+/* 关闭逐行输入与回显，但保留 Ctrl+C 信号；备用屏幕避免污染原终端。 */
 static inline bool start_terminal(void)
 {
     if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) ||
@@ -126,6 +135,7 @@ static inline bool start_terminal(void)
     return true;
 }
 
+/* 人工模式借用 rand 选择种子；训练模式直接调用带种子的 snake_reset。 */
 static inline Game new_game(void)
 {
     return snake_reset((uint32_t)rand());
@@ -155,6 +165,7 @@ static inline int decode_key(unsigned char byte, int *escape)
     return byte;
 }
 
+/* 转向成功才更新 pending；current 是本帧已执行方向，用于拒绝掉头。 */
 static inline bool change_direction(int key, Point current, Point *pending)
 {
     Point next;
@@ -172,6 +183,7 @@ static inline bool change_direction(int key, Point current, Point *pending)
     return true;
 }
 
+/* 返回单调时钟秒数，不受系统时间调整影响；失败返回 -1。 */
 static inline double monotonic_time(void)
 {
     struct timespec now;
@@ -181,6 +193,7 @@ static inline double monotonic_time(void)
     return (double)now.tv_sec + (double)now.tv_nsec / 1e9;
 }
 
+/* 渲染只读取状态；ai 只改变操作提示，不影响游戏规则。 */
 static inline void draw_mode(const Game *game, const Scores *scores, const char *message, bool ai)
 {
     /* ANSI 转义序列清屏并回到左上角，常见终端均支持。 */
@@ -213,6 +226,7 @@ static inline void draw_mode(const Game *game, const Scores *scores, const char 
     fflush(stdout);
 }
 
+/* 人工游戏使用的渲染入口。 */
 static inline void draw(const Game *game, const Scores *scores, const char *message)
 {
     draw_mode(game, scores, message, false);
