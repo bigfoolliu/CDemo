@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix="cdemo-ai-integration-") as directory:
     for _ in range(2):
         result = run(directory, "train", "--seconds", "30", "--steps", "1500", "--seed", "42")
         assert result.returncode == 0, result.stderr
-        match = re.search(r"运行目录：([^\n]+)", result.stdout)
+        match = re.search(r"运行目录：([^\n\r]+)", result.stdout)
         assert match
         sessions.append(root / match.group(1))
     assert sessions[0] != sessions[1]
@@ -82,7 +82,8 @@ with tempfile.TemporaryDirectory(prefix="cdemo-ai-integration-") as directory:
         for row in metrics:
             del row["elapsed"]
         rows.append(metrics)
-        assert (session / "config.txt").exists() and (session / "report.txt").exists()
+        assert (session / "config.txt").exists()
+        assert (root / "logs/snake-ai" / session.name / "report.txt").exists()
     assert rows[0] == rows[1]
     assert sum(int(row["steps"]) for row in rows[0]) == 1500
     result = run(directory, "eval", "--model", str(sessions[0] / "best.model"))

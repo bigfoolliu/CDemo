@@ -14,7 +14,7 @@ make snake-ai
 ```sh
 ./build/games/snake_ai eval --model sessions/snake-ai/run-XXXXXX/best.model
 ./build/games/snake_ai play --model sessions/snake-ai/run-XXXXXX/best.model
-less sessions/snake-ai/run-XXXXXX/train.log
+less logs/snake-ai/run-XXXXXX/train.log
 ```
 
 训练默认最多 180 秒或 20000 局，任一到达即停止。若本机较快、希望跑满三分钟，可提高局数上限：
@@ -89,7 +89,7 @@ error = Q_online(state, action) - target
 
 ## 记录、模型和评估
 
-每次训练创建新目录，不覆盖旧实验。产物包括：
+每次训练创建新目录，不覆盖旧实验。模型、配置和 CSV 在 `sessions/snake-ai/<编号>/`，通过日志记录器写出的 `train.log` 和 `report.txt` 在 `logs/snake-ai/<编号>/`。日志每行带本地毫秒时间戳及调用文件名、行号，旧实验日志不会迁移或修改。产物包括：
 
 - `config.txt`：实际种子、预算、超参数和数据划分。
 - `train.log`：每局记录、定期验证和模型更新；终端仅每 20 局显示训练摘要。

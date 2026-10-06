@@ -75,7 +75,7 @@ make build/basics/01_types
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 
-线性回归的详细日志同时输出到屏幕和当前目录的 `linear_regression.log`，多次运行会追加。用 `less linear_regression.log` 分页查看，或运行 `./build/ml/01_linear_regression build/training.log` 指定日志文件。
+线性回归的详细日志同时输出到屏幕和 `logs/linear_regression.log`，每行包含毫秒时间戳和调用源码位置，多次运行会追加。用 `less logs/linear_regression.log` 分页查看，或运行 `./build/ml/01_linear_regression logs/training.log` 指定日志文件，父目录自动创建。
 
 ## C23 新特性示例
 
@@ -99,7 +99,7 @@ make snake-ai
 ./build/games/snake_ai play --model sessions/snake-ai/run-XXXXXX/best.model
 ```
 
-实验日志、CSV 指标和模型放在独立的 `sessions/snake-ai/` 目录；AI 得分与人工历史分开。训练追求分数提升，不保证每局满分。`make test-snake-ai` 验证数值计算与终端自动游戏。
+实验模型、配置和 CSV 指标放在独立的 `sessions/snake-ai/` 目录，训练日志和文本报告放在同编号的 `logs/snake-ai/` 目录；AI 得分与人工历史分开。训练追求分数提升，不保证每局满分。`make test-snake-ai` 验证数值计算与终端自动游戏。
 
 ## 终端小游戏
 

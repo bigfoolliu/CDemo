@@ -73,18 +73,28 @@ build/modules_demo: $(MODULE_SOURCES) src/modules/arithmetic.h Makefile
 run: all
 	@set -e; for program in $(PROGRAMS); do echo "运行 $$program"; "$$program"; done
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test
+build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+.PHONY: test-logger
+test-logger: build/tests/logger_test
+	./build/tests/logger_test
+
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
+	./build/tests/logger_test
 
 lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake_ai.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/snake_ai_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/logger_test.c
 	@set -e; for source in $(SOURCES); do $(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only "$$source"; done
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
 	rm -f $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
-	rm -f build/tests/snake_ai_test build/sanitize/snake_ai_test
+	rm -f build/tests/snake_ai_test build/sanitize/snake_ai_test build/tests/logger_test
 	rm -f $(patsubst src/advanced/%.c,build/sanitize/%,$(wildcard src/advanced/*.c))

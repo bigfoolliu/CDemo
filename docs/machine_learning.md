@@ -27,15 +27,15 @@ make build/ml/01_linear_regression    # 只编译一个案例
 
 ### 查看完整训练日志
 
-示例使用 `src/common/logger.h` 中的单线程日志记录器，同时向屏幕和文件输出全部训练过程。默认文件为当前工作目录的 `linear_regression.log`，采用追加模式，多次运行保留之前的记录。每次写入都会刷新；打开、写入、刷新或关闭失败会使程序返回失败状态。
+示例使用 `src/common/logger.h` 中的单线程日志记录器，同时向屏幕和文件输出全部训练过程。默认文件为 `logs/linear_regression.log`，采用追加模式。每行格式为 `2026-10-06 02:31:58,019 | 01_linear_regression.c:48 | 内容`，时间使用本地时区，文件名和行号来自日志调用处。每次写入都会刷新；打开、写入、刷新或关闭失败会使程序返回失败状态。
 
 ```sh
 ./build/ml/01_linear_regression
-less linear_regression.log                  # 分页查看全部过程，按 q 退出
-./build/ml/01_linear_regression training.log # 自定义文件路径
+less logs/linear_regression.log                  # 分页查看全部过程，按 q 退出
+./build/ml/01_linear_regression logs/training.log # 自定义文件路径
 ```
 
-自定义路径的父目录需要已经存在。默认日志文件已被 Git 忽略；自定义日志请放在 `build/` 等被忽略目录。日志记录器通过 `va_copy` 为两个输出目标分别复制可变参数，且不关闭借用的标准输出流；每次刷新适合教学演示，大量生产日志可改用缓冲策略。
+日志路径须使用 `logs/` 下的相对路径，父目录自动创建，拒绝 `..` 等目录回退。消息只格式化一次，多行逐行添加相同前缀；两个目标内容一致，没有末尾换行时自动补齐。`logger_write` 宏通过 `__FILE__` 和 `__LINE__` 捕获调用位置。日志记录器不关闭借用的标准输出流；每次刷新适合教学演示，大量生产日志可改用缓冲策略。旧日志原样保留。
 
 数据遵循 `y = 2x + 1`，但程序从权重和偏置均为零开始。模型为 `prediction = weight * x + bias`，损失为平均平方误差：
 

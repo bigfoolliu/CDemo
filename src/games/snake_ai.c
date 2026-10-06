@@ -201,8 +201,15 @@ static bool write_config(const char *directory, const Options *options)
 static int train(const Options *options)
 {
     char directory[256], log_path[512], csv_path[512], best_path[512], final_path[512];
-    if (!make_session(directory) || !write_config(directory, options) ||
-        !artifact(log_path, directory, "train.log") || !artifact(csv_path, directory, "metrics.csv") ||
+    char log_directory[512];
+    if (!make_session(directory)) {
+        perror("创建训练目录失败");
+        return EXIT_FAILURE;
+    }
+    /* 模型仍在 sessions/，日志按相同运行编号放到 logs/。 */
+    snprintf(log_directory, sizeof(log_directory), "logs/snake-ai/%s", strrchr(directory, '/') + 1);
+    if (!write_config(directory, options) ||
+        !artifact(log_path, log_directory, "train.log") || !artifact(csv_path, directory, "metrics.csv") ||
         !artifact(best_path, directory, "best.model") || !artifact(final_path, directory, "final.model")) {
         perror("创建训练目录失败");
         return EXIT_FAILURE;
@@ -336,7 +343,7 @@ static int train(const Options *options)
     Network selected;
     if (ok && network_load(&selected, best_path)) {
         char report_path[512];
-        ok = artifact(report_path, directory, "report.txt");
+        ok = artifact(report_path, log_directory, "report.txt");
         Logger report;
         if (ok && logger_open(&report, report_path, stdout)) {
             logger_write(&report, "训练完成：%zu 局，%zu 环境步，%zu 更新，训练中最高分=%zu\n",

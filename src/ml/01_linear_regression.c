@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "用法：%s [日志文件路径]\n", argv[0]);
         return EXIT_FAILURE;
     }
-    const char *log_path = argc == 2 ? argv[1] : "linear_regression.log";
+    const char *log_path = argc == 2 ? argv[1] : "logs/linear_regression.log";
     Logger logger;
     if (!logger_open(&logger, log_path, stdout)) {
         fprintf(stderr, "无法打开日志文件：%s\n", log_path);
