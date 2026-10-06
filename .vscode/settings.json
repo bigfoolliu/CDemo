@@ -1,7 +1,10 @@
 {
   "makefile.configureOnOpen": false,
   "C_Cpp.intelliSenseEngine": "disabled",
-  "clangd.arguments": ["--background-index", "--compile-commands-dir=${workspaceFolder}/build"],
+  "clangd.arguments": [
+    "--background-index",
+    "--compile-commands-dir=${workspaceFolder}/build"
+  ],
   "files.encoding": "utf8",
   "files.insertFinalNewline": true,
   "[c]": {

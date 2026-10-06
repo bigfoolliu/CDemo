@@ -8,7 +8,9 @@
 
 首次运行 `make compile-commands`，或者按 `Cmd+Shift+B` 构建全部。编译数据库位于 `build/compile_commands.json`，通过 Make 的预演命令生成，不会运行示例。它记录实际 C 标准、线程参数和各翻译单元，让编辑器理解多文件模块及测试代码。新增源文件、修改编译参数或切换编译器后重新生成；例如 `make CC=clang compile-commands`。切换正常构建工具链前仍需 `make clean`。
 
-如果提示找不到 clangd，在用户设置中指定 `clangd.path`。没有补全时检查数据库是否存在，然后执行命令面板的 `clangd: Restart language server`。编译器自身的诊断仍以 `make lint` 为准。
+调试构建任务也会先生成编译数据库。仓库的 `.clangd` 为 C 源文件明确指定 C23，即使数据库被 `make clean` 删除，仍能识别 `bool`、`true` 和 `nullptr` 等关键字。不要为了消除编辑器报错而改写教学示例的新语法。
+
+如果提示找不到 clangd，在用户设置中指定 `clangd.path`。没有补全或 `bool` 被标红时检查数据库是否存在，然后执行命令面板的 `clangd: Restart language server`。编译器自身的诊断仍以 `make lint` 为准。
 
 ## 构建与测试
 
@@ -18,13 +20,17 @@
 
 ## 断点与运行
 
-在“运行和调试”中选择线性回归、人工贪吃蛇、AI 短训练或 AI 单元测试，然后按 F5。启动前自动构建调试版本。点击行号左侧设置断点，F10 单步跳过，F11 进入函数，在变量或监视面板观察参数、损失和数组。macOS 的功能键可能需要同时按 Fn。
+在“运行和调试”下拉列表中选择与 C 文件对应的入口，然后按 F5。配置已覆盖 `src/` 根目录、`basics/`、`advanced/` 和 `ml/` 的全部独立示例，以及多文件模块、人工贪吃蛇、AI 短训练和 AI 单元测试。启动前自动构建调试版本，`stopOnEntry` 默认为 `false`，仅在设置的断点或运行异常处暂停。短小示例可能立即结束，请先设置断点；需要启动后立即暂停时可临时改为 `true`。
+
+调试控制台中的 `Console is in 'commands' mode`、`Launching` 和 `Launched process` 是 CodeLLDB 的正常提示，程序输出显示在集成终端中。在该控制台求值时使用 `?count`，也可直接使用变量或监视面板。启用 `stopOnEntry` 后，启动停顿可能显示 `signal SIGSTOP`；这与程序崩溃不同，按 F5 可继续执行。相关行为见 [CodeLLDB 使用手册](https://github.com/vadimcn/codelldb/blob/master/MANUAL.md)。
+
+例如打开 `src/basics/06_pointers.c`，选择 `C: basics/06_pointers.c` 再按 F5。仅打开文件不会自动切换调试入口，运行前检查下拉列表。点击行号左侧设置断点，F10 单步跳过，F11 进入函数，在变量或监视面板观察参数、损失和数组。macOS 的功能键可能需要同时按 Fn。
 
 游戏在集成终端运行，以支持方向键和终端输入；先点击终端获取焦点。正常退出优先使用游戏的 `q` 键，人工游戏停止调试时也配置了 SIGTERM 恢复终端。若异常退出后终端状态失常，可运行 `reset`。断点暂停会暂停整个实时游戏。
 
 AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能训练出高分模型。模型与实验产物仍存于 `sessions/snake-ai/`，日志位于 `logs/`；线性回归日志为 `logs/linear_regression.log`。所有配置都以仓库根目录为工作目录。
 
-其他示例可复制一个启动配置，将 `program` 改成对应的 `build/debug/...` 路径。多文件示例使用 `build/debug/modules_demo`，不要单独编译模块入口。
+调试 `src/modules/main.c` 或 `arithmetic.c` 时选择 `C: 多文件模块（modules）`，该入口使用共同链接的 `build/debug/modules_demo`。头文件没有独立入口，请在调用它的示例中设置断点。后续新增示例可复制一个启动配置，将 `program` 改成对应的 `build/debug/...` 路径。
 
 ## 格式化
 

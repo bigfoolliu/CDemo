@@ -1,0 +1,5 @@
+# 编译数据库缺失（例如刚克隆或 make clean 后）时也按 C23 解析 C 源码。
+If:
+  PathMatch: .*\.c
+CompileFlags:
+  Add: [-std=c23]

@@ -2,6 +2,270 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "C: 01_bool_nullptr.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/01_bool_nullptr",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: 02_literals.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/02_literals",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: 03_bitint.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/03_bitint",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/01_types.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/01_types",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/02_operators.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/02_operators",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/03_control_flow.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/03_control_flow",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/04_functions.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/04_functions",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/05_arrays_strings.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/05_arrays_strings",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/06_pointers.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/06_pointers",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/07_aggregate_types.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/07_aggregate_types",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/08_scope_storage.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/08_scope_storage",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/09_dynamic_memory.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/09_dynamic_memory",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/10_preprocessor.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/10_preprocessor",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/11_io_errors.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/11_io_errors",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: basics/12_generic_variadic.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/basics/12_generic_variadic",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: advanced/01_vector.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/01_vector",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: advanced/02_parser.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/02_parser",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: advanced/03_binary_protocol.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/03_binary_protocol",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: advanced/04_callbacks.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/04_callbacks",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: advanced/05_atomics.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/05_atomics",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: ml/02_logistic_regression.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/ml/02_logistic_regression",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: ml/03_knn.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/ml/03_knn",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: ml/04_kmeans.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/ml/04_kmeans",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: 多文件模块（modules）",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/modules_demo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
       "name": "C: 线性回归",
       "type": "lldb",
       "request": "launch",
@@ -9,7 +273,8 @@
       "args": [],
       "cwd": "${workspaceFolder}",
       "terminal": "integrated",
-      "preLaunchTask": "C: 构建调试版本"
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
     },
     {
       "name": "C: 人工贪吃蛇",
@@ -20,7 +285,8 @@
       "cwd": "${workspaceFolder}",
       "terminal": "integrated",
       "gracefulShutdown": "SIGTERM",
-      "preLaunchTask": "C: 构建调试版本"
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
     },
     {
       "name": "C: AI 短训练",
@@ -38,7 +304,8 @@
       ],
       "cwd": "${workspaceFolder}",
       "terminal": "integrated",
-      "preLaunchTask": "C: 构建调试版本"
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
     },
     {
       "name": "C: AI 单元测试",
@@ -48,7 +315,8 @@
       "args": [],
       "cwd": "${workspaceFolder}",
       "terminal": "integrated",
-      "preLaunchTask": "C: 构建调试版本"
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
     }
   ]
 }
