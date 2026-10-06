@@ -1,9 +1,54 @@
 {
   "version": "0.2.0",
   "configurations": [
-    { "name": "C: 线性回归", "type": "lldb", "request": "launch", "program": "${workspaceFolder}/build/debug/ml/01_linear_regression", "args": [], "cwd": "${workspaceFolder}", "terminal": "integrated", "preLaunchTask": "C: 构建调试版本" },
-    { "name": "C: 人工贪吃蛇", "type": "lldb", "request": "launch", "program": "${workspaceFolder}/build/debug/games/snake", "args": [], "cwd": "${workspaceFolder}", "terminal": "integrated", "gracefulShutdown": "SIGTERM", "preLaunchTask": "C: 构建调试版本" },
-    { "name": "C: AI 短训练", "type": "lldb", "request": "launch", "program": "${workspaceFolder}/build/debug/games/snake_ai", "args": ["train", "--seconds", "30", "--steps", "1500", "--seed", "42"], "cwd": "${workspaceFolder}", "terminal": "integrated", "preLaunchTask": "C: 构建调试版本" },
-    { "name": "C: AI 单元测试", "type": "lldb", "request": "launch", "program": "${workspaceFolder}/build/debug/tests/snake_ai_test", "args": [], "cwd": "${workspaceFolder}", "terminal": "integrated", "preLaunchTask": "C: 构建调试版本" }
+    {
+      "name": "C: 线性回归",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/ml/01_linear_regression",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: 人工贪吃蛇",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/games/snake",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "gracefulShutdown": "SIGTERM",
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: AI 短训练",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/games/snake_ai",
+      "args": [
+        "train",
+        "--seconds",
+        "30",
+        "--steps",
+        "1500",
+        "--seed",
+        "42"
+      ],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
+      "name": "C: AI 单元测试",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/tests/snake_ai_test",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本"
+    }
   ]
 }
