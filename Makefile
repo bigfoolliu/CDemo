@@ -10,6 +10,30 @@ PROGRAMS += build/modules_demo
 GAME_PROGRAM := build/games/snake
 AI_PROGRAM := build/games/snake_ai
 AI_HEADERS := $(wildcard src/games/*.h)
+DEBUG_CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -O0 -g3
+DEBUG_PROGRAMS := $(patsubst src/%.c,build/debug/%,$(SOURCES)) build/debug/games/snake build/debug/games/snake_ai build/debug/modules_demo build/debug/tests/snake_ai_test
+
+.PHONY: debug compile-commands
+debug: $(DEBUG_PROGRAMS)
+
+# 从实际构建命令生成数据库，避免编辑器和 Make 使用不同的参数。
+compile-commands:
+	python3 scripts/generate_compile_commands.py
+
+build/debug/advanced/05_atomics: DEBUG_CFLAGS += -pthread
+$(patsubst src/%.c,build/debug/%,$(wildcard src/ml/*.c)) build/debug/games/snake_ai build/debug/tests/snake_ai_test: LDLIBS += -lm
+
+build/debug/%: src/%.c $(AI_HEADERS) src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/modules_demo: $(MODULE_SOURCES) src/modules/arithmetic.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(MODULE_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/tests/snake_ai_test: tests/snake_ai_test.c src/games/snake_ai.c $(AI_HEADERS) src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
 
 .PHONY: all run test lint clean advanced sanitize ml snake test-snake-terminal
 all: $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
@@ -95,6 +119,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f $(DEBUG_PROGRAMS) build/compile_commands.json
 	rm -f $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
 	rm -f build/tests/snake_ai_test build/sanitize/snake_ai_test build/tests/logger_test
 	rm -f $(patsubst src/advanced/%.c,build/sanitize/%,$(wildcard src/advanced/*.c))

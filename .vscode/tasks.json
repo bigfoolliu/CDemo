@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "C: 生成编译数据库", "type": "process", "command": "make", "args": ["compile-commands"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": ["$gcc"] },
+    { "label": "C: 构建全部", "type": "process", "command": "make", "args": ["all"], "dependsOn": ["C: 生成编译数据库"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": ["$gcc"], "group": {"kind": "build", "isDefault": true} },
+    { "label": "C: 构建调试版本", "type": "process", "command": "make", "args": ["debug"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": ["$gcc"], "group": "build" },
+    { "label": "C: 运行测试", "type": "process", "command": "make", "args": ["test"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": ["$gcc"], "group": "test" },
+    { "label": "C: 严格检查", "type": "process", "command": "make", "args": ["lint"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": ["$gcc"] },
+    { "label": "C: AI 集成测试", "type": "process", "command": "make", "args": ["test-snake-ai"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": ["$gcc"] }
+  ]
+}

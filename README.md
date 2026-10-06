@@ -21,6 +21,12 @@ make ml        # 构建并运行机器学习案例
 
 Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接受标准选项并不代表完整实现 C23。示例使用真正的新语法，缺少支持时会编译失败，以便明确识别工具链限制。macOS 上名为 `gcc` 的命令也可能实际是 Apple Clang。
 
+## VS Code 开发
+
+仓库提供扩展推荐、clangd 代码提示、Make 构建任务、CodeLLDB 调试入口及 `.clang-format`。首次打开后安装推荐扩展，按 `Cmd+Shift+B` 构建，在“运行和调试”选择示例并按 F5。
+
+配置原因、环境要求、断点操作及常见问题见 [VS Code 开发指南](docs/vscode.md)。也可运行 `make compile-commands` 更新代码提示，运行 `make debug` 构建独立调试版本。
+
 ## 基础语法学习目录
 
 先阅读 [C 语言基础学习手册](docs/c_basics.md)，再按下表学习。手册包含概念说明、易错点、练习及尚未提供独立示例的深入主题。
