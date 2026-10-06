@@ -1,3 +1,6 @@
+/** @file
+ * @brief 线性回归与双输出训练日志。
+ */
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -7,11 +10,25 @@
 
 typedef struct { double weight; double bias; } Model;
 
+/**
+ * @brief 计算一元线性回归预测值。
+ * @param model 按值传入的权重与偏置。
+ * @param x 待预测的输入。
+ * @return weight * x + bias。
+ */
 static double predict(Model model, double x)
 {
     return model.weight * x + model.bias;
 }
 
+/**
+ * @brief 计算线性回归的平均平方误差。
+ * @param model 当前模型参数。
+ * @param x 包含 count 个输入的只读数组。
+ * @param y 与 x 一一对应的目标数组。
+ * @param count 样本数，须大于零。
+ * @return 全部样本误差平方的平均值。
+ */
 static double mse(Model model, const double *x, const double *y, size_t count)
 {
     double loss = 0;
@@ -22,6 +39,12 @@ static double mse(Model model, const double *x, const double *y, size_t count)
     return loss / (double)count;
 }
 
+/**
+ * @brief 配置日志并运行线性回归训练及验证。
+ * @param argc 命令行参数数量，包含程序名。
+ * @param argv 参数字符串数组，可指定 logs/ 下的日志路径。
+ * @return 正常完成返回 EXIT_SUCCESS；参数或运行错误返回 EXIT_FAILURE。
+ */
 int main(int argc, char *argv[])
 {
     if (argc > 2) {

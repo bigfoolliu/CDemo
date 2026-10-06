@@ -1,7 +1,14 @@
+/** @file
+ * @brief 基本类型、初始化与 sizeof。
+ */
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 
+/**
+ * @brief 运行并验证基本类型、初始化与 sizeof。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     /* 声明指定类型，初始化提供初始值；const 对象不可通过其名称修改。 */

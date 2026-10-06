@@ -1,3 +1,6 @@
+/** @file
+ * @brief K-means 聚类。
+ */
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -5,6 +8,12 @@
 enum { POINT_COUNT = 6, CLUSTER_COUNT = 2 };
 typedef struct { double x; double y; } Point;
 
+/**
+ * @brief 计算两点的欧氏距离平方。
+ * @param a 第一个有限坐标点。
+ * @param b 第二个有限坐标点。
+ * @return 距离平方；输入尺度应避免浮点运算溢出。
+ */
 static double distance_squared(Point a, Point b)
 {
     double dx = a.x - b.x;
@@ -12,12 +21,24 @@ static double distance_squared(Point a, Point b)
     return dx * dx + dy * dy;
 }
 
+/**
+ * @brief 查找最近的聚类中心。
+ * @param point 待分配的点。
+ * @param centers 包含 CLUSTER_COUNT 个中心的只读数组。
+ * @return 中心索引，等距离时选较小索引。
+ */
 static size_t nearest(Point point, const Point centers[CLUSTER_COUNT])
 {
     return distance_squared(point, centers[0]) <= distance_squared(point, centers[1])
         ? 0 : 1; /* 等距离时选编号较小的簇。 */
 }
 
+/**
+ * @brief 计算 K-means 的簇内距离平方总和。
+ * @param points 包含 POINT_COUNT 个点的只读数组。
+ * @param centers 包含 CLUSTER_COUNT 个中心的只读数组。
+ * @return 各点到最近中心的距离平方之和。
+ */
 static double objective(const Point points[POINT_COUNT], const Point centers[CLUSTER_COUNT])
 {
     double total = 0;
@@ -27,6 +48,12 @@ static double objective(const Point points[POINT_COUNT], const Point centers[CLU
     return total;
 }
 
+/**
+ * @brief 迭代更新聚类中心，空簇保留原中心。
+ * @param points 包含 POINT_COUNT 个有限坐标点的只读数组。
+ * @param centers 包含 CLUSTER_COUNT 个初始中心的可读写数组。
+ * @return 执行的迭代次数，最多 100 次；达到上限不保证收敛。
+ */
 static size_t train(const Point points[POINT_COUNT], Point centers[CLUSTER_COUNT])
 {
     for (size_t iteration = 0; iteration < 100; ++iteration) {
@@ -58,6 +85,10 @@ static size_t train(const Point points[POINT_COUNT], Point centers[CLUSTER_COUNT
     return 100; /* 教学实现返回迭代数；工程接口应另报告是否收敛。 */
 }
 
+/**
+ * @brief 运行并验证K-means 聚类。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     /* 无类别标签，算法自行将点划分为两个簇。 */

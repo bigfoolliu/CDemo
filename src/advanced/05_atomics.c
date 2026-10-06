@@ -1,3 +1,6 @@
+/** @file
+ * @brief POSIX 线程与 ISO C 原子操作。
+ */
 #include <assert.h>
 #include <pthread.h>
 #include <sched.h>
@@ -12,6 +15,11 @@ typedef struct {
     int payload; /* 普通对象，通过 release/acquire 建立读写顺序。 */
 } Shared;
 
+/**
+ * @brief 在线程中递增原子计数并发布载荷。
+ * @param context 借用的 Shared 地址，须至少存活至线程结束。
+ * @return nullptr；主线程通过共享状态获取结果。
+ */
 static void *produce(void *context)
 {
     Shared *shared = context;
@@ -23,6 +31,10 @@ static void *produce(void *context)
     return nullptr;
 }
 
+/**
+ * @brief 运行并验证POSIX 线程与 ISO C 原子操作。
+ * @return 正常完成返回 0；资源操作失败可能返回非零，断言失败会终止程序。
+ */
 int main(void)
 {
     Shared shared = {.ready = false, .ticks = 0, .payload = 0};

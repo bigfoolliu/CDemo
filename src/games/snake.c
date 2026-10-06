@@ -1,3 +1,6 @@
+/** @file
+ * @brief 人工实时贪吃蛇与规则自测。
+ */
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
@@ -13,6 +16,9 @@
 
 #include "snake_terminal.h"
 
+/**
+ * @brief 验证人工贪吃蛇的规则、按键解析和内存得分统计。
+ */
 static void self_test(void)
 {
     Game game = {.body = {{3, 2}, {2, 2}, {1, 2}}, .length = 3,
@@ -66,6 +72,12 @@ static void self_test(void)
     puts("贪吃蛇测试通过：持续移动、碰撞、重置、方向键解析及历史分数。");
 }
 
+/**
+ * @brief 解析命令行并运行人工游戏或规则自测。
+ * @param argc 命令行参数数量，包含程序名。
+ * @param argv 参数字符串数组，可指定历史得分路径或 --test。
+ * @return 正常完成返回 EXIT_SUCCESS；参数或运行错误返回 EXIT_FAILURE。
+ */
 int main(int argc, char *argv[])
 {
     if (argc == 2 && strcmp(argv[1], "--test") == 0) {

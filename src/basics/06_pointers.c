@@ -1,6 +1,14 @@
+/** @file
+ * @brief 指针、解引用与指针运算。
+ */
 #include <assert.h>
 #include <stdio.h>
 
+/**
+ * @brief 交换两个整数对象的值。
+ * @param left 可读写的第一个整数地址。
+ * @param right 可读写的第二个整数地址；允许与 left 相同。
+ */
 static void swap(int *left, int *right)
 {
     int temporary = *left; /* * 解引用；调用者必须提供有效地址。 */
@@ -8,6 +16,12 @@ static void swap(int *left, int *right)
     *right = temporary;
 }
 
+/**
+ * @brief 累加整数数组。
+ * @param values 包含 length 个元素的只读数组；length 为零时可为空。
+ * @param length 元素数量；累加结果须在 int 范围内。
+ * @return 元素总和，空数组返回 0。
+ */
 static int sum(const int *values, size_t length)
 {
     int result = 0;
@@ -17,6 +31,10 @@ static int sum(const int *values, size_t length)
     return result;
 }
 
+/**
+ * @brief 运行并验证指针、解引用与指针运算。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     int a = 1;

@@ -1,6 +1,13 @@
+/** @file
+ * @brief C23 数字字面量。
+ */
 #include <assert.h>
 #include <stdio.h>
 
+/**
+ * @brief 运行并验证C23 数字字面量。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     /* C23 标准化二进制字面量，并允许用单引号分隔数字。 */

@@ -1,9 +1,16 @@
+/** @file
+ * @brief 输入输出与错误处理。
+ */
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * @brief 运行并验证输入输出与错误处理。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     const char *input = "123";

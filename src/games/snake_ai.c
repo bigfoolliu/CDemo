@@ -1,3 +1,6 @@
+/** @file
+ * @brief 纯 C DQN 训练、评估与终端演示。
+ */
 /* 阅读顺序：main → train → learn_batch → 网络头文件；play 展示训练后的策略。
  * train 学习参数，eval 独立测分，play 只推理、不更新网络。 */
 #define _POSIX_C_SOURCE 200809L
@@ -52,7 +55,12 @@ typedef struct {
     const char *model;
 } Options;
 
-/* 满容量后覆盖最旧经验，不再分配内存。 */
+/**
+ * @brief 向环形经验池追加一条经验。
+ * @param replay 已初始化的可读写经验池。
+ * @param transition 只读经验，内容按值复制，不保留指针。
+ * @note 满容量后覆盖最旧经验，不再分配内存。
+ */
 static void replay_push(Replay *replay, const Transition *transition)
 {
     replay->data[replay->cursor] = *transition;
@@ -62,7 +70,13 @@ static void replay_push(Replay *replay, const Transition *transition)
     }
 }
 
-/* 贝尔曼目标：即时奖励 + 折扣后的下一状态最大 Q 值。 */
+/**
+ * @brief 计算含终止状态处理的贝尔曼目标。
+ * @param transition 待学习的只读经验。
+ * @param target 只读目标网络；经验未终止时用于预测下一状态。
+ * @return 终止时仅返回奖励，否则加上折扣后的最大下一状态 Q 值。
+ * @note 贝尔曼目标：即时奖励 + 折扣后的下一状态最大 Q 值。
+ */
 static double td_target(const Transition *transition, const Network *target)
 {
     if (transition->terminated) {
@@ -78,7 +92,13 @@ static double td_target(const Transition *transition, const Network *target)
     return transition->reward + 0.95 * maximum;
 }
 
-/* 有效经验池非空时调用：抽样 → 前向 → 累积梯度 → Adam 更新。 */
+/**
+ * @brief 抽样一个批次并更新在线网络和目标网络。
+ * @param learner 已初始化的学习器，经验池必须非空。
+ * @param loss 有效的平均损失输出地址；数值失败时也可能已写入。
+ * @return 学习成功返回 true；非有限损失或更新失败返回 false。
+ * @note 有效经验池非空时调用：抽样 → 前向 → 累积梯度 → Adam 更新。
+ */
 static bool learn_batch(Learner *learner, double *loss)
 {
     Network gradient = {0};
@@ -103,14 +123,27 @@ static bool learn_batch(Learner *learner, double *loss)
     return true;
 }
 
-/* ε 是随机动作概率：前 50000 步线性下降，此后保持 0.05。 */
+/**
+ * @brief 计算随训练步数线性衰减的探索概率。
+ * @param steps 已执行的环境步数。
+ * @return 从 1.0 降至 0.05 的随机动作概率。
+ * @note ε 是随机动作概率：前 50000 步线性下降，此后保持 0.05。
+ */
 static double exploration(size_t steps)
 {
     return 1 - 0.95 * fmin(1, (double)steps / 50000);
 }
 
-/* 每局单独的环境随机流，所有策略使用相同种子列表和步数上限。
- * 测试种子不用于训练或挑选模型；随机策略也不更改食物随机流。 */
+/**
+ * @brief 使用固定种子序列评估网络或随机策略。
+ * @param net 只读网络；random_policy 为 true 时不使用，可为空。
+ * @param random_policy 是否采用随机动作而不是网络策略。
+ * @param seed 评估环境的基础种子。
+ * @param games 评估局数，须大于零。
+ * @return 平均分、最高分、截断数及获胜数等统计。
+ * @note 每局单独的环境随机流，所有策略使用相同种子列表和步数上限。
+ *       测试种子不用于训练或挑选模型；随机策略也不更改食物随机流。
+ */
 static Evaluation evaluate(const Network *net, bool random_policy, uint32_t seed, size_t games)
 {
     Evaluation result = {.games = games};
@@ -143,7 +176,13 @@ static Evaluation evaluate(const Network *net, bool random_policy, uint32_t seed
     return result;
 }
 
-/* 将评估统计转换为可读摘要，不参与训练。 */
+/**
+ * @brief 将评估统计写入日志摘要。
+ * @param logger 已初始化的可读写日志记录器。
+ * @param label 有效的 NUL 结尾摘要名称。
+ * @param result 按值传入的评估结果，games 须大于零。
+ * @note 将评估统计转换为可读摘要，不参与训练。
+ */
 static void log_evaluation(Logger *logger, const char *label, Evaluation result)
 {
     logger_write(logger, "%s：%zu 局，平均分=%.3f，最高分=%zu，截断=%.1f%%，满分=%zu\n",
@@ -151,7 +190,12 @@ static void log_evaluation(Logger *logger, const char *label, Evaluation result)
                  100.0 * (double)result.truncated / (double)result.games, result.won);
 }
 
-/* 创建本次运行的独立产物目录，避免覆盖已有实验。 */
+/**
+ * @brief 为一次实验创建独立产物目录。
+ * @param directory 可写路径缓冲区，至少 256 字节；失败时内容不可作为有效路径。
+ * @return 目录创建成功返回 true；失败返回 false。
+ * @note 创建本次运行的独立产物目录，避免覆盖已有实验。
+ */
 static bool make_session(char directory[256])
 {
     if (mkdir("sessions", 0755) != 0 && errno != EEXIST) {
@@ -164,14 +208,27 @@ static bool make_session(char directory[256])
     return mkdtemp(directory) != nullptr;
 }
 
-/* 拼接路径并检查是否截断；path 必须至少容纳 512 字节。 */
+/**
+ * @brief 将产物目录和文件名拼接为路径。
+ * @param path 可写输出缓冲区，至少 512 字节；失败时可能含截断内容。
+ * @param directory 有效的 NUL 结尾目录路径。
+ * @param name 有效的 NUL 结尾产物文件名。
+ * @return 路径完整写入返回 true；格式化失败或截断返回 false。
+ * @note 拼接路径并检查是否截断；path 必须至少容纳 512 字节。
+ */
 static bool artifact(char path[512], const char *directory, const char *name)
 {
     int length = snprintf(path, 512, "%s/%s", directory, name);
     return length >= 0 && length < 512;
 }
 
-/* 保存预算与超参数，方便将训练结果与配置对应起来。 */
+/**
+ * @brief 保存训练预算与超参数供实验复现。
+ * @param directory 已存在的实验目录路径。
+ * @param options 有效的只读训练选项。
+ * @return 创建、写入并关闭成功返回 true；失败返回 false。
+ * @note 保存预算与超参数，方便将训练结果与配置对应起来。
+ */
 static bool write_config(const char *directory, const Options *options)
 {
     char path[512];
@@ -197,7 +254,12 @@ static bool write_config(const char *directory, const Options *options)
     return ok;
 }
 
-/* 训练主流程：初始化 → 采样学习 → 验证选模 → 独立测试 → 释放资源。 */
+/**
+ * @brief 执行 DQN 采样、学习、选模和独立测试。
+ * @param options 已校验的只读训练预算和随机种子配置。
+ * @return 训练及产物写入成功返回 EXIT_SUCCESS，否则返回 EXIT_FAILURE。
+ * @note 训练主流程：初始化 → 采样学习 → 验证选模 → 独立测试 → 释放资源。
+ */
 static int train(const Options *options)
 {
     char directory[256], log_path[512], csv_path[512], best_path[512], final_path[512];
@@ -373,7 +435,13 @@ static int train(const Options *options)
     return ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-/* 演示不训练：每个时钟周期预测动作，终止后记分并自动重开。 */
+/**
+ * @brief 使用已训练网络在终端自动玩贪吃蛇。
+ * @param net 已加载的只读网络，演示时不训练。
+ * @param seed 演示环境的初始随机种子。
+ * @return 正常结束返回 EXIT_SUCCESS；终端或文件操作失败返回 EXIT_FAILURE。
+ * @note 演示不训练：每个时钟周期预测动作，终止后记分并自动重开。
+ */
 static int play(const Network *net, uint32_t seed)
 {
     char directory[256], path[512];
@@ -459,7 +527,13 @@ static int play(const Network *net, uint32_t seed)
     return result;
 }
 
-/* 要求整个字符串都是非负十进制数，并检查转换溢出。 */
+/**
+ * @brief 解析完整的非负十进制无符号整数。
+ * @param text 有效的 NUL 结尾数值文本，不接受符号或空白。
+ * @param value 有效的输出地址；转换失败时也可能被修改。
+ * @return 文本完整且未超出 unsigned long 范围返回 true，否则返回 false。
+ * @note 要求整个字符串都是非负十进制数，并检查转换溢出。
+ */
 static bool parse_number(const char *text, unsigned long *value)
 {
     if (*text < '0' || *text > '9') {
@@ -471,7 +545,13 @@ static bool parse_number(const char *text, unsigned long *value)
     return errno == 0 && *end == '\0';
 }
 
-/* 参数按“选项 值”解析；先检查输入，再分派到训练、评估或演示。 */
+/**
+ * @brief 校验命令行并分派训练、评估或演示。
+ * @param argc 命令行参数数量，包含程序名。
+ * @param argv 参数字符串数组，包含 train/eval/play 子命令及对应选项。
+ * @return 正常完成返回 EXIT_SUCCESS；参数或运行错误返回 EXIT_FAILURE。
+ * @note 参数按“选项 值”解析；先检查输入，再分派到训练、评估或演示。
+ */
 int main(int argc, char *argv[])
 {
     Options options = {.seconds = 180, .seed = 42, .episodes = 20000, .steps = SIZE_MAX};

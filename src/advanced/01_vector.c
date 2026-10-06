@@ -1,8 +1,16 @@
+/** @file
+ * @brief 动态数组的所有权与失败契约。
+ */
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * @brief realloc 兼容的扩容回调，供容器注入分配策略。
+ * @note 第一个参数为旧内存地址或 nullptr，第二个参数为请求字节数。
+ *       成功返回可用 free 释放的新地址；失败返回 nullptr 并保留旧内存。
+ */
 typedef void *(*Resize)(void *, size_t);
 typedef struct {
     int *data;
@@ -11,9 +19,15 @@ typedef struct {
     Resize resize;
 } Vector;
 
-/* 不变量：length <= capacity；只有 [0, length) 内的元素可读取。
- * resize 必须兼容 realloc，返回的内存必须能用 free 释放。
- * 容器拥有 data；不要浅复制拥有内存的 Vector。 */
+/**
+ * @brief 为动态数组预留至少指定容量。
+ * @param vector 满足容器不变量的可读写对象。
+ * @param capacity 所需元素容量，不是字节数。
+ * @return 容量足够或扩容成功返回 true；失败返回 false 且容器不变。
+ * @note 不变量：length <= capacity；只有 [0, length) 内的元素可读取。
+ *       resize 必须兼容 realloc，返回的内存必须能用 free 释放。
+ *       容器拥有 data；不要浅复制拥有内存的 Vector。
+ */
 static bool reserve(Vector *vector, size_t capacity)
 {
     if (capacity <= vector->capacity) {
@@ -31,6 +45,12 @@ static bool reserve(Vector *vector, size_t capacity)
     return true;
 }
 
+/**
+ * @brief 在动态数组末尾追加元素，必要时扩容。
+ * @param vector 已初始化的可读写容器。
+ * @param value 待追加的整数。
+ * @return 追加成功返回 true；容量溢出或分配失败返回 false。
+ */
 static bool push(Vector *vector, int value)
 {
     if (vector->length == vector->capacity) {
@@ -48,12 +68,22 @@ static bool push(Vector *vector, int value)
     return true;
 }
 
+/**
+ * @brief 释放容器拥有的内存并恢复空状态。
+ * @param vector 待销毁的有效对象；允许重复销毁空容器。
+ */
 static void destroy(Vector *vector)
 {
     free(vector->data);
     *vector = (Vector){.resize = realloc};
 }
 
+/**
+ * @brief 注入内存分配失败以验证容器失败路径。
+ * @param pointer 模拟旧内存地址；本函数不读取或释放它。
+ * @param bytes 模拟请求字节数；本函数忽略它。
+ * @return 始终返回 nullptr。
+ */
 static void *fail_resize(void *pointer, size_t bytes)
 {
     (void)pointer;
@@ -61,6 +91,10 @@ static void *fail_resize(void *pointer, size_t bytes)
     return nullptr; /* 注入分配失败，无需真的耗尽内存。 */
 }
 
+/**
+ * @brief 运行并验证动态数组的所有权与失败契约。
+ * @return 正常完成返回 0；资源操作失败可能返回非零，断言失败会终止程序。
+ */
 int main(void)
 {
     Vector vector = {.resize = realloc};

@@ -1,3 +1,6 @@
+/** @file
+ * @brief 二进制报文与借用视图。
+ */
 #include <assert.h>
 #include <limits.h>
 #include <stdint.h>
@@ -11,9 +14,16 @@ typedef struct {
     size_t length;
 } Packet;
 
-/* 格式：[版本=1][类型][长度高字节][长度低字节][载荷]。
- * 返回借用视图，不复制数据；输入缓冲区必须比视图活得更久。
- * 不将原始字节强转成结构体，避免填充、对齐、字节序和别名问题。 */
+/**
+ * @brief 校验并解码二进制报文，返回零拷贝视图。
+ * @param bytes 至少 size 字节的只读输入；size 为零时不解引用。
+ * @param size 输入缓冲区的字节数。
+ * @param output 成功时写入报文视图；载荷借用 bytes 的存储。
+ * @return 报文完整且版本正确返回 true；失败返回 false 且输出不变。
+ * @note 格式：[版本=1][类型][长度高字节][长度低字节][载荷]。
+ *       返回借用视图，不复制数据；输入缓冲区必须比视图活得更久。
+ *       不将原始字节强转成结构体，避免填充、对齐、字节序和别名问题。
+ */
 static bool decode(const unsigned char *bytes, size_t size, Packet *output)
 {
     if (size < 4 || bytes[0] != 1) {
@@ -27,6 +37,10 @@ static bool decode(const unsigned char *bytes, size_t size, Packet *output)
     return true;
 }
 
+/**
+ * @brief 运行并验证二进制报文与借用视图。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     const unsigned char bytes[] = {1, 7, 0, 3, 'a', 'b', 'c'};

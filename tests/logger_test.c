@@ -1,3 +1,6 @@
+/** @file
+ * @brief 日志格式、双输出与失败路径验证。
+ */
 #define _POSIX_C_SOURCE 200809L
 #ifdef __APPLE__
 #define _DARWIN_C_SOURCE 1
@@ -6,6 +9,10 @@
 #include <assert.h>
 #include <unistd.h>
 
+/**
+ * @brief 运行并验证日志格式、双输出与失败路径验证。
+ * @return 正常完成返回 0；资源操作失败可能返回非零，断言失败会终止程序。
+ */
 int main(void)
 {
     int made = mkdir("logs", 0755);

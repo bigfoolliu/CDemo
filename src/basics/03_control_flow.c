@@ -1,6 +1,13 @@
+/** @file
+ * @brief 条件、循环与分支控制。
+ */
 #include <assert.h>
 #include <stdio.h>
 
+/**
+ * @brief 运行并验证条件、循环与分支控制。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     int sum = 0;

@@ -1,3 +1,6 @@
+/** @file
+ * @brief 结构体、联合体与枚举。
+ */
 #include <assert.h>
 #include <stdio.h>
 
@@ -15,6 +18,10 @@ struct Value {
     } data; /* 成员共享存储；标签记录当前使用的成员。 */
 };
 
+/**
+ * @brief 运行并验证结构体、联合体与枚举。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     Person person = {.name = "小明", .age = 18}; /* 指定初始化。 */

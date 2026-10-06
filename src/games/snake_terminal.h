@@ -1,3 +1,6 @@
+/** @file
+ * @brief POSIX 终端输入、渲染与得分接口。
+ */
 #ifndef CDEMO_SNAKE_TERMINAL_H
 #define CDEMO_SNAKE_TERMINAL_H
 
@@ -20,7 +23,12 @@ typedef struct {
     size_t recent[5];
 } Scores;
 
-/* 更新内存中的统计；不执行文件写入。 */
+/**
+ * @brief 更新内存中的最高分、局数和最近得分。
+ * @param scores 已初始化的可读写统计对象。
+ * @param score 本局得分。
+ * @note 更新内存中的统计；不执行文件写入。
+ */
 static inline void add_score(Scores *scores, size_t score)
 {
     for (size_t i = 4; i > 0; --i) {
@@ -33,7 +41,13 @@ static inline void add_score(Scores *scores, size_t score)
     }
 }
 
-/* 文件不存在视为没有历史；跳过无效记录，其他读取错误返回失败。 */
+/**
+ * @brief 读取得分历史并追加到内存统计。
+ * @param path 有效的 NUL 结尾历史文件路径。
+ * @param scores 已初始化的可读写统计对象，通常先清零。
+ * @return 读取成功或文件不存在返回 true；读取或关闭失败返回 false，统计可能已部分更新。
+ * @note 文件不存在视为没有历史；跳过无效记录，其他读取错误返回失败。
+ */
 static inline bool load_scores(const char *path, Scores *scores)
 {
     FILE *file = fopen(path, "r");
@@ -67,7 +81,14 @@ static inline bool load_scores(const char *path, Scores *scores)
     return success;
 }
 
-/* 追加并关闭文件成功后才更新内存统计，避免显示未保存的得分。 */
+/**
+ * @brief 追加保存一局得分，成功后更新内存统计。
+ * @param path 有效的 NUL 结尾历史文件路径，父目录须已存在。
+ * @param scores 可读写统计对象；写入失败时不更新。
+ * @param score 待追加的得分。
+ * @return 写入并关闭成功返回 true；失败返回 false，文件可能已部分写入。
+ * @note 追加并关闭文件成功后才更新内存统计，避免显示未保存的得分。
+ */
 static inline bool save_score(const char *path, Scores *scores, size_t score)
 {
     FILE *file = fopen(path, "a");
@@ -88,14 +109,21 @@ static struct termios saved_terminal;
 static bool terminal_active;
 static volatile sig_atomic_t stopped; /* 信号处理器与主循环共用的退出标志。 */
 
-/* 信号中只设置标志，恢复终端和保存文件留给主循环处理。 */
+/**
+ * @brief 请求主循环退出，供 POSIX 信号处理器调用。
+ * @param signal_number 收到的信号编号；本函数不区分具体信号。
+ * @note 信号中只设置标志，恢复终端和保存文件留给主循环处理。
+ */
 static inline void stop_game(int signal_number)
 {
     (void)signal_number;
     stopped = 1;
 }
 
-/* 恢复输入模式、光标和原屏幕；可重复调用，也注册为退出回调。 */
+/**
+ * @brief 恢复终端输入模式、光标和原屏幕。
+ * @note 恢复输入模式、光标和原屏幕；可重复调用，也注册为退出回调。
+ */
 static inline void restore_terminal(void)
 {
     if (terminal_active) {
@@ -106,7 +134,11 @@ static inline void restore_terminal(void)
     }
 }
 
-/* 关闭逐行输入与回显，但保留 Ctrl+C 信号；备用屏幕避免污染原终端。 */
+/**
+ * @brief 设置交互终端并注册退出恢复及信号处理。
+ * @return 设置成功返回 true；非交互终端或 POSIX 调用失败返回 false。
+ * @note 关闭逐行输入与回显，但保留 Ctrl+C 信号；备用屏幕避免污染原终端。
+ */
 static inline bool start_terminal(void)
 {
     if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) ||
@@ -135,13 +167,23 @@ static inline bool start_terminal(void)
     return true;
 }
 
-/* 人工模式借用 rand 选择种子；训练模式直接调用带种子的 snake_reset。 */
+/**
+ * @brief 使用人工游戏的随机流创建新局。
+ * @return 初始化后的游戏状态；调用者可先通过 srand 设置种子。
+ * @note 人工模式借用 rand 选择种子；训练模式直接调用带种子的 snake_reset。
+ */
 static inline Game new_game(void)
 {
     return snake_reset((uint32_t)rand());
 }
 
-/* 转义序列可跨多次读取，状态必须保留；兼容 ESC [ 和 ESC O 方向键。 */
+/**
+ * @brief 逐字节解析普通按键和方向键转义序列。
+ * @param byte 本次读取的输入字节。
+ * @param escape 可读写解析状态，首次置零并跨读取保留。
+ * @return 普通字符或映射后的 WASD；序列未完成或无效时返回 0。
+ * @note 转义序列可跨多次读取，状态必须保留；兼容 ESC [ 和 ESC O 方向键。
+ */
 static inline int decode_key(unsigned char byte, int *escape)
 {
     if (byte == 27) {
@@ -165,7 +207,14 @@ static inline int decode_key(unsigned char byte, int *escape)
     return byte;
 }
 
-/* 转向成功才更新 pending；current 是本帧已执行方向，用于拒绝掉头。 */
+/**
+ * @brief 校验转向并更新待执行方向。
+ * @param key WASD 按键编码，大小写均可。
+ * @param current 本帧已执行的单位方向，用于拒绝反向操作。
+ * @param pending 有效的方向输出地址，仅接受转向时修改。
+ * @return 接受新方向返回 true；无效、同向或反向输入返回 false。
+ * @note 转向成功才更新 pending；current 是本帧已执行方向，用于拒绝掉头。
+ */
 static inline bool change_direction(int key, Point current, Point *pending)
 {
     Point next;
@@ -183,7 +232,11 @@ static inline bool change_direction(int key, Point current, Point *pending)
     return true;
 }
 
-/* 返回单调时钟秒数，不受系统时间调整影响；失败返回 -1。 */
+/**
+ * @brief 读取不受系统时间调整影响的单调时钟。
+ * @return 单调时钟秒数；读取失败返回 -1。
+ * @note 返回单调时钟秒数，不受系统时间调整影响；失败返回 -1。
+ */
 static inline double monotonic_time(void)
 {
     struct timespec now;
@@ -193,7 +246,14 @@ static inline double monotonic_time(void)
     return (double)now.tv_sec + (double)now.tv_nsec / 1e9;
 }
 
-/* 渲染只读取状态；ai 只改变操作提示，不影响游戏规则。 */
+/**
+ * @brief 在终端渲染棋盘、统计和操作提示。
+ * @param game 有效的只读游戏状态。
+ * @param scores 有效的只读得分统计。
+ * @param message 有效的 NUL 结尾提示文本。
+ * @param ai true 显示 AI 操作提示，false 显示人工操作提示。
+ * @note 渲染只读取状态；ai 只改变操作提示，不影响游戏规则。
+ */
 static inline void draw_mode(const Game *game, const Scores *scores, const char *message, bool ai)
 {
     /* ANSI 转义序列清屏并回到左上角，常见终端均支持。 */
@@ -226,7 +286,13 @@ static inline void draw_mode(const Game *game, const Scores *scores, const char 
     fflush(stdout);
 }
 
-/* 人工游戏使用的渲染入口。 */
+/**
+ * @brief 渲染人工游戏界面。
+ * @param game 有效的只读游戏状态。
+ * @param scores 有效的只读得分统计。
+ * @param message 有效的 NUL 结尾提示文本。
+ * @note 人工游戏使用的渲染入口。
+ */
 static inline void draw(const Game *game, const Scores *scores, const char *message)
 {
     draw_mode(game, scores, message, false);

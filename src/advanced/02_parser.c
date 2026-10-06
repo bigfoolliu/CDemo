@@ -1,3 +1,6 @@
+/** @file
+ * @brief 严格整数解析与溢出检测。
+ */
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
@@ -5,9 +8,15 @@
 
 enum ParseStatus { PARSE_OK, PARSE_EMPTY, PARSE_INVALID, PARSE_RANGE };
 
-/* 严格解析十进制 int：接受一个可选正负号，不接受空白和尾随字符。
- * 仅成功时写入 output；不使用 atoi，因为它无法可靠报告错误。
- * text 必须是有效的 NUL 结尾字符串，output 必须指向有效 int。 */
+/**
+ * @brief 严格解析十进制整数并报告失败原因。
+ * @param text 有效的 NUL 结尾字符串，不接受空白或尾随字符。
+ * @param output 有效的整数输出地址；仅解析成功时修改。
+ * @return PARSE_OK 表示成功；其余状态分别表示空输入、格式错误或超范围。
+ * @note 严格解析十进制 int：接受一个可选正负号，不接受空白和尾随字符。
+ *       仅成功时写入 output；不使用 atoi，因为它无法可靠报告错误。
+ *       text 必须是有效的 NUL 结尾字符串，output 必须指向有效 int。
+ */
 static enum ParseStatus parse_int(const char *text, int *output)
 {
     const unsigned char *cursor = (const unsigned char *)text;
@@ -43,6 +52,10 @@ static enum ParseStatus parse_int(const char *text, int *output)
     return PARSE_OK;
 }
 
+/**
+ * @brief 运行并验证严格整数解析与溢出检测。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     const struct {

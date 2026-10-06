@@ -1,8 +1,15 @@
+/** @file
+ * @brief 动态内存分配与释放。
+ */
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * @brief 运行并验证动态内存分配与释放。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     size_t count = 3;

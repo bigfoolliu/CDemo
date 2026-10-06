@@ -1,6 +1,13 @@
+/** @file
+ * @brief 基本运算符与类型转换。
+ */
 #include <assert.h>
 #include <stdio.h>
 
+/**
+ * @brief 运行并验证基本运算符与类型转换。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     int a = 7;

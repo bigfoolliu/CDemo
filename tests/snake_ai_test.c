@@ -1,9 +1,15 @@
+/** @file
+ * @brief DQN 数值与环境单元验证。
+ */
 /* 编译在同一翻译单元中直接验证内部算法，训练与测试使用同一实现。 */
 #define main snake_ai_program_main
 #include "../src/games/snake_ai.c"
 #undef main
 #include <assert.h>
 
+/**
+ * @brief 验证环境规则、奖励及满棋盘终止状态。
+ */
 static void test_environment(void)
 {
     Game a = snake_reset(42);
@@ -32,6 +38,9 @@ static void test_environment(void)
     assert(!moved);
 }
 
+/**
+ * @brief 验证网络梯度、Adam 更新和梯度裁剪。
+ */
 static void test_gradient(void)
 {
     uint32_t rng = 123;
@@ -82,6 +91,9 @@ static void test_gradient(void)
     assert(ok && fabs(sqrt(moment_norm) - 1) < 1e-8);
 }
 
+/**
+ * @brief 验证经验池、TD 目标和截断状态处理。
+ */
 static void test_replay(void)
 {
     Learner *learner = calloc(1, sizeof(*learner));
@@ -112,6 +124,9 @@ static void test_replay(void)
     free(learner);
 }
 
+/**
+ * @brief 验证模型读写、格式拒绝和历史文件处理。
+ */
 static void test_files(void)
 {
     char directory[] = "/tmp/cdemo-ai-unit-XXXXXX";
@@ -155,6 +170,10 @@ static void test_files(void)
     assert(removed == 0);
 }
 
+/**
+ * @brief 运行并验证DQN 数值与环境单元验证。
+ * @return 正常完成返回 0；资源操作失败可能返回非零，断言失败会终止程序。
+ */
 int main(void)
 {
     test_environment();

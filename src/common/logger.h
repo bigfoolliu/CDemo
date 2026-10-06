@@ -1,3 +1,6 @@
+/** @file
+ * @brief 单线程双输出日志接口。
+ */
 #ifndef CDEMO_LOGGER_H
 #define CDEMO_LOGGER_H
 
@@ -18,8 +21,13 @@ typedef struct {
     bool failed;
 } Logger;
 
-/* 日志使用 logs/ 下的相对路径；拒绝目录回退，自动创建父目录。
- * mkdir 是 POSIX 接口，其余记录与格式化逻辑使用标准 C。 */
+/**
+ * @brief 校验日志路径并创建缺失的父目录。
+ * @param path 有效的 NUL 结尾相对路径，必须位于 logs/ 内且无回退组件。
+ * @return 路径有效且父目录就绪返回 true；失败返回 false 并设置 errno。
+ * @note 日志使用 logs/ 下的相对路径；拒绝目录回退，自动创建父目录。
+ *       mkdir 是 POSIX 接口，其余记录与格式化逻辑使用标准 C。
+ */
 static inline bool logger_prepare_path(const char *path)
 {
     if (strncmp(path, "logs/", 5) != 0 || strlen(path) >= 1024 || path[5] == '\0') {
@@ -61,7 +69,14 @@ static inline bool logger_prepare_path(const char *path)
     return true;
 }
 
-/* console 为 nullptr 时只写文件；已有文件采用追加模式。 */
+/**
+ * @brief 初始化单线程记录器并以追加模式打开日志。
+ * @param logger 有效的输出地址，不应覆盖仍持有文件流的记录器。
+ * @param path 有效的 logs/ 下相对日志路径。
+ * @param console 借用的可写流；nullptr 表示仅写文件，记录器不关闭它。
+ * @return 成功返回 true；失败返回 false 并设置 failed。
+ * @note console 为 nullptr 时只写文件；已有文件采用追加模式。
+ */
 static inline bool logger_open(Logger *logger, const char *path, FILE *console)
 {
     *logger = (Logger){.console = console};
@@ -77,8 +92,16 @@ static inline bool logger_open(Logger *logger, const char *path, FILE *console)
     return true;
 }
 
-/* 一次调用是一条消息：每个物理行都有前缀，没有末尾换行时自动补齐。
- * 同一消息的所有行及输出目标共用时间戳，格式化只执行一次。 */
+/**
+ * @brief 格式化消息并为每行添加时间及调用位置。
+ * @param logger 已初始化的可读写记录器，失败状态会累计保留。
+ * @param source 有效的 NUL 结尾调用源码路径，通常由宏自动传入。
+ * @param line 调用处源码行号，通常由宏自动传入。
+ * @param format 有效的 printf 格式字符串。
+ * @param ... 与 format 中转换说明匹配的可变参数。
+ * @note 一次调用是一条消息：每个物理行都有前缀，没有末尾换行时自动补齐。
+ *       同一消息的所有行及输出目标共用时间戳，格式化只执行一次。
+ */
 static inline void logger_write_at(Logger *logger, const char *source, int line, const char *format, ...)
 {
     struct timespec now;
@@ -149,7 +172,12 @@ static inline void logger_write_at(Logger *logger, const char *source, int line,
 /* 宏在调用处捕获文件名和行号，而不是 logger.h 内部的位置。 */
 #define logger_write(logger, ...) logger_write_at((logger), __FILE__, __LINE__, __VA_ARGS__)
 
-/* 只关闭拥有的文件，不关闭借用的终端流；返回累计的成功状态。 */
+/**
+ * @brief 关闭拥有的文件流并报告累计写入状态。
+ * @param logger 有效的可读写记录器；不关闭借用的 console 流。
+ * @return 所有记录与关闭操作均成功返回 true，否则返回 false。
+ * @note 只关闭拥有的文件，不关闭借用的终端流；返回累计的成功状态。
+ */
 static inline bool logger_close(Logger *logger)
 {
     if (logger->file != nullptr) {

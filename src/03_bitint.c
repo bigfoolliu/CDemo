@@ -1,6 +1,13 @@
+/** @file
+ * @brief C23 位精确整数。
+ */
 #include <assert.h>
 #include <stdio.h>
 
+/**
+ * @brief 运行并验证C23 位精确整数。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     /* unsigned _BitInt(5) 的值域为 0..31。

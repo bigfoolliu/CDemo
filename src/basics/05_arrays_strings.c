@@ -1,7 +1,14 @@
+/** @file
+ * @brief 数组与字符串。
+ */
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief 运行并验证数组与字符串。
+ * @return 正常完成返回 0；断言失败会终止程序。
+ */
 int main(void)
 {
     int values[] = {1, 2, 3};
