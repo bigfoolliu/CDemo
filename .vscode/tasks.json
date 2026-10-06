@@ -38,7 +38,9 @@
     },
     {
       "label": "C: 构建调试版本",
-      "dependsOn": ["C: 生成编译数据库"],
+      "dependsOn": [
+        "C: 生成编译数据库"
+      ],
       "type": "process",
       "command": "make",
       "args": [
@@ -87,6 +89,20 @@
       "command": "make",
       "args": [
         "test-snake-ai"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "C: 运行标准库示例",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "stdlib"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

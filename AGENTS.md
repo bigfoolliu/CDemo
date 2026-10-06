@@ -6,6 +6,8 @@
 
 ## 构建、测试与开发命令
 
+`src/stdlib/` 是常用 ISO C 标准库专区，指南为 `docs/c_standard_library.md`。`make stdlib` 构建并运行本专区，示例同时接入默认构建、测试、检查与调试。示例应无需交互、保留用户文件，并解释 API 返回值、参数长度、所有权和失败行为；临时文件使用 `tmpfile`，持久日志仍须遵守 `logs/` 约束。
+
 人工与 AI 贪吃蛇共用 `src/games/snake_env.h` 规则和 `snake_terminal.h` 终端模块。纯 C DQN 位于 `snake_ai.c` 与 `snake_ai_network.h`，教程为 `docs/snake_ai.md`。`make snake-ai` 只构建；长训练不加入默认测试。`make test-snake-ai` 运行数值及集成测试，`make sanitize-snake-ai` 验证内存与未定义行为。训练产物位于独立的 `sessions/snake-ai/`，不得覆盖旧实验或人工得分。
 
 `src/games/` 存放交互游戏，`make snake` 启动使用 POSIX 终端 API 的实时贪吃蛇。游戏不加入自动运行的示例列表；通过 `--test` 测试规则并接入 `make test`。`make test-snake-terminal` 使用 Python 3 伪终端验证输入、自动重开、得分持久化及终端恢复，测试使用临时历史文件。保留用户已有 `snake_scores.log`。对应说明位于 `docs/snake.md`。

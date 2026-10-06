@@ -1,8 +1,10 @@
 CC = cc
+.DEFAULT_GOAL := all
 # 优先使用正式标准名称，旧编译器可能只接受 c2x。
 CSTD := $(shell printf 'int main(void) { return 0; }\n' | $(CC) -std=c23 -x c -fsyntax-only - >/dev/null 2>&1 && echo c23 || echo c2x)
 CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -g
-SOURCES := $(wildcard src/*.c src/basics/*.c src/advanced/*.c src/ml/*.c)
+SOURCES := $(wildcard src/*.c src/basics/*.c src/advanced/*.c src/ml/*.c src/stdlib/*.c)
+STDLIB_PROGRAMS := $(patsubst src/%.c,build/%,$(wildcard src/stdlib/*.c))
 ML_PROGRAMS := $(patsubst src/%.c,build/%,$(wildcard src/ml/*.c))
 PROGRAMS := $(patsubst src/%.c,build/%,$(SOURCES))
 MODULE_SOURCES := $(wildcard src/modules/*.c)
@@ -14,6 +16,9 @@ DEBUG_CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -O0 -g3
 DEBUG_PROGRAMS := $(patsubst src/%.c,build/debug/%,$(SOURCES)) build/debug/games/snake build/debug/games/snake_ai build/debug/modules_demo build/debug/tests/snake_ai_test
 
 .PHONY: debug compile-commands
+.PHONY: stdlib
+stdlib: $(STDLIB_PROGRAMS)
+	@set -e; for program in $(STDLIB_PROGRAMS); do "$$program"; done
 debug: $(DEBUG_PROGRAMS)
 
 # 从实际构建命令生成数据库，避免编辑器和 Make 使用不同的参数。
@@ -21,6 +26,7 @@ compile-commands:
 	python3 scripts/generate_compile_commands.py
 
 build/debug/advanced/05_atomics: DEBUG_CFLAGS += -pthread
+build/stdlib/08_math build/debug/stdlib/08_math: LDLIBS += -lm
 $(patsubst src/%.c,build/debug/%,$(wildcard src/ml/*.c)) build/debug/games/snake_ai build/debug/tests/snake_ai_test: LDLIBS += -lm
 
 build/debug/%: src/%.c $(AI_HEADERS) src/common/logger.h Makefile

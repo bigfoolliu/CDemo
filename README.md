@@ -15,6 +15,7 @@ make clean     # 删除示例可执行文件
 make advanced  # 只构建并运行深入示例
 make sanitize  # 对深入示例执行地址与未定义行为检查
 make ml        # 构建并运行机器学习案例
+make stdlib    # 构建并运行常用标准库示例
 ```
 
 `src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
@@ -26,6 +27,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 仓库提供扩展推荐、clangd 代码提示、Make 构建任务、CodeLLDB 调试入口及 `.clang-format`。首次打开后安装推荐扩展，按 `Cmd+Shift+B` 构建，在“运行和调试”选择示例并按 F5。
 
 配置原因、环境要求、断点操作及常见问题见 [VS Code 开发指南](docs/vscode.md)。也可运行 `make compile-commands` 更新代码提示，运行 `make debug` 构建独立调试版本。
+
+## 常用标准库学习专区
+
+阅读 [C 常用标准库学习指南](docs/c_standard_library.md)，按头文件导航、API 契约和小练习逐步学习。`src/stdlib/` 提供 10 个独立示例：输入输出、字符串与字节、动态内存、数值转换、字符分类、类型与范围、排序搜索、数学、时间、可变参数。
+
+运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
 ## 基础语法学习目录
 

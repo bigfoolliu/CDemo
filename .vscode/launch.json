@@ -317,6 +317,116 @@
       "terminal": "integrated",
       "preLaunchTask": "C: 构建调试版本",
       "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/01_stdio.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/01_stdio",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/02_string.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/02_string",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/03_memory.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/03_memory",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/04_conversion.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/04_conversion",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/05_ctype.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/05_ctype",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/06_types_limits.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/06_types_limits",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/07_sort_search.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/07_sort_search",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/08_math.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/08_math",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/09_time.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/09_time",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: stdlib/10_stdarg.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/stdlib/10_stdarg",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
     }
   ]
 }
