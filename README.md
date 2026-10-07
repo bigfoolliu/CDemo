@@ -34,6 +34,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 最小二维图形引擎
+
+`src/graphics/` 提供纯 C 软件绘制核心和可选的 SDL2 实时窗口，演示像素、直线、矩形、圆、二维变换和动画循环。运行 `make graphics`，Space 暂停，暂停时 N 单步，R 重置，Esc 退出。
+
+阅读 [二维图形原理教程](docs/graphics_2d.md)。窗口需 SDL2 与 pkg-config，普通构建及 `make test-graphics` 无需这些依赖。VS Code 选择 `C: 二维图形演示`，设置断点后按 F5。
+
 ## 基础语法学习目录
 
 先阅读 [C 语言基础学习手册](docs/c_basics.md)，再按下表学习。手册包含概念说明、易错点、练习及尚未提供独立示例的深入主题。

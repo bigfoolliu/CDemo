@@ -14,6 +14,52 @@ AI_PROGRAM := build/games/snake_ai
 AI_HEADERS := $(wildcard src/games/*.h)
 DEBUG_CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -O0 -g3
 DEBUG_PROGRAMS := $(patsubst src/%.c,build/debug/%,$(SOURCES)) build/debug/games/snake build/debug/games/snake_ai build/debug/modules_demo build/debug/tests/snake_ai_test
+GRAPHICS_CORE := src/graphics/graphics.c
+GRAPHICS_HEADER := src/graphics/graphics.h
+GRAPHICS_SOURCES := src/graphics/demo.c $(GRAPHICS_CORE)
+SDL_CFLAGS = $(shell pkg-config --cflags sdl2)
+SDL_LIBS = $(shell pkg-config --libs sdl2)
+
+# 图形窗口是可选依赖；普通构建和无窗口测试不查询或链接 SDL。
+.PHONY: graphics graphics-build graphics-debug check-sdl test-graphics sanitize-graphics compile-commands-graphics
+.PHONY: test-graphics-window
+test-graphics-window: build/tests/graphics_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/graphics_window_test
+
+build/tests/graphics_window_test: tests/graphics_window_test.c $(GRAPHICS_SOURCES) $(GRAPHICS_HEADER) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/graphics_window_test.c $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+check-sdl:
+	@command -v pkg-config >/dev/null 2>&1 && pkg-config --exists sdl2 || { echo "需要 SDL2 与 pkg-config；macOS 可使用 brew install sdl2 pkg-config。" >&2; exit 1; }
+
+graphics: graphics-build
+	./build/graphics/demo
+
+graphics-build: check-sdl build/graphics/demo
+graphics-debug: check-sdl build/debug/graphics/demo
+
+build/graphics/demo: $(GRAPHICS_SOURCES) $(GRAPHICS_HEADER) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(GRAPHICS_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/demo: $(GRAPHICS_SOURCES) $(GRAPHICS_HEADER) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(GRAPHICS_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/graphics_test: tests/graphics_test.c $(GRAPHICS_CORE) $(GRAPHICS_HEADER) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/graphics_test.c $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-graphics: build/tests/graphics_test
+	./build/tests/graphics_test
+
+sanitize-graphics:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/graphics_test.c $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/graphics_test
+	./build/sanitize/graphics_test
+
+compile-commands-graphics: check-sdl
+	python3 scripts/generate_compile_commands.py --graphics
 
 .PHONY: debug compile-commands
 .PHONY: stdlib
@@ -111,12 +157,14 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
+	./build/tests/graphics_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(GRAPHICS_CORE) tests/graphics_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake_ai.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/snake_ai_test.c
@@ -125,6 +173,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f build/graphics/demo build/debug/graphics/demo build/tests/graphics_test build/tests/graphics_window_test build/sanitize/graphics_test
 	rm -f $(DEBUG_PROGRAMS) build/compile_commands.json
 	rm -f $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
 	rm -f build/tests/snake_ai_test build/sanitize/snake_ai_test build/tests/logger_test

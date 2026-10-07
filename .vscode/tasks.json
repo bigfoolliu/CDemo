@@ -110,6 +110,51 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 生成图形编译数据库",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "compile-commands-graphics"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "C: 构建二维图形调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "graphics-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试二维图形核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-graphics"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

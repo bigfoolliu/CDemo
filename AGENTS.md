@@ -6,6 +6,8 @@
 
 ## 构建、测试与开发命令
 
+`src/graphics/` 的纯 C 绘制核心与 SDL2 窗口分离，教程为 `docs/graphics_2d.md`。`make graphics` 启动可选窗口；`make test-graphics` 和 `make sanitize-graphics` 无需 SDL。默认测试不打开窗口，普通构建不引入 SDL 依赖。窗口使用 `make graphics-debug` 调试，`make compile-commands-graphics` 生成对应代码提示。新增绘图接口需说明坐标边界并验证裁切、退化图形和数值失败。
+
 `src/stdlib/` 是常用 ISO C 标准库专区，指南为 `docs/c_standard_library.md`。`make stdlib` 构建并运行本专区，示例同时接入默认构建、测试、检查与调试。示例应无需交互、保留用户文件，并解释 API 返回值、参数长度、所有权和失败行为；临时文件使用 `tmpfile`，持久日志仍须遵守 `logs/` 约束。
 
 人工与 AI 贪吃蛇共用 `src/games/snake_env.h` 规则和 `snake_terminal.h` 终端模块。纯 C DQN 位于 `snake_ai.c` 与 `snake_ai_network.h`，教程为 `docs/snake_ai.md`。`make snake-ai` 只构建；长训练不加入默认测试。`make test-snake-ai` 运行数值及集成测试，`make sanitize-snake-ai` 验证内存与未定义行为。训练产物位于独立的 `sessions/snake-ai/`，不得覆盖旧实验或人工得分。

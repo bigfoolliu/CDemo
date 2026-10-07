@@ -6,13 +6,19 @@ from pathlib import Path
 import shlex
 import shutil
 import subprocess
+import argparse
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--graphics", action="store_true", help="加入依赖 SDL2 的图形窗口编译命令")
+    options = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
+    targets = ["all", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test"]
+    if options.graphics:
+        targets.extend(["build/graphics/demo", "build/tests/graphics_window_test"])
     result = subprocess.run(
-        ["make", "--no-print-directory", "--dry-run", "--always-make", "all",
-         "build/tests/snake_ai_test", "build/tests/logger_test"],
+        ["make", "--no-print-directory", "--dry-run", "--always-make", *targets],
         cwd=root, check=True, capture_output=True, text=True,
     )
     entries = []
@@ -30,9 +36,17 @@ def main():
                 "arguments": [arg for arg in arguments
                               if arg not in sources or arg == source],
             })
+    # 可选窗口与核心测试共用翻译单元，保留每个源文件第一条有效命令。
+    entries = list({entry["file"]: entry for entry in reversed(entries)}.values())
     if not entries:
         raise SystemExit("未找到编译命令，请检查 Makefile。")
     destination = root / "build" / "compile_commands.json"
+    if not options.graphics and destination.exists():
+        # 普通示例任务不要求 SDL；保留已显式生成的窗口记录，避免提示突然失效。
+        previous = json.loads(destination.read_text())
+        optional_files = {str(root / "src" / "graphics" / "demo.c"),
+                          str(root / "tests" / "graphics_window_test.c")}
+        entries.extend(entry for entry in previous if entry["file"] in optional_files)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n")
     print(f"已生成 {destination}（{len(entries)} 个翻译单元）")
