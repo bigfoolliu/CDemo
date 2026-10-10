@@ -248,6 +248,20 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 测试内存池",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-memory-pool"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

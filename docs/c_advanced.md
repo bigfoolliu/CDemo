@@ -73,3 +73,13 @@
 练习：增加生产者数量，明确共享对象的初始化和销毁时机；实现互斥锁版本，对比接口复杂度和性能。不要简单把一次性标志反复复用为消息队列。
 
 参考：[WG14 内存模型说明](https://open-std.org/jtc1/sc22/wg14/www/docs/n1479.htm)、[POSIX pthread_create](https://pubs.opengroup.org/onlinepubs/000095399/functions/pthread_create.html)、[POSIX pthread_join](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/pthread_join.html)。
+
+## 6. 固定块内存池：对齐与存储复用
+
+源码：`src/advanced/06_memory_pool.c`，可复用接口：`src/common/memory_pool.h`。详细讲解见 [内存池教程](memory_pool.md)。
+
+初始化一次申请固定数量的块，以槽位索引构成空闲链表；分配弹出头节点，归还压入头节点。所有块保持 max_align_t 对齐，用户载荷和占用状态分离。载荷不清零，不提供 realloc 语义。
+
+本例为避免对任意外来指针做减法，归还采用逐块地址相等比较，故分配为 O(1)，归还为 O(capacity)。归还后不得再读写对象，销毁池后全部地址失效；直接重复释放可检测，地址重新分配后的陈旧别名仍由调用者管理。
+
+运行 `make memory-pool` 观察过程，`make test-memory-pool` 验证对齐、耗尽、非法释放、复用、算术溢出及系统分配失败，`make sanitize-memory-pool` 检查内存与未定义行为。

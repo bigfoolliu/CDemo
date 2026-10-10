@@ -170,6 +170,25 @@ sanitize-bmp:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/bmp_test.c $(BMP_SOURCES) $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/bmp_test
 	./build/sanitize/bmp_test
 
+
+.PHONY: memory-pool test-memory-pool sanitize-memory-pool
+memory-pool: build/advanced/06_memory_pool
+	./build/advanced/06_memory_pool
+
+build/advanced/06_memory_pool build/debug/advanced/06_memory_pool: src/common/memory_pool.h
+
+build/tests/memory_pool_test: tests/memory_pool_test.c src/common/memory_pool.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/memory_pool_test.c $(LDFLAGS) $(LDLIBS) -o $@
+
+test-memory-pool: build/tests/memory_pool_test
+	./build/tests/memory_pool_test
+
+sanitize-memory-pool:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/memory_pool_test.c $(LDFLAGS) $(LDLIBS) -o build/sanitize/memory_pool_test
+	./build/sanitize/memory_pool_test
+
 .PHONY: debug compile-commands
 .PHONY: stdlib
 stdlib: $(STDLIB_PROGRAMS)
@@ -266,7 +285,7 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -274,8 +293,10 @@ test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test buil
 	./build/tests/particles_test
 	./build/tests/life_test
 	./build/tests/bmp_test
+	./build/tests/memory_pool_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/memory_pool_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(LIFE_CORE) tests/life_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(PARTICLES_CORE) tests/particles_test.c
@@ -288,6 +309,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f build/tests/memory_pool_test build/sanitize/memory_pool_test
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
 	rm -f build/graphics/life_demo build/debug/graphics/life_demo build/tests/life_test build/tests/life_window_test build/sanitize/life_test
 	rm -f build/graphics/particles_demo build/debug/graphics/particles_demo build/tests/particles_test build/tests/particles_window_test build/sanitize/particles_test

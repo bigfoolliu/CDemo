@@ -1,0 +1,105 @@
+# 固定块内存池：学习对齐、指针与所有权
+
+本示例为小对象提供固定块分配：初始化时向系统申请一片存储，把它分成等间距槽位；之后从空闲链表取出或归还槽位。它是单线程教学分配器，不替换系统 malloc，不处理可变大小块的拆分、合并或扩容。
+
+## 运行与调试
+
+```sh
+make memory-pool                # 构建并运行分配、耗尽、归还、复用示例
+make test-memory-pool           # 完整边界和失败安全断言
+make sanitize-memory-pool       # 地址与未定义行为检查
+make debug                      # 构建包含本例的独立调试程序
+make compile-commands           # 更新代码提示
+```
+
+本例位于 `src/advanced/06_memory_pool.c`，可复用实现位于 `src/common/memory_pool.h`。头文件采用 static inline，与项目中的独立示例构建方式配合，不需要额外链接翻译单元。示例也接入 `make`、`make run`、`make test`、`make advanced`、`make lint` 和 `make sanitize`，无需第三方依赖。
+
+VS Code 选择 `C: 固定块内存池` 后按 F5。在 `memory_pool_alloc` 和 `memory_pool_release` 中设断点，观察 free_head、in_use、allocated 数组及块开头的链接。任务 `C: 测试内存池` 执行专门测试。演示输出直接写终端，不创建日志文件。
+
+## 1. 固定块与空闲链表
+
+每块能够容纳最多 block_size 字节的载荷。capacity 指定固定数量，stride 是相邻块起始地址的距离。
+
+初始化时空闲链表为：
+
+```text
+free_head = 0
+槽 0 → 槽 1 → 槽 2 → SIZE_MAX（结束）
+```
+
+每个空闲块的开头保存一个 size_t 类型的下一槽索引。分配弹出链表头，读出 next 并更新 free_head；归还把原链表头写入当前块，再让它成为新头。因此最近归还的块优先被复用，即 LIFO。
+
+分配后的块开头属于用户载荷，可以全部覆盖；分配器不再读取这里的链接。额外的 allocated 状态数组记录每块是否占用，避免依靠已经被用户覆盖的内容判断状态。
+
+不变量：每个空闲块在链表中恰好出现一次，每个占用块不在链表中；`in_use <= capacity`，剩余数量为 `capacity - in_use`。池满时 free_head 为 SIZE_MAX，分配返回 nullptr，已有对象保持有效。
+
+## 2. 对齐不等于块大小
+
+malloc 返回满足基本类型对齐要求的地址，但后面的槽位也必须正确对齐，所以 stride 要取 alignof(max_align_t) 的整数倍。C23 直接提供 alignof 关键字，不需要用兼容宏隐藏语法。
+
+```text
+minimum = max(block_size, sizeof(size_t))
+padding = minimum % alignment == 0 ? 0 : alignment - minimum % alignment
+stride = minimum + padding
+系统载荷分配字节数 = stride × capacity
+状态数组字节数 = capacity
+```
+
+即使载荷只有一字节，空闲块仍需装下链表索引。不能简单地用 block_size 作为间距，也不能把“对齐填充”当作额外允许使用的载荷。
+
+实现先检查加法舍入和乘法长度不会溢出，再调用系统分配函数。两次分配都成功后才提交池状态；第二次失败则释放第一次分配的存储，调用者的零状态保持不变。
+
+本例支持不超过 max_align_t 的对齐，不支持要求更强对齐的扩展类型。具体对齐值由平台决定，不能假定总是 8 或 16。
+
+## 3. 用 malloc 存储承载不同对象
+
+示例创建点对象：
+
+```c
+MemoryPool pool = {0};
+if (!memory_pool_init(&pool, sizeof(PointObject), 3)) {
+    return EXIT_FAILURE;
+}
+PointObject *point = memory_pool_alloc(&pool, sizeof *point);
+if (point != nullptr) {
+    *point = (PointObject){.id = 1, .x = 10, .y = 20};
+    memory_pool_release(&pool, point);
+    point = nullptr;
+}
+memory_pool_destroy(&pool);
+```
+
+这里的 PointObject 定义见演示源码。返回 void * 可在 C 中隐式转换为对象指针，不需要强制转换。载荷必须由用户初始化后才能读取；分配不保证清零，可能保留旧对象或空闲索引的字节。
+
+底层使用 malloc 得到没有声明类型的存储，以便通过合适类型的指针写入用户对象。仅给声明为 unsigned char 数组的缓冲加上对齐，并不能自动解决通过其他类型访问时的有效类型约束。
+
+空闲索引采用 memcpy 读写对象表示，避免把字节地址直接转成 size_t * 并解引用。申请不同尺寸的小对象可以共用一个池，但都占用一整块，不会把一个块分给多个调用者。
+
+## 4. 释放校验为何不是 O(1)
+
+这个教学版本逐块比较指针是否等于块起始地址，再检查 allocated 状态。它拒绝其他池的地址、外部地址、块内偏移和尚未再次分配的重复释放，失败不会改变链表。
+
+不使用 `pointer - pool->storage` 或指针大小比较来验证任意传入地址：对无关对象的指针做这些运算不满足 C 的接口前提。相等比较不需要先假定它属于同一数组。
+
+因此：初始化 O(capacity)，分配 O(1)，带地址校验的归还 O(capacity)，查询剩余数量 O(1)。它演示的是存储复用机制，没有声称整体一定比 malloc 更快，也没有加入会受运行环境影响的性能基准。
+
+## 5. 生命周期与限制
+
+- 使用前零初始化池；已有活动池再次初始化会失败。已销毁的池可以重新初始化。
+- 每次请求必须为 1..block_size 字节；零尺寸、超限或池满时返回 nullptr。
+- 用户地址只能交给 memory_pool_release，不得直接 free 或 realloc；不得访问超出请求范围的字节。
+- 归还后所有别名都不再拥有该对象。把一个本地变量置为空不能自动清除其他别名。
+- 同一地址被重新分配后，分配器无法区分新指针与指向旧对象的别名。状态数组能发现直接重复归还，不能解决地址复用后的生命周期错误。
+- destroy 释放整个池，所有地址同时失效；不能继续解引用或比较已失效的指针。重复销毁零状态安全。
+- 池不调用对象资源清理函数。对象若拥有另一次 malloc、文件句柄等资源，必须在归还或销毁前自行清理。
+- 禁止浅复制拥有存储的池，也不得直接修改内部字段。实现没有并发同步，多线程共享需要额外设计。
+
+由于整片存储在归还单个块时仍由系统分配，普通 AddressSanitizer 不会自动标记每个池内块的释放状态。因此消毒器通过不等于能够发现所有池内释放后使用；所有权契约和专门状态测试仍很重要。
+
+## 测试与练习
+
+测试验证尺寸边界、加法/乘法溢出、两次系统分配的失败注入、重复初始化、全部块的对齐、不同类型写入、池耗尽、外来地址、块内地址、直接重复归还、LIFO 复用及多轮交错释放。断言不应使用 `-DNDEBUG` 禁用。
+
+建议阅读顺序：结构体 → init 的对齐和长度计算 → alloc 的链表弹出 → release 的地址校验和链表压入 → destroy 的所有权结束。
+
+练习：增加峰值占用统计；为一种固定对象设计强类型包装；改成索引加代际计数的句柄接口以识别陈旧引用；最后再比较不同负载下的实际性能。不要直接把本例接入现有 Vector：它的 resize 契约需要 realloc 兼容语义，而固定块池不提供这种能力。

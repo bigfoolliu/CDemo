@@ -96,6 +96,9 @@ make build/basics/01_types
 | `03_binary_protocol.c` | 字节序、截断检测、零拷贝视图生命周期 |
 | `04_callbacks.c` | 回调与上下文、策略复用、提前终止 |
 | `05_atomics.c` | 双线程原子计数与 release/acquire 发布 |
+| `06_memory_pool.c` | 固定块内存池、对齐、空闲链表、生命周期与失败安全 |
+
+运行 `make memory-pool` 观察小对象分配与地址复用，配合 [内存池教程](docs/memory_pool.md) 学习。`make test-memory-pool` 和 `make sanitize-memory-pool` 验证边界；VS Code 选择 `C: 固定块内存池` 按 F5 调试。
 
 线程示例采用 POSIX API，需要 macOS/Linux 等支持环境；其他深入示例使用 ISO C 接口。消毒器命令要求编译器支持 `-fsanitize=address,undefined`，生成物放在 `build/sanitize/`。
 

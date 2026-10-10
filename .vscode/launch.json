@@ -471,6 +471,17 @@
       "terminal": "integrated",
       "preLaunchTask": "C: 构建 BMP 调试版本",
       "stopOnEntry": false
+    },
+    {
+      "name": "C: 固定块内存池",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/06_memory_pool",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建调试版本",
+      "stopOnEntry": false
     }
   ]
 }

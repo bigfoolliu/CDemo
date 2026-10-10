@@ -51,3 +51,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## BMP 导出调试
 
 选择 `C: BMP 图片导出` 按 F5，任务先生成普通编译数据库，再构建 `build/debug/graphics/bmp_demo`，无需 SDL。可在 `gfx_bmp_write` 中检查文件头、BGR 字节和行填充。已有三个窗口调试入口均支持按 S 保存；导出路径位于 `exports/`，详细说明见 [BMP 教程](bmp_export.md)。
+
+## 固定块内存池调试
+
+选择 `C: 固定块内存池` 按 F5，沿用普通编译数据库与 `make debug`，程序位于 `build/debug/advanced/06_memory_pool`。在头文件的分配和归还函数中设断点，观察 free_head、in_use、allocated 数组与块地址；通过实例跟踪 LIFO 地址复用。任务 `C: 测试内存池` 运行专门断言。原理和生命周期约束见 [内存池教程](memory_pool.md)。
