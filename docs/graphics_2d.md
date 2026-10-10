@@ -73,8 +73,10 @@ SDL 创建软件显示器和流式纹理，锁定后将像素逐行复制，使�
 
 ## 推荐阅读和练习
 
-先读 `graphics.h` 的接口契约，再读 `graphics.c` 的 `gfx_pixel → gfx_line → gfx_rect/gfx_circle`，最后读 `demo.c` 的 `draw_scene → present → main`。推荐断点：像素写入、直线误差比较、圆对称绘制、点变换及每帧角度更新。
+先读 `graphics.h` 的接口契约，再读 `graphics.c` 的 `gfx_pixel → gfx_line → gfx_rect/gfx_circle`，再读 `demo.c` 的 `draw_scene → main`，最后读共享模块 `graphics_sdl.c` 的 `gfx_sdl_open → gfx_sdl_present → gfx_sdl_close`。推荐断点：像素写入、直线误差比较、圆对称绘制、点变换及每帧角度更新。
 
 练习：改变直线端点观察八个方向；改变 scale 为 0.5、2 或 -1；给旋转矩形增加平移；观察半径为零和部分出界的圆。改动后运行核心测试和消毒器检查。
 
 无窗口测试验证颜色、清屏、各向直线、端点、裁切、无效参数、圆对称及变换顺序。它验证数值和内存行为，窗口显示和按键操作还需实际运行确认。SDL 接口契约可查官方 [纹理锁定](https://wiki.libsdl.org/SDL2/SDL_LockTexture) 和 [事件轮询](https://wiki.libsdl.org/SDL2/SDL_PollEvent) 文档。
+
+在此核心上继续学习 [粒子喷泉](particles.md)，观察固定步长、重力和对象池；两个演示共用 SDL 显示模块。

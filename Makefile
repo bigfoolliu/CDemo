@@ -16,7 +16,12 @@ DEBUG_CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -O0 -g3
 DEBUG_PROGRAMS := $(patsubst src/%.c,build/debug/%,$(SOURCES)) build/debug/games/snake build/debug/games/snake_ai build/debug/modules_demo build/debug/tests/snake_ai_test
 GRAPHICS_CORE := src/graphics/graphics.c
 GRAPHICS_HEADER := src/graphics/graphics.h
-GRAPHICS_SOURCES := src/graphics/demo.c $(GRAPHICS_CORE)
+GRAPHICS_SDL := src/graphics/graphics_sdl.c
+GRAPHICS_WINDOW_HEADERS := $(GRAPHICS_HEADER) src/graphics/graphics_sdl.h
+PARTICLES_CORE := src/graphics/particles.c $(GRAPHICS_CORE)
+PARTICLES_HEADERS := src/graphics/particles.h $(GRAPHICS_HEADER)
+PARTICLES_SOURCES := src/graphics/particles_demo.c $(PARTICLES_CORE) $(GRAPHICS_SDL)
+GRAPHICS_SOURCES := src/graphics/demo.c $(GRAPHICS_CORE) $(GRAPHICS_SDL)
 SDL_CFLAGS = $(shell pkg-config --cflags sdl2)
 SDL_LIBS = $(shell pkg-config --libs sdl2)
 
@@ -26,9 +31,9 @@ SDL_LIBS = $(shell pkg-config --libs sdl2)
 test-graphics-window: build/tests/graphics_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/graphics_window_test
 
-build/tests/graphics_window_test: tests/graphics_window_test.c $(GRAPHICS_SOURCES) $(GRAPHICS_HEADER) Makefile | check-sdl
+build/tests/graphics_window_test: tests/graphics_window_test.c $(GRAPHICS_SOURCES) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/graphics_window_test.c $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/graphics_window_test.c $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
 check-sdl:
 	@command -v pkg-config >/dev/null 2>&1 && pkg-config --exists sdl2 || { echo "需要 SDL2 与 pkg-config；macOS 可使用 brew install sdl2 pkg-config。" >&2; exit 1; }
 
@@ -38,11 +43,11 @@ graphics: graphics-build
 graphics-build: check-sdl build/graphics/demo
 graphics-debug: check-sdl build/debug/graphics/demo
 
-build/graphics/demo: $(GRAPHICS_SOURCES) $(GRAPHICS_HEADER) Makefile | check-sdl
+build/graphics/demo: $(GRAPHICS_SOURCES) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(GRAPHICS_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
 
-build/debug/graphics/demo: $(GRAPHICS_SOURCES) $(GRAPHICS_HEADER) Makefile | check-sdl
+build/debug/graphics/demo: $(GRAPHICS_SOURCES) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(GRAPHICS_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
 
@@ -60,6 +65,41 @@ sanitize-graphics:
 
 compile-commands-graphics: check-sdl
 	python3 scripts/generate_compile_commands.py --graphics
+
+
+.PHONY: particles particles-build particles-debug test-particles sanitize-particles test-particles-window
+particles: particles-build
+	./build/graphics/particles_demo
+
+particles-build: check-sdl build/graphics/particles_demo
+particles-debug: check-sdl build/debug/graphics/particles_demo
+
+build/graphics/particles_demo: $(PARTICLES_SOURCES) $(PARTICLES_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(PARTICLES_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/particles_demo: $(PARTICLES_SOURCES) $(PARTICLES_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(PARTICLES_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/particles_test: tests/particles_test.c $(PARTICLES_CORE) $(PARTICLES_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/particles_test.c $(PARTICLES_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-particles: build/tests/particles_test
+	./build/tests/particles_test
+
+sanitize-particles:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/particles_test.c $(PARTICLES_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/particles_test
+	./build/sanitize/particles_test
+
+build/tests/particles_window_test: tests/particles_window_test.c $(PARTICLES_SOURCES) $(PARTICLES_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/particles_window_test.c $(PARTICLES_CORE) $(GRAPHICS_SDL) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-particles-window: build/tests/particles_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/particles_window_test
 
 .PHONY: debug compile-commands
 .PHONY: stdlib
@@ -157,13 +197,15 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
 	./build/tests/graphics_test
+	./build/tests/particles_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(PARTICLES_CORE) tests/particles_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(GRAPHICS_CORE) tests/graphics_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake_ai.c
@@ -173,6 +215,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f build/graphics/particles_demo build/debug/graphics/particles_demo build/tests/particles_test build/tests/particles_window_test build/sanitize/particles_test
 	rm -f build/graphics/demo build/debug/graphics/demo build/tests/graphics_test build/tests/graphics_window_test build/sanitize/graphics_test
 	rm -f $(DEBUG_PROGRAMS) build/compile_commands.json
 	rm -f $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)

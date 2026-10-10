@@ -34,6 +34,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 粒子喷泉
+
+在二维引擎上用纯 C 实现固定粒子池、重力、寿命回收和颜色渐暗。运行 `make particles`；Space 暂停/继续，暂停时 N 单步，R 重置，Esc 退出。窗口标题显示存活粒子数。
+
+阅读 [粒子效果教程](docs/particles.md)。`make test-particles` 和 `make sanitize-particles` 无需 SDL；窗口与二维演示共用 SDL2 依赖。VS Code 选择 `C: 粒子喷泉演示` 按 F5 调试。
+
 ## 最小二维图形引擎
 
 `src/graphics/` 提供纯 C 软件绘制核心和可选的 SDL2 实时窗口，演示像素、直线、矩形、圆、二维变换和动画循环。运行 `make graphics`，Space 暂停，暂停时 N 单步，R 重置，Esc 退出。

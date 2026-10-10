@@ -59,7 +59,7 @@ int main(void)
     uint32_t background = gfx_rgb(1, 2, 3), foreground = gfx_rgb(100, 150, 200);
     gfx_clear(&buffer, background);
     gfx_pixel(&buffer, 5, 7, foreground);
-    bool ok = present(renderer, texture, &buffer);
+    bool ok = gfx_sdl_present(&(GfxWindow){.renderer = renderer, .texture = texture}, &buffer);
     assert(ok);
     for (int y = 14; y <= 15; ++y) {
         for (int x = 10; x <= 11; ++x) {

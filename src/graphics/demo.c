@@ -1,7 +1,7 @@
 /** @file
  * @brief SDL2 只负责窗口、输入、计时和显示；图形由纯 C 核心绘制。
  */
-#include "graphics.h"
+#include "graphics_sdl.h"
 #include <SDL.h>
 #include <math.h>
 #include <stdio.h>
@@ -72,33 +72,6 @@ static void draw_scene(GfxCanvas *canvas, double angle)
 }
 
 /**
- * @brief 将画布复制到流式纹理并显示，不使用 SDL 的图形绘制函数。
- * @param renderer 已创建的 SDL 显示器，借用。
- * @param texture 与画布同尺寸的 ARGB8888 流式纹理，借用。
- * @param canvas 有效的只读画布。
- * @return 锁定、清屏与提交均成功时为 true；失败为 false。
- */
-static bool present(SDL_Renderer *renderer, SDL_Texture *texture, const GfxCanvas *canvas)
-{
-    void *pixels;
-    int pitch;
-    if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) != 0) {
-        return false;
-    }
-    /* SDL 的行跨度可能有填充，不能假设整张纹理连续紧密排列。 */
-    for (int y = 0; y < GFX_HEIGHT; ++y) {
-        memcpy((unsigned char *)pixels + (size_t)y * (size_t)pitch,
-               canvas->pixels[y], sizeof(canvas->pixels[y]));
-    }
-    SDL_UnlockTexture(texture);
-    if (SDL_RenderClear(renderer) != 0 || SDL_RenderCopy(renderer, texture, nullptr, nullptr) != 0) {
-        return false;
-    }
-    SDL_RenderPresent(renderer);
-    return true;
-}
-
-/**
  * @brief 创建窗口并运行事件、更新、绘制和显示循环。
  * @param argc 命令行参数数量，包含程序名。
  * @param argv 参数字符串数组；可传 --frames N 限制演示帧数用于显示验证。
@@ -119,29 +92,9 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-    SDL_Window *window = nullptr;
-    SDL_Renderer *renderer = nullptr;
-    SDL_Texture *texture = nullptr;
+    GfxWindow display = {0};
     int status = EXIT_FAILURE;
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-        goto cleanup;
-    }
-    if (SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0") == SDL_FALSE) {
-        goto cleanup;
-    }
-    window = SDL_CreateWindow("C 2D | Space: pause | N: step | R: reset | Esc: quit",
-                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              GFX_WIDTH * 2, GFX_HEIGHT * 2, 0);
-    if (window == nullptr) {
-        goto cleanup;
-    }
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-    if (renderer == nullptr) {
-        goto cleanup;
-    }
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                SDL_TEXTUREACCESS_STREAMING, GFX_WIDTH, GFX_HEIGHT);
-    if (texture == nullptr) {
+    if (!gfx_sdl_open(&display, "C 2D | Space: pause | N: step | R: reset | Esc: quit")) {
         goto cleanup;
     }
     static GfxCanvas canvas; /* 避免把约 300 KiB 画布放进较小的调用栈。 */
@@ -174,7 +127,7 @@ int main(int argc, char *argv[])
         }
         state.angle = fmod(state.angle, 2 * PI);
         draw_scene(&canvas, state.angle);
-        if (!present(renderer, texture, &canvas)) {
+        if (!gfx_sdl_present(&display, &canvas)) {
             goto cleanup;
         }
         if (frame_limit != 0 && ++frames >= frame_limit) {
@@ -190,9 +143,6 @@ cleanup:
     if (status != EXIT_SUCCESS) {
         fprintf(stderr, "SDL 图形演示失败：%s\n", SDL_GetError());
     }
-    if (texture != nullptr) { SDL_DestroyTexture(texture); }
-    if (renderer != nullptr) { SDL_DestroyRenderer(renderer); }
-    if (window != nullptr) { SDL_DestroyWindow(window); }
-    SDL_Quit();
+    gfx_sdl_close(&display);
     return status;
 }

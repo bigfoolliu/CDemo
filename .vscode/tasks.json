@@ -155,6 +155,37 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 构建粒子调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "particles-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试粒子核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-particles"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }
