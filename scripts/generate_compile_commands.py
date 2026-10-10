@@ -14,10 +14,11 @@ def main():
     parser.add_argument("--graphics", action="store_true", help="加入依赖 SDL2 的图形窗口编译命令")
     options = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
-    targets = ["all", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test"]
+    targets = ["all", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo"]
     if options.graphics:
         targets.extend(["build/graphics/demo", "build/tests/graphics_window_test",
-                        "build/graphics/particles_demo", "build/tests/particles_window_test"])
+                        "build/graphics/particles_demo", "build/tests/particles_window_test",
+                        "build/graphics/life_demo", "build/tests/life_window_test"])
     result = subprocess.run(
         ["make", "--no-print-directory", "--dry-run", "--always-make", *targets],
         cwd=root, check=True, capture_output=True, text=True,
@@ -49,7 +50,9 @@ def main():
                           str(root / "tests" / "graphics_window_test.c"),
                           str(root / "src" / "graphics" / "particles_demo.c"),
                           str(root / "src" / "graphics" / "graphics_sdl.c"),
-                          str(root / "tests" / "particles_window_test.c")}
+                          str(root / "tests" / "particles_window_test.c"),
+                          str(root / "src" / "graphics" / "life_demo.c"),
+                          str(root / "tests" / "life_window_test.c")}
         entries.extend(entry for entry in previous if entry["file"] in optional_files)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n")

@@ -16,12 +16,19 @@ DEBUG_CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -O0 -g3
 DEBUG_PROGRAMS := $(patsubst src/%.c,build/debug/%,$(SOURCES)) build/debug/games/snake build/debug/games/snake_ai build/debug/modules_demo build/debug/tests/snake_ai_test
 GRAPHICS_CORE := src/graphics/graphics.c
 GRAPHICS_HEADER := src/graphics/graphics.h
+BMP_CORE := src/graphics/bmp.c
+BMP_CAPTURE := src/graphics/bmp_capture.c
+BMP_HEADERS := src/graphics/bmp.h src/graphics/bmp_capture.h
+BMP_SOURCES := $(BMP_CORE) $(BMP_CAPTURE)
 GRAPHICS_SDL := src/graphics/graphics_sdl.c
-GRAPHICS_WINDOW_HEADERS := $(GRAPHICS_HEADER) src/graphics/graphics_sdl.h
+GRAPHICS_WINDOW_HEADERS := $(GRAPHICS_HEADER) src/graphics/graphics_sdl.h $(BMP_HEADERS)
+LIFE_CORE := src/graphics/life.c $(GRAPHICS_CORE)
+LIFE_HEADERS := src/graphics/life.h $(GRAPHICS_HEADER)
+LIFE_SOURCES := src/graphics/life_demo.c $(LIFE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 PARTICLES_CORE := src/graphics/particles.c $(GRAPHICS_CORE)
 PARTICLES_HEADERS := src/graphics/particles.h $(GRAPHICS_HEADER)
-PARTICLES_SOURCES := src/graphics/particles_demo.c $(PARTICLES_CORE) $(GRAPHICS_SDL)
-GRAPHICS_SOURCES := src/graphics/demo.c $(GRAPHICS_CORE) $(GRAPHICS_SDL)
+PARTICLES_SOURCES := src/graphics/particles_demo.c $(PARTICLES_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
+GRAPHICS_SOURCES := src/graphics/demo.c $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 SDL_CFLAGS = $(shell pkg-config --cflags sdl2)
 SDL_LIBS = $(shell pkg-config --libs sdl2)
 
@@ -31,9 +38,9 @@ SDL_LIBS = $(shell pkg-config --libs sdl2)
 test-graphics-window: build/tests/graphics_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/graphics_window_test
 
-build/tests/graphics_window_test: tests/graphics_window_test.c $(GRAPHICS_SOURCES) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+build/tests/graphics_window_test: tests/graphics_window_test.c tests/bmp_window_helpers.h $(GRAPHICS_SOURCES) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/graphics_window_test.c $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/graphics_window_test.c $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
 check-sdl:
 	@command -v pkg-config >/dev/null 2>&1 && pkg-config --exists sdl2 || { echo "需要 SDL2 与 pkg-config；macOS 可使用 brew install sdl2 pkg-config。" >&2; exit 1; }
 
@@ -94,12 +101,74 @@ sanitize-particles:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/particles_test.c $(PARTICLES_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/particles_test
 	./build/sanitize/particles_test
 
-build/tests/particles_window_test: tests/particles_window_test.c $(PARTICLES_SOURCES) $(PARTICLES_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+build/tests/particles_window_test: tests/particles_window_test.c tests/bmp_window_helpers.h $(PARTICLES_SOURCES) $(PARTICLES_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/particles_window_test.c $(PARTICLES_CORE) $(GRAPHICS_SDL) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/particles_window_test.c $(PARTICLES_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
 
 test-particles-window: build/tests/particles_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/particles_window_test
+
+.PHONY: life life-build life-debug test-life sanitize-life test-life-window
+life: life-build
+	./build/graphics/life_demo
+
+life-build: check-sdl build/graphics/life_demo
+life-debug: check-sdl build/debug/graphics/life_demo
+
+build/graphics/life_demo: $(LIFE_SOURCES) $(LIFE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(LIFE_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/life_demo: $(LIFE_SOURCES) $(LIFE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(LIFE_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/life_test: tests/life_test.c $(LIFE_CORE) $(LIFE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/life_test.c $(LIFE_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-life: build/tests/life_test
+	./build/tests/life_test
+
+sanitize-life:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/life_test.c $(LIFE_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/life_test
+	./build/sanitize/life_test
+
+build/tests/life_window_test: tests/life_window_test.c tests/bmp_window_helpers.h $(LIFE_SOURCES) $(LIFE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/life_window_test.c $(LIFE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-life-window: build/tests/life_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/life_window_test
+
+
+.PHONY: bmp bmp-build bmp-debug test-bmp sanitize-bmp
+bmp: bmp-build
+	./build/graphics/bmp_demo
+
+bmp-build: build/graphics/bmp_demo
+bmp-debug: build/debug/graphics/bmp_demo
+
+build/graphics/bmp_demo: src/graphics/bmp_demo.c $(BMP_SOURCES) $(BMP_HEADERS) $(GRAPHICS_CORE) $(GRAPHICS_HEADER) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) src/graphics/bmp_demo.c $(BMP_SOURCES) $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+build/debug/graphics/bmp_demo: src/graphics/bmp_demo.c $(BMP_SOURCES) $(BMP_HEADERS) $(GRAPHICS_CORE) $(GRAPHICS_HEADER) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) src/graphics/bmp_demo.c $(BMP_SOURCES) $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+build/tests/bmp_test: tests/bmp_test.c $(BMP_SOURCES) $(BMP_HEADERS) $(GRAPHICS_CORE) $(GRAPHICS_HEADER) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/bmp_test.c $(BMP_SOURCES) $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-bmp: build/tests/bmp_test
+	./build/tests/bmp_test
+
+sanitize-bmp:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/bmp_test.c $(BMP_SOURCES) $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/bmp_test
+	./build/sanitize/bmp_test
 
 .PHONY: debug compile-commands
 .PHONY: stdlib
@@ -197,14 +266,18 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
 	./build/tests/graphics_test
 	./build/tests/particles_test
+	./build/tests/life_test
+	./build/tests/bmp_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(LIFE_CORE) tests/life_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(PARTICLES_CORE) tests/particles_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(GRAPHICS_CORE) tests/graphics_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
@@ -215,6 +288,8 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
+	rm -f build/graphics/life_demo build/debug/graphics/life_demo build/tests/life_test build/tests/life_window_test build/sanitize/life_test
 	rm -f build/graphics/particles_demo build/debug/graphics/particles_demo build/tests/particles_test build/tests/particles_window_test build/sanitize/particles_test
 	rm -f build/graphics/demo build/debug/graphics/demo build/tests/graphics_test build/tests/graphics_window_test build/sanitize/graphics_test
 	rm -f $(DEBUG_PROGRAMS) build/compile_commands.json

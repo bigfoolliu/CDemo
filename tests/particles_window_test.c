@@ -3,6 +3,7 @@
 #include "../src/graphics/particles_demo.c"
 #undef main
 #include <assert.h>
+#include "bmp_window_helpers.h"
 
 /** @brief 验证暂停、单步、重置与时间截断的可观察结果。 */
 static void test_controls_and_time(void)
@@ -13,6 +14,14 @@ static void test_controls_and_time(void)
     assert(particles_count(&state.particles) == 0);
     advance_time(&state, 0.01);
     assert(particles_count(&state.particles) == 2);
+    SDL_Event screenshot = {.type = SDL_KEYDOWN};
+    screenshot.key.keysym.sym = SDLK_s; screenshot.key.repeat = 1;
+    handle_event(&state, &screenshot);
+    assert(!state.capture);
+    screenshot.key.repeat = 0;
+    handle_event(&state, &screenshot);
+    assert(state.capture);
+    state.capture = false;
     SDL_Event event = {.type = SDL_KEYDOWN};
     event.key.keysym.sym = SDLK_SPACE;
     assert(handle_event(&state, &event) && state.paused && state.accumulator == 0);
@@ -52,6 +61,7 @@ static void test_controls_and_time(void)
 /** @brief 无实体窗口运行演示并验证非法命令行参数。 */
 int main(void)
 {
+    test_capture_loop(particles_demo_main);
     test_controls_and_time();
     char *args[] = {"particles_demo", "--frames", "2", nullptr};
     assert(particles_demo_main(3, args) == EXIT_SUCCESS);

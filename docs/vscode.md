@@ -43,3 +43,11 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 “运行和调试”选择 `C: 粒子喷泉演示`，按 F5。启动前自动执行图形编译数据库任务和 `make particles-debug`，使用 SDL 头文件路径与 `-O0 -g3`，便于逐行观察粒子结构体；生成物位于 `build/debug/graphics/particles_demo`。
 
 在 `src/graphics/particles.c` 的 `particles_step` 内设断点检查速度、位置和寿命。在窗口中用 Space 暂停，N 前进一步，R 重置。调试器断点暂停整个进程；窗口暂停只停止模拟，仍处理输入。任务 `C: 测试粒子核心` 无需窗口或 SDL。完整说明见 [粒子教程](particles.md)。
+
+## 康威生命游戏调试
+
+选择 `C: 康威生命游戏` 按 F5，启动任务先更新包含 SDL 参数的编译数据库，再运行 `make life-debug`，程序位于 `build/debug/graphics/life_demo`。在 `life_step` 中观察邻居数量、两张数组与 current 索引；Space 暂停演化，N 推进一代，暂停时左键编辑。任务 `C: 测试生命游戏核心` 不依赖 SDL。规则及操作见 [生命游戏教程](life.md)。
+
+## BMP 导出调试
+
+选择 `C: BMP 图片导出` 按 F5，任务先生成普通编译数据库，再构建 `build/debug/graphics/bmp_demo`，无需 SDL。可在 `gfx_bmp_write` 中检查文件头、BGR 字节和行填充。已有三个窗口调试入口均支持按 S 保存；导出路径位于 `exports/`，详细说明见 [BMP 教程](bmp_export.md)。

@@ -8,7 +8,11 @@
 
 `src/graphics/` 的纯 C 绘制核心与 SDL2 窗口分离，教程为 `docs/graphics_2d.md`。`make graphics` 启动可选窗口；`make test-graphics` 和 `make sanitize-graphics` 无需 SDL。默认测试不打开窗口，普通构建不引入 SDL 依赖。窗口使用 `make graphics-debug` 调试，`make compile-commands-graphics` 生成对应代码提示。新增绘图接口需说明坐标边界并验证裁切、退化图形和数值失败。
 
-粒子喷泉的纯 C 核心为 `src/graphics/particles.h/c`，窗口入口为 `particles_demo.c`，教程为 `docs/particles.md`。`make particles` 启动，`make particles-debug` 构建调试版本；`make test-particles` 和 `make sanitize-particles` 无需 SDL。固定粒子池和随机种子保持可重复，更新使用 1/60 秒固定步长。默认测试只验证核心；`make test-particles-window` 通过 SDL dummy 驱动验证控制。两个演示共用 `graphics_sdl.h/c` 的窗口资源与显示接口。
+BMP 编码位于 `src/graphics/bmp.h/c`，截图路径由 `bmp_capture.h/c` 管理，教程为 `docs/bmp_export.md`。`make bmp` 无需 SDL 导出示例，窗口按 S 截图。图片保存在 `exports/`，必须独占创建并保留已有文件；清理构建产物不得删除图片。`make test-bmp`、`make sanitize-bmp` 验证小端头、BGR、底部行优先和四字节填充，测试使用临时目录。编码与文件写入使用 C 标准 API；errno 错误码约定和目录创建使用 POSIX 平台接口。
+
+康威生命游戏位于 `src/graphics/life.h/c` 和 `life_demo.c`，教程为 `docs/life.md`。`make life` 启动，`make life-debug` 调试；`make test-life`、`make sanitize-life` 无需 SDL，核心接入默认测试和检查。使用固定死亡边界与双缓冲同步更新，不得原地覆盖当前代；随机预设应可重现。`make test-life-window` 验证输入、鼠标映射与时间控制，窗口复用共享 SDL 模块。
+
+粒子喷泉的纯 C 核心为 `src/graphics/particles.h/c`，窗口入口为 `particles_demo.c`，教程为 `docs/particles.md`。`make particles` 启动，`make particles-debug` 构建调试版本；`make test-particles` 和 `make sanitize-particles` 无需 SDL。固定粒子池和随机种子保持可重复，更新使用 1/60 秒固定步长。默认测试只验证核心；`make test-particles-window` 通过 SDL dummy 驱动验证控制。图形演示共用 `graphics_sdl.h/c` 的窗口资源与显示接口。
 
 `src/stdlib/` 是常用 ISO C 标准库专区，指南为 `docs/c_standard_library.md`。`make stdlib` 构建并运行本专区，示例同时接入默认构建、测试、检查与调试。示例应无需交互、保留用户文件，并解释 API 返回值、参数长度、所有权和失败行为；临时文件使用 `tmpfile`，持久日志仍须遵守 `logs/` 约束。
 

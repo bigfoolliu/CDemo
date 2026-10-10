@@ -34,6 +34,18 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## BMP 图片导出
+
+运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉与生命游戏窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
+
+阅读 [BMP 导出教程](docs/bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
+
+## 康威生命游戏
+
+使用纯 C 二维数组和双缓冲实现 B3/S23 细胞演化，提供滑翔机、闪烁器、可重复随机图案及暂停鼠标编辑。运行 `make life`；Space 暂停，N 单步，1/2/3 切换预设，R 重置，C 清空，Esc 退出。
+
+阅读 [生命游戏教程](docs/life.md)。默认绘制目标 60 FPS、每秒演化 10 代，采用固定死亡边界。`make test-life` 和 `make sanitize-life` 无需 SDL；VS Code 选择 `C: 康威生命游戏` 按 F5 调试。
+
 ## 粒子喷泉
 
 在二维引擎上用纯 C 实现固定粒子池、重力、寿命回收和颜色渐暗。运行 `make particles`；Space 暂停/继续，暂停时 N 单步，R 重置，Esc 退出。窗口标题显示存活粒子数。

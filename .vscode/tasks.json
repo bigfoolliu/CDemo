@@ -186,6 +186,68 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 构建生命游戏调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "life-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试生命游戏核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-life"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "C: 构建 BMP 调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "bmp-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试 BMP 导出",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-bmp"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

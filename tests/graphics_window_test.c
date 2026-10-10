@@ -5,11 +5,20 @@
 #include "../src/graphics/demo.c"
 #undef main
 #include <assert.h>
+#include "bmp_window_helpers.h"
 
 /** @brief 验证暂停、单步、重复键、重置、继续和两种退出事件。 */
 static void test_controls(void)
 {
     DemoState state = {.running = true, .angle = 1};
+    SDL_Event screenshot = {.type = SDL_KEYDOWN};
+    screenshot.key.keysym.sym = SDLK_s; screenshot.key.repeat = 1;
+    handle_event(&state, &screenshot);
+    assert(!state.capture);
+    screenshot.key.repeat = 0;
+    handle_event(&state, &screenshot);
+    assert(state.capture);
+    state.capture = false;
     SDL_Event event = {.type = SDL_KEYDOWN};
     event.key.keysym.sym = SDLK_n;
     bool reset = handle_event(&state, &event);
@@ -42,6 +51,7 @@ static void test_controls(void)
 /** @brief 验证 ARGB 像素复制、最近邻放大和有界主循环。 @return 成功为 0。 */
 int main(void)
 {
+    test_capture_loop(graphics_demo_main);
     test_controls();
     int result = SDL_Init(SDL_INIT_VIDEO);
     assert(result == 0);

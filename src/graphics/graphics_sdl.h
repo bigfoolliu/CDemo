@@ -1,5 +1,5 @@
 /** @file
- * @brief 两个教学演示共用的 SDL 窗口适配层；纯 C 绘图核心无需此头文件。
+ * @brief 图形教学演示共用的 SDL 窗口适配层；纯 C 绘图核心无需此头文件。
  */
 #ifndef CDEMO_GRAPHICS_SDL_H
 #define CDEMO_GRAPHICS_SDL_H
@@ -32,7 +32,7 @@ bool gfx_sdl_present(const GfxWindow *display, const GfxCanvas *canvas);
 /**
  * @brief 释放已创建资源，清空句柄并退出 SDL；可清理创建失败的部分状态。
  * @param display 有效的可读写资源对象。
- * @note 两个演示各自独占一个进程的 SDL 生命周期，不用于同时管理多个窗口。
+ * @note 各演示独占一个进程的 SDL 生命周期，不用于同时管理多个窗口。
  */
 void gfx_sdl_close(GfxWindow *display);
 #endif

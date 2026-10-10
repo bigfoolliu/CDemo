@@ -449,6 +449,28 @@
       "terminal": "integrated",
       "preLaunchTask": "C: 构建粒子调试版本",
       "stopOnEntry": false
+    },
+    {
+      "name": "C: 康威生命游戏",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/graphics/life_demo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建生命游戏调试版本",
+      "stopOnEntry": false
+    },
+    {
+      "name": "C: BMP 图片导出",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/graphics/bmp_demo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建 BMP 调试版本",
+      "stopOnEntry": false
     }
   ]
 }

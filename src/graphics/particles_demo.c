@@ -6,6 +6,7 @@
  * 阅读时可先看 main 的整体流程，再进入 handle_event 和 advance_time。
  */
 #include "graphics_sdl.h"
+#include "bmp_capture.h"
 #include "particles.h"
 #include <errno.h>
 #include <math.h>
@@ -16,7 +17,8 @@
 /** 暂停不积累时间；重置只清空粒子和随机状态，保留暂停状态。 */
 typedef struct {
     ParticleSystem particles; /* 本演示自己拥有的粒子池。 */
-    bool running, paused; /* running 控制退出；paused 只控制自动模拟。 */
+    bool running, paused;
+    bool capture; /* S 请求保存本帧；重复按键忽略，同帧多次请求合并。 */ /* running 控制退出；paused 只控制自动模拟。 */
     double accumulator; /* 尚未用于模拟的秒数，正常推进后小于 1/60 秒。 */
 } ParticleDemoState;
 
@@ -34,6 +36,7 @@ static bool handle_event(ParticleDemoState *state, const SDL_Event *event)
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         /* SDL 在按住键时会生成重复事件；忽略它们，避免连续切换暂停或单步。 */
         switch (event->key.keysym.sym) {
+        case SDLK_s: state->capture = true; break;
         case SDLK_ESCAPE: state->running = false; break;
         case SDLK_SPACE:
             state->paused = !state->paused;
@@ -129,7 +132,7 @@ int main(int argc, char *argv[])
         goto cleanup;
     }
     unsigned long frames = 0;
-    puts("粒子喷泉：Space 暂停/继续，暂停时 N 前进一步，R 重置，Esc 退出。");
+    puts("粒子喷泉：Space 暂停/继续，暂停时 N 前进一步，R 重置，S 保存 BMP，Esc 退出。");
     while (state.running) {
         /* 两次帧开始时间的差包含上一帧处理、显示和延时的全部时间。 */
         Uint64 started = SDL_GetPerformanceCounter();
@@ -147,10 +150,20 @@ int main(int argc, char *argv[])
         particles_draw(&state.particles, &canvas);
         char title[160]; /* snprintf 限制写入长度；%zu 对应 size_t 类型的存活数。 */
         snprintf(title, sizeof title,
-                 "C particles | %zu/256 | %s | Space: pause | N: step | R: reset | Esc: quit",
+                 "C particles | %zu/256 | %s | Space: pause | N: step | R: reset | S: BMP | Esc: quit",
                  particles_count(&state.particles), state.paused ? "paused" : "running");
         SDL_SetWindowTitle(display.window, title);
         /* 将 CPU 像素数组复制到 SDL 纹理；绘图核心不直接调用 SDL 图元 API。 */
+        if (state.capture) {
+            /* 此时画布已完整绘制，保存逻辑像素；失败报错后继续演示。 */
+            char path[BMP_CAPTURE_PATH_SIZE];
+            if (gfx_bmp_capture(&canvas, "particles", path)) {
+                printf("已保存 BMP：%s\n", path);
+            } else {
+                fprintf(stderr, "BMP 截图失败：%s\n", strerror(errno));
+            }
+            state.capture = false;
+        }
         if (!gfx_sdl_present(&display, &canvas)) { goto cleanup; }
         /* --frames 统计显示次数，不是模拟步数；它们不一定一一对应。
          * && 的短路求值使无限运行模式下不必增加 frames。

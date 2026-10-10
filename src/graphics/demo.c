@@ -2,8 +2,10 @@
  * @brief SDL2 只负责窗口、输入、计时和显示；图形由纯 C 核心绘制。
  */
 #include "graphics_sdl.h"
+#include "bmp_capture.h"
 #include <SDL.h>
 #include <math.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +13,7 @@
 static const double PI = 3.14159265358979323846;
 
 /** 主循环状态；暂停只停止角度更新，不停止事件处理或显示。 */
-typedef struct { bool running; bool paused; double angle; } DemoState;
+typedef struct { bool running; bool paused; bool capture; double angle; } DemoState;
 
 /**
  * @brief 处理一次窗口事件，便于在无窗口环境验证操作规则。
@@ -25,6 +27,7 @@ static bool handle_event(DemoState *state, const SDL_Event *event)
         state->running = false;
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         switch (event->key.keysym.sym) {
+        case SDLK_s: state->capture = true; break;
         case SDLK_ESCAPE: state->running = false; break;
         case SDLK_SPACE: state->paused = !state->paused; return true;
         case SDLK_n: if (state->paused) { state->angle += PI / 240; } break;
@@ -94,7 +97,7 @@ int main(int argc, char *argv[])
     }
     GfxWindow display = {0};
     int status = EXIT_FAILURE;
-    if (!gfx_sdl_open(&display, "C 2D | Space: pause | N: step | R: reset | Esc: quit")) {
+    if (!gfx_sdl_open(&display, "C 2D | Space: pause | N: step | R: reset | S: BMP | Esc: quit")) {
         goto cleanup;
     }
     static GfxCanvas canvas; /* 避免把约 300 KiB 画布放进较小的调用栈。 */
@@ -105,7 +108,7 @@ int main(int argc, char *argv[])
         goto cleanup;
     }
     unsigned long frames = 0;
-    puts("二维绘图：Space 暂停/继续，暂停时 N 前进一帧，R 重置，Esc 退出。");
+    puts("二维绘图：Space 暂停/继续，暂停时 N 前进一帧，R 重置，S 保存 BMP，Esc 退出。");
     while (state.running) {
         Uint64 started = SDL_GetPerformanceCounter();
         double dt = (double)(started - previous) / (double)frequency;
@@ -127,6 +130,16 @@ int main(int argc, char *argv[])
         }
         state.angle = fmod(state.angle, 2 * PI);
         draw_scene(&canvas, state.angle);
+        if (state.capture) {
+            /* 此时画布已完整绘制，保存逻辑像素；失败报错后继续演示。 */
+            char path[BMP_CAPTURE_PATH_SIZE];
+            if (gfx_bmp_capture(&canvas, "graphics", path)) {
+                printf("已保存 BMP：%s\n", path);
+            } else {
+                fprintf(stderr, "BMP 截图失败：%s\n", strerror(errno));
+            }
+            state.capture = false;
+        }
         if (!gfx_sdl_present(&display, &canvas)) {
             goto cleanup;
         }
