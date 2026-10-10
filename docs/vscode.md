@@ -55,3 +55,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## 固定块内存池调试
 
 选择 `C: 固定块内存池` 按 F5，沿用普通编译数据库与 `make debug`，程序位于 `build/debug/advanced/06_memory_pool`。在头文件的分配和归还函数中设断点，观察 free_head、in_use、allocated 数组与块地址；通过实例跟踪 LIFO 地址复用。任务 `C: 测试内存池` 运行专门断言。原理和生命周期约束见 [内存池教程](memory_pool.md)。
+
+## 迷宫生成与寻路调试
+
+选择 `C: 迷宫生成与寻路` 按 F5，启动任务更新图形编译数据库并构建 `build/debug/graphics/maze_demo`。在 generate_step、前沿取出和 mark_path 处设断点，观察 depth、head/tail、discovered 和 parent。Space 暂停，N 单步，生成完成后 1/2 重启不同搜索。任务 `C: 测试迷宫核心` 无需 SDL，完整说明见 [迷宫教程](maze.md)。

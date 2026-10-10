@@ -22,6 +22,9 @@ BMP_HEADERS := src/graphics/bmp.h src/graphics/bmp_capture.h
 BMP_SOURCES := $(BMP_CORE) $(BMP_CAPTURE)
 GRAPHICS_SDL := src/graphics/graphics_sdl.c
 GRAPHICS_WINDOW_HEADERS := $(GRAPHICS_HEADER) src/graphics/graphics_sdl.h $(BMP_HEADERS)
+MAZE_CORE := src/graphics/maze.c $(GRAPHICS_CORE)
+MAZE_HEADERS := src/graphics/maze.h $(GRAPHICS_HEADER)
+MAZE_SOURCES := src/graphics/maze_demo.c $(MAZE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 LIFE_CORE := src/graphics/life.c $(GRAPHICS_CORE)
 LIFE_HEADERS := src/graphics/life.h $(GRAPHICS_HEADER)
 LIFE_SOURCES := src/graphics/life_demo.c $(LIFE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
@@ -141,6 +144,41 @@ build/tests/life_window_test: tests/life_window_test.c tests/bmp_window_helpers.
 
 test-life-window: build/tests/life_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/life_window_test
+
+
+.PHONY: maze maze-build maze-debug test-maze sanitize-maze test-maze-window
+maze: maze-build
+	./build/graphics/maze_demo
+
+maze-build: check-sdl build/graphics/maze_demo
+maze-debug: check-sdl build/debug/graphics/maze_demo
+
+build/graphics/maze_demo: $(MAZE_SOURCES) $(MAZE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(MAZE_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/maze_demo: $(MAZE_SOURCES) $(MAZE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(MAZE_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/maze_test: tests/maze_test.c $(MAZE_CORE) $(MAZE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/maze_test.c $(MAZE_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-maze: build/tests/maze_test
+	./build/tests/maze_test
+
+sanitize-maze:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/maze_test.c $(MAZE_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/maze_test
+	./build/sanitize/maze_test
+
+build/tests/maze_window_test: tests/maze_window_test.c tests/bmp_window_helpers.h $(MAZE_SOURCES) $(MAZE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/maze_window_test.c $(MAZE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-maze-window: build/tests/maze_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/maze_window_test
 
 
 .PHONY: bmp bmp-build bmp-debug test-bmp sanitize-bmp
@@ -285,7 +323,7 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -294,8 +332,10 @@ test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test buil
 	./build/tests/life_test
 	./build/tests/bmp_test
 	./build/tests/memory_pool_test
+	./build/tests/maze_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MAZE_CORE) tests/maze_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/memory_pool_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(LIFE_CORE) tests/life_test.c
@@ -309,6 +349,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f build/graphics/maze_demo build/debug/graphics/maze_demo build/tests/maze_test build/tests/maze_window_test build/sanitize/maze_test
 	rm -f build/tests/memory_pool_test build/sanitize/memory_pool_test
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
 	rm -f build/graphics/life_demo build/debug/graphics/life_demo build/tests/life_test build/tests/life_window_test build/sanitize/life_test

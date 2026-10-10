@@ -34,9 +34,15 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 迷宫生成与寻路
+
+运行 `make maze`，观察 DFS 回溯生成，再用 BFS 自动寻找路径。Space 暂停，N 单步，R 同种子重建，G 新迷宫，1/2 在同一张完整地图上比较 BFS/DFS，S 保存 BMP，Esc 退出。
+
+阅读 [迷宫算法教程](docs/maze.md)，学习显式栈、FIFO 队列、前驱链和最短路。核心测试 `make test-maze` 与 `make sanitize-maze` 无需 SDL；VS Code 选择 `C: 迷宫生成与寻路` 按 F5。
+
 ## BMP 图片导出
 
-运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉与生命游戏窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
+运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、生命游戏和迷宫窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
 
 阅读 [BMP 导出教程](docs/bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
 
