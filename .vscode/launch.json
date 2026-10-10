@@ -493,6 +493,17 @@
       "terminal": "integrated",
       "preLaunchTask": "C: 构建迷宫调试版本",
       "stopOnEntry": false
+    },
+    {
+      "name": "C: 曼德勃罗分形",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/graphics/mandelbrot_demo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建曼德勃罗调试版本",
+      "stopOnEntry": false
     }
   ]
 }

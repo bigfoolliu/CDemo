@@ -8,6 +8,8 @@
 
 `src/graphics/` 的纯 C 绘制核心与 SDL2 窗口分离，教程为 `docs/graphics_2d.md`。`make graphics` 启动可选窗口；`make test-graphics` 和 `make sanitize-graphics` 无需 SDL。默认测试不打开窗口，普通构建不引入 SDL 依赖。窗口使用 `make graphics-debug` 调试，`make compile-commands-graphics` 生成对应代码提示。新增绘图接口需说明坐标边界并验证裁切、退化图形和数值失败。
 
+曼德勃罗核心为 `src/graphics/mandelbrot.h/c`，窗口为 `mandelbrot_demo.c`，教程为 `docs/mandelbrot.md`。`make mandelbrot` 启动，`make mandelbrot-debug` 调试；`make test-mandelbrot`、`make sanitize-mandelbrot` 无需 SDL。区分最后一次迭代逃逸与达到上限未逃逸，有限迭代不能证明集合成员；视图须验证有限数和范围，修改失败保留状态。窗口只在视图变化时重算，`make test-mandelbrot-window` 验证输入、缓存标记、截图和主循环。
+
 迷宫核心为 `src/graphics/maze.h/c`，入口为 `maze_demo.c`，教程为 `docs/maze.md`。`make maze` 启动、`make maze-debug` 调试，`make test-maze`、`make sanitize-maze` 无需 SDL。DFS 回溯生成可重复的连通无环地图，BFS/DFS 在入队或入栈时标记，前驱链用于路径回溯；需区分无权图 BFS 最短路保证与树中路径唯一。默认测试验证核心，`make test-maze-window` 验证控制、时间、截图和有界循环。
 
 BMP 编码位于 `src/graphics/bmp.h/c`，截图路径由 `bmp_capture.h/c` 管理，教程为 `docs/bmp_export.md`。`make bmp` 无需 SDL 导出示例，窗口按 S 截图。图片保存在 `exports/`，必须独占创建并保留已有文件；清理构建产物不得删除图片。`make test-bmp`、`make sanitize-bmp` 验证小端头、BGR、底部行优先和四字节填充，测试使用临时目录。编码与文件写入使用 C 标准 API；errno 错误码约定和目录创建使用 POSIX 平台接口。

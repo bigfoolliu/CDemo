@@ -22,6 +22,9 @@ BMP_HEADERS := src/graphics/bmp.h src/graphics/bmp_capture.h
 BMP_SOURCES := $(BMP_CORE) $(BMP_CAPTURE)
 GRAPHICS_SDL := src/graphics/graphics_sdl.c
 GRAPHICS_WINDOW_HEADERS := $(GRAPHICS_HEADER) src/graphics/graphics_sdl.h $(BMP_HEADERS)
+MANDELBROT_CORE := src/graphics/mandelbrot.c $(GRAPHICS_CORE)
+MANDELBROT_HEADERS := src/graphics/mandelbrot.h $(GRAPHICS_HEADER)
+MANDELBROT_SOURCES := src/graphics/mandelbrot_demo.c $(MANDELBROT_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 MAZE_CORE := src/graphics/maze.c $(GRAPHICS_CORE)
 MAZE_HEADERS := src/graphics/maze.h $(GRAPHICS_HEADER)
 MAZE_SOURCES := src/graphics/maze_demo.c $(MAZE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
@@ -181,6 +184,41 @@ test-maze-window: build/tests/maze_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/maze_window_test
 
 
+.PHONY: mandelbrot mandelbrot-build mandelbrot-debug test-mandelbrot sanitize-mandelbrot test-mandelbrot-window
+mandelbrot: mandelbrot-build
+	./build/graphics/mandelbrot_demo
+
+mandelbrot-build: check-sdl build/graphics/mandelbrot_demo
+mandelbrot-debug: check-sdl build/debug/graphics/mandelbrot_demo
+
+build/graphics/mandelbrot_demo: $(MANDELBROT_SOURCES) $(MANDELBROT_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(MANDELBROT_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/mandelbrot_demo: $(MANDELBROT_SOURCES) $(MANDELBROT_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(MANDELBROT_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/mandelbrot_test: tests/mandelbrot_test.c $(MANDELBROT_CORE) $(MANDELBROT_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/mandelbrot_test.c $(MANDELBROT_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-mandelbrot: build/tests/mandelbrot_test
+	./build/tests/mandelbrot_test
+
+sanitize-mandelbrot:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/mandelbrot_test.c $(MANDELBROT_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/mandelbrot_test
+	./build/sanitize/mandelbrot_test
+
+build/tests/mandelbrot_window_test: tests/mandelbrot_window_test.c tests/bmp_window_helpers.h $(MANDELBROT_SOURCES) $(MANDELBROT_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/mandelbrot_window_test.c $(MANDELBROT_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-mandelbrot-window: build/tests/mandelbrot_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/mandelbrot_window_test
+
+
 .PHONY: bmp bmp-build bmp-debug test-bmp sanitize-bmp
 bmp: bmp-build
 	./build/graphics/bmp_demo
@@ -323,7 +361,7 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -333,8 +371,10 @@ test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test buil
 	./build/tests/bmp_test
 	./build/tests/memory_pool_test
 	./build/tests/maze_test
+	./build/tests/mandelbrot_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MANDELBROT_CORE) tests/mandelbrot_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MAZE_CORE) tests/maze_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/memory_pool_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
@@ -349,6 +389,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MODULE_SOURCES)
 
 clean:
+	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/maze_demo build/debug/graphics/maze_demo build/tests/maze_test build/tests/maze_window_test build/sanitize/maze_test
 	rm -f build/tests/memory_pool_test build/sanitize/memory_pool_test
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test

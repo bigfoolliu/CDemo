@@ -59,3 +59,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## 迷宫生成与寻路调试
 
 选择 `C: 迷宫生成与寻路` 按 F5，启动任务更新图形编译数据库并构建 `build/debug/graphics/maze_demo`。在 generate_step、前沿取出和 mark_path 处设断点，观察 depth、head/tail、discovered 和 parent。Space 暂停，N 单步，生成完成后 1/2 重启不同搜索。任务 `C: 测试迷宫核心` 无需 SDL，完整说明见 [迷宫教程](maze.md)。
+
+## 曼德勃罗分形调试
+
+选择 `C: 曼德勃罗分形` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/mandelbrot_demo`。在 escape_unchecked 中观察旧实部、虚部和新实部，在 mandelbrot_zoom 中比较缩放前后鼠标锚点。图像只在 dirty 标记为真时重新计算。任务 `C: 测试曼德勃罗核心` 无需 SDL；数值与操作说明见 [分形教程](mandelbrot.md)。

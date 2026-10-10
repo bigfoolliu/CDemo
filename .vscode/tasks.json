@@ -293,6 +293,37 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 构建曼德勃罗调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "mandelbrot-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试曼德勃罗核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-mandelbrot"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }
