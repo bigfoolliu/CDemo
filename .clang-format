@@ -2,9 +2,27 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
+# 函数左花括号另起一行，其余代码块跟随条件或声明。
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true
+  AfterControlStatement: Never
+  AfterStruct: false
+  AfterEnum: false
+  AfterUnion: false
+  BeforeElse: false
+  BeforeWhile: false
 AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+# 在行宽允许时紧凑排列参数，不强制每行一个参数。
+BinPackArguments: true
+BinPackParameters: true
 ColumnLimit: 100
+MaxEmptyLinesToKeep: 1
 SortIncludes: Never
+# 保留中文注释的手工分段及逐行参数说明。
+ReflowComments: false

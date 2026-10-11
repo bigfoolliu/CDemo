@@ -20,25 +20,34 @@
  */
 static void self_test(void)
 {
-    Game game = {.body = {{3, 2}, {2, 2}, {1, 2}}, .length = 3,
-                 .direction = {1, 0}, .food = {4, 2}};
+    Game game = {
+        .body = {{3, 2}, {2, 2}, {1, 2}}, .length = 3, .direction = {1, 0}, .food = {4, 2}};
     bool moved = step(&game, (Point){1, 0});
     assert(moved && game.length == 4 && equal(game.body[0], (Point){4, 2}));
     assert(!occupied(&game, game.food, game.length));
+
     game.food = (Point){0, 0};
     moved = step(&game, (Point){-1, 0});
     assert(moved && game.body[0].x == 5); /* 掉头被忽略。 */
+
     game.body[0] = (Point){WIDTH - 1, 2};
     moved = step(&game, (Point){1, 0});
     assert(!moved && game.body[0].x == WIDTH - 1);
-    game = (Game){.body = {{2, 2}, {2, 3}, {3, 3}, {3, 2}}, .length = 4,
-                  .direction = {0, -1}, .food = {0, 0}};
+
+    game = (Game){.body = {{2, 2}, {2, 3}, {3, 3}, {3, 2}},
+                  .length = 4,
+                  .direction = {0, -1},
+                  .food = {0, 0}};
     moved = step(&game, (Point){1, 0});
     assert(moved && equal(game.body[0], (Point){3, 2})); /* 进入旧尾格。 */
-    game = (Game){.body = {{2, 2}, {2, 3}, {3, 3}, {3, 2}, {4, 2}}, .length = 5,
-                  .direction = {0, -1}, .food = {0, 0}};
+
+    game = (Game){.body = {{2, 2}, {2, 3}, {3, 3}, {3, 2}, {4, 2}},
+                  .length = 5,
+                  .direction = {0, -1},
+                  .food = {0, 0}};
     moved = step(&game, (Point){1, 0});
     assert(!moved); /* 撞到非尾部身体。 */
+
     game = new_game();
     game.food = (Point){0, 0};
     assert(game.length == 3 && equal(game.direction, (Point){1, 0}));
@@ -46,11 +55,13 @@ static void self_test(void)
     assert(moved && game.body[0].x == 11);
     moved = step(&game, game.direction);
     assert(moved && game.body[0].x == 12);
+
     Point pending = game.direction;
     bool changed = change_direction('w', game.direction, &pending);
     assert(changed && equal(pending, (Point){0, -1}));
     changed = change_direction('a', game.direction, &pending);
     assert(!changed);
+
     const unsigned char codes[] = {'A', 'B', 'C', 'D'};
     const int keys[] = {'w', 's', 'd', 'a'};
     for (size_t i = 0; i < 4; ++i) {
@@ -62,6 +73,7 @@ static void self_test(void)
         key = decode_key(codes[i], &escape);
         assert(key == keys[i] && escape == 0);
     }
+
     Scores scores = {0};
     add_score(&scores, 3);
     add_score(&scores, 8);
@@ -87,6 +99,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "用法：%s [历史得分文件路径 | --test]\n", argv[0]);
         return EXIT_FAILURE;
     }
+
     const char *score_path = argc == 2 ? argv[1] : "snake_scores.log";
     Scores scores = {0};
     if (!load_scores(score_path, &scores)) {
@@ -97,6 +110,7 @@ int main(int argc, char *argv[])
         fputs("请在支持 ANSI 的交互终端中运行游戏。\n", stderr);
         return EXIT_FAILURE;
     }
+
     srand((unsigned int)time(nullptr));
     Game game = new_game();
     Point pending = game.direction;
@@ -111,6 +125,7 @@ int main(int argc, char *argv[])
         result = EXIT_FAILURE;
         stopped = 1;
     }
+
     draw(&game, &scores, message);
     while (!stopped) {
         now = monotonic_time();
@@ -118,6 +133,7 @@ int main(int argc, char *argv[])
             result = EXIT_FAILURE;
             break;
         }
+
         if (now >= deadline) {
             if (restarting) {
                 game = new_game();
@@ -135,17 +151,18 @@ int main(int argc, char *argv[])
                         break;
                     }
                     restarting = true;
-                    message = moved ? "填满棋盘，获胜！1 秒后自动重开。" :
-                                      "撞墙或撞到自己，死亡！1 秒后自动重开。";
+                    message = moved ? "填满棋盘，获胜！1 秒后自动重开。"
+                                    : "撞墙或撞到自己，死亡！1 秒后自动重开。";
                 }
             }
             deadline = now + (restarting ? 1.0 : 0.2);
             draw(&game, &scores, message);
             continue;
         }
+
         double wait = deadline - now;
         struct timeval timeout = {.tv_sec = (time_t)wait,
-            .tv_usec = (suseconds_t)((wait - (double)(time_t)wait) * 1e6)};
+                                  .tv_usec = (suseconds_t)((wait - (double)(time_t)wait) * 1e6)};
         fd_set input;
         FD_ZERO(&input);
         FD_SET(STDIN_FILENO, &input);
@@ -157,6 +174,7 @@ int main(int argc, char *argv[])
             result = EXIT_FAILURE;
             break;
         }
+
         if (ready > 0) {
             unsigned char bytes[64];
             ssize_t count = read(STDIN_FILENO, bytes, sizeof(bytes));
@@ -182,6 +200,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+
     if (result == EXIT_SUCCESS && !restarting &&
         !save_score(score_path, &scores, game.length - 3)) {
         result = EXIT_FAILURE;
