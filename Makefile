@@ -705,6 +705,20 @@ sanitize-numeric-foundations:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/05_numeric_foundations.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/05_numeric_foundations
 	./build/sanitize/ml/05_numeric_foundations
 
+# 阶段 1 独立入口；固定规模的 XOR 短训练也接入默认测试与调试。
+.PHONY: xor-mlp test-xor-mlp sanitize-xor-mlp
+xor-mlp: build/ml/06_xor_mlp
+	./build/ml/06_xor_mlp
+
+# 案例内部检查全部参数梯度、稳定损失与四组真值表。
+test-xor-mlp: xor-mlp
+
+# 独立消毒器产物，不覆盖普通或调试程序。
+sanitize-xor-mlp:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/06_xor_mlp.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/06_xor_mlp
+	./build/sanitize/ml/06_xor_mlp
+
 # 只构建并运行深入示例，自动纳入 src/advanced/ 新增的独立入口。
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done
@@ -787,6 +801,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/06_xor_mlp
 	rm -f build/sanitize/ml/05_numeric_foundations
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/bezier_demo build/debug/graphics/bezier_demo build/tests/bezier_test build/tests/bezier_window_test build/sanitize/bezier_test
