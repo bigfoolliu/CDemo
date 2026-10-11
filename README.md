@@ -28,6 +28,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 配置原因、环境要求、断点操作及常见问题见 [VS Code 开发指南](docs/vscode.md)。也可运行 `make compile-commands` 更新代码提示，运行 `make debug` 构建独立调试版本。
 
+## 教学 CPU 模拟器
+
+运行 `make cpu`，通过十条自定义指令学习取指、解码与执行；两个机器码案例演示累加 1～10 和内存读写，均输出 55。核心使用纯 C，包含八个 16 位寄存器、64 KiB 内存、条件跳转与有界执行。
+
+阅读 [CPU 模拟教程](docs/cpu_emulation.md)。`./build/cpu/demo --trace` 将逐指令状态同时输出到终端并追加到 `logs/cpu/trace.log`；`make test-cpu` 和 `make sanitize-cpu` 验证核心，VS Code 选择 `C: 教学 CPU` 调试。该指令集用于教学，不运行真实 x86/RISC-V 程序。
+
 ## 常用标准库学习专区
 
 阅读 [C 常用标准库学习指南](docs/c_standard_library.md)，按头文件导航、API 契约和小练习逐步学习。`src/stdlib/` 提供 10 个独立示例：输入输出、字符串与字节、动态内存、数值转换、字符分类、类型与范围、排序搜索、数学、时间、可变参数。

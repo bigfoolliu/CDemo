@@ -79,3 +79,9 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## 落沙模拟调试
 
 选择 `C: 落沙模拟` 按 F5，自动生成图形编译数据库并构建 `build/debug/graphics/sand_demo`。Space 暂停后按 N 单步，在 `try_move` 中观察 `source`、`target` 和 `moved`；可设置 `x == 60` 等条件断点，减少逐格停顿。`sand_step` 原地交换物质，不采用生命游戏的同步双缓冲规则。任务 `C: 测试落沙核心` 无需 SDL；规则与操作见 [落沙教程](sand.md)。
+
+## 教学 CPU 调试
+
+先运行 `make compile-commands` 更新多文件编译记录，再选择 `C: 教学 CPU` 按 F5。配置通过现有调试任务构建 `build/debug/cpu/demo`，使用 `-O0 -g3` 保留便于观察的变量；传入 `--trace` 同时记录客体指令状态到 `logs/cpu/trace.log`。
+
+在 `src/cpu/cpu.c` 的 `cpu_step` 设置断点，观察 PC、原始字节、立即数与寄存器。PC 表示模拟机器的字节地址，编辑器行号表示宿主解释器位置，二者不是同一个地址空间。取消 `args` 中的 `--trace` 即可只看两个案例结果。

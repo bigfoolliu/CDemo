@@ -52,7 +52,7 @@ PROGRAMS := $(patsubst src/%.c,build/%,$(SOURCES))
 # 模块示例的全部翻译单元：一次链接成一个程序，而不是每个文件各自运行。
 MODULE_SOURCES := $(wildcard src/modules/*.c)
 # 把多文件模块程序加入可运行清单，补充前面的单文件路径映射。
-PROGRAMS += build/modules_demo
+PROGRAMS += build/modules_demo build/cpu/demo
 # 人工贪吃蛇可执行文件；默认只构建，启动由 snake 目标显式触发。
 GAME_PROGRAM := build/games/snake
 # DQN 贪吃蛇可执行文件；默认不进行交互或长时间训练。
@@ -602,6 +602,8 @@ sanitize-memory-pool:
 stdlib: $(STDLIB_PROGRAMS)
 	@set -e; for program in $(STDLIB_PROGRAMS); do "$$program"; done
 # 批量构建非窗口调试程序，只构建不执行；VS Code 的普通调试任务使用此目标。
+DEBUG_PROGRAMS += build/debug/cpu/demo
+
 debug: $(DEBUG_PROGRAMS)
 
 # 从实际构建命令生成数据库，避免编辑器和 Make 使用不同的参数。
@@ -792,6 +794,34 @@ sanitize-autoencoder:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(AUTOENCODER_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/09_denoising_autoencoder
 	./build/sanitize/ml/09_denoising_autoencoder --test
 
+# 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
+CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
+CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
+.PHONY: cpu test-cpu sanitize-cpu
+cpu: build/cpu/demo
+	./build/cpu/demo
+
+build/cpu/demo: $(CPU_SOURCES) $(CPU_HEADERS)
+	@mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CPU_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/cpu/demo: $(CPU_SOURCES) $(CPU_HEADERS)
+	@mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(CPU_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/tests/cpu_test: tests/cpu_test.c src/cpu/cpu.c $(CPU_HEADERS)
+	@mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/cpu_test.c src/cpu/cpu.c $(LDFLAGS) $(LDLIBS) -o $@
+
+test-cpu: build/tests/cpu_test
+	./build/tests/cpu_test
+
+# 消毒器只运行核心测试，不产生追踪日志。
+sanitize-cpu:
+	@mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer tests/cpu_test.c src/cpu/cpu.c $(LDFLAGS) $(LDLIBS) -o build/sanitize/cpu_test
+	./build/sanitize/cpu_test
+
 # 只构建并运行深入示例，自动纳入 src/advanced/ 新增的独立入口。
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done
@@ -835,7 +865,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
+test: build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -849,10 +879,12 @@ test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test buil
 	./build/tests/bezier_test
 	./build/tests/ripple_test
 	./build/tests/sand_test
+	./build/tests/cpu_test
 
 # 以严格警告执行 -fsyntax-only，不链接、不生成可执行文件，也不验证运行行为。
 # 覆盖普通示例、纯 C 图形核心及核心测试，无需 SDL；窗口编译由专用目标验证。
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(CPU_SOURCES) tests/cpu_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(SAND_CORE) tests/sand_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(RIPPLE_CORE) tests/ripple_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BEZIER_CORE) tests/bezier_test.c
@@ -874,6 +906,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/tests/cpu_test build/sanitize/cpu_test
 	rm -f build/sanitize/ml/09_denoising_autoencoder
 	rm -f build/sanitize/ml/08_cnn_shapes
 	rm -f build/sanitize/ml/07_mlp_2d

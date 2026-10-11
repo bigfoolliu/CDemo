@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--graphics", action="store_true", help="加入依赖 SDL2 的图形窗口编译命令")
     options = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
-    targets = ["all", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo", "build/tests/memory_pool_test", "build/tests/maze_test", "build/tests/mandelbrot_test", "build/tests/bezier_test", "build/tests/ripple_test", "build/tests/sand_test"]
+    targets = ["all", "build/tests/cpu_test", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo", "build/tests/memory_pool_test", "build/tests/maze_test", "build/tests/mandelbrot_test", "build/tests/bezier_test", "build/tests/ripple_test", "build/tests/sand_test"]
     if options.graphics:
         targets.extend(["build/graphics/demo", "build/tests/graphics_window_test",
                         "build/graphics/particles_demo", "build/tests/particles_window_test",
