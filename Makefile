@@ -746,6 +746,29 @@ sanitize-mlp-2d:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(MLP_2D_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/07_mlp_2d
 	./build/sanitize/ml/07_mlp_2d --test
 
+# 阶段 3：纯 C CNN 与软件画布/BMP；默认测试无窗口且不产生图片。
+CNN_SHAPES_SOURCES := src/ml/08_cnn_shapes.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+CNN_SHAPES_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS)
+.PHONY: cnn-shapes test-cnn-shapes sanitize-cnn-shapes
+cnn-shapes: build/ml/08_cnn_shapes
+	./build/ml/08_cnn_shapes --export
+
+build/ml/08_cnn_shapes: $(CNN_SHAPES_SOURCES) $(CNN_SHAPES_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $(CNN_SHAPES_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/08_cnn_shapes: $(CNN_SHAPES_SOURCES) $(CNN_SHAPES_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(CNN_SHAPES_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+test-cnn-shapes: build/ml/08_cnn_shapes
+	./build/ml/08_cnn_shapes --test
+
+sanitize-cnn-shapes:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(CNN_SHAPES_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/08_cnn_shapes
+	./build/sanitize/ml/08_cnn_shapes --test
+
 # 只构建并运行深入示例，自动纳入 src/advanced/ 新增的独立入口。
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done
@@ -828,6 +851,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/08_cnn_shapes
 	rm -f build/sanitize/ml/07_mlp_2d
 	rm -f build/sanitize/ml/06_xor_mlp
 	rm -f build/sanitize/ml/05_numeric_foundations
