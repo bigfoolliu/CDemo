@@ -504,6 +504,17 @@
       "terminal": "integrated",
       "preLaunchTask": "C: 构建曼德勃罗调试版本",
       "stopOnEntry": false
+    },
+    {
+      "name": "C: 贝塞尔曲线编辑器",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/graphics/bezier_demo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建贝塞尔曲线调试版本",
+      "stopOnEntry": false
     }
   ]
 }

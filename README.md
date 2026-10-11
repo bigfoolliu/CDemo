@@ -34,6 +34,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 贝塞尔曲线编辑器
+
+运行 `make bezier`，左键拖动四个控制点实时编辑三次曲线。绿色 P0、红色 P3 是端点，蓝色 P1/P2 控制弯曲方向；R 重置，S 保存 BMP，Esc 退出。窗口需 SDL2 与 pkg-config，目标显示 60 FPS。
+
+阅读 [贝塞尔曲线教程](docs/bezier.md)，学习 de Casteljau 插值、控制多边形、鼠标坐标映射和折线采样。`make test-bezier` 与 `make sanitize-bezier` 无需 SDL；VS Code 选择 `C: 贝塞尔曲线编辑器` 按 F5。
+
 ## 曼德勃罗分形
 
 运行 `make mandelbrot`，通过复数迭代生成彩色分形。左键/滚轮放大，右键缩小，方向键平移，+/- 调整迭代上限，R 重置，S 保存 BMP，Esc 退出。图像只在视图改变时重新计算。
@@ -48,7 +54,7 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 ## BMP 图片导出
 
-运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、生命游戏、迷宫和分形窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
+运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、生命游戏、迷宫、分形和贝塞尔曲线窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
 
 阅读 [BMP 导出教程](docs/bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
 

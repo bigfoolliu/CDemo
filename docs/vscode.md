@@ -63,3 +63,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## 曼德勃罗分形调试
 
 选择 `C: 曼德勃罗分形` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/mandelbrot_demo`。在 escape_unchecked 中观察旧实部、虚部和新实部，在 mandelbrot_zoom 中比较缩放前后鼠标锚点。图像只在 dirty 标记为真时重新计算。任务 `C: 测试曼德勃罗核心` 无需 SDL；数值与操作说明见 [分形教程](mandelbrot.md)。
+
+## 贝塞尔曲线编辑器调试
+
+选择 `C: 贝塞尔曲线编辑器` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/bezier_demo`。在 `evaluate_unchecked` 的逐层插值循环设置断点，观察 `work` 如何从四点减少为一点；在 `handle_event` 中观察窗口坐标、`offset` 和控制点坐标。断点期间窗口暂停响应是正常现象，继续执行后恢复。任务 `C: 测试贝塞尔曲线核心` 无需 SDL；操作与原理见 [曲线教程](bezier.md)。

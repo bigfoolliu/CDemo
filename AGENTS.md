@@ -8,6 +8,8 @@
 
 `src/graphics/` 的纯 C 绘制核心与 SDL2 窗口分离，教程为 `docs/graphics_2d.md`。`make graphics` 启动可选窗口；`make test-graphics` 和 `make sanitize-graphics` 无需 SDL。默认测试不打开窗口，普通构建不引入 SDL 依赖。窗口使用 `make graphics-debug` 调试，`make compile-commands-graphics` 生成对应代码提示。新增绘图接口需说明坐标边界并验证裁切、退化图形和数值失败。
 
+贝塞尔曲线核心为 `src/graphics/bezier.h/c`，窗口为 `bezier_demo.c`，教程为 `docs/bezier.md`。`make bezier` 启动，`make bezier-debug` 调试；`make test-bezier`、`make sanitize-bezier` 无需 SDL。控制点须为画布内有限数，参数 t 为 [0,1]；失败不修改输出。保留拖动抓取偏移，处理松键、失焦与离开窗口；`make test-bezier-window` 验证坐标映射、输入、截图和主循环。
+
 曼德勃罗核心为 `src/graphics/mandelbrot.h/c`，窗口为 `mandelbrot_demo.c`，教程为 `docs/mandelbrot.md`。`make mandelbrot` 启动，`make mandelbrot-debug` 调试；`make test-mandelbrot`、`make sanitize-mandelbrot` 无需 SDL。区分最后一次迭代逃逸与达到上限未逃逸，有限迭代不能证明集合成员；视图须验证有限数和范围，修改失败保留状态。窗口只在视图变化时重算，`make test-mandelbrot-window` 验证输入、缓存标记、截图和主循环。
 
 迷宫核心为 `src/graphics/maze.h/c`，入口为 `maze_demo.c`，教程为 `docs/maze.md`。`make maze` 启动、`make maze-debug` 调试，`make test-maze`、`make sanitize-maze` 无需 SDL。DFS 回溯生成可重复的连通无环地图，BFS/DFS 在入队或入栈时标记，前驱链用于路径回溯；需区分无权图 BFS 最短路保证与树中路径唯一。默认测试验证核心，`make test-maze-window` 验证控制、时间、截图和有界循环。

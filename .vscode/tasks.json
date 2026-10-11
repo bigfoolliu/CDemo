@@ -324,6 +324,37 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 构建贝塞尔曲线调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "bezier-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试贝塞尔曲线核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-bezier"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }
