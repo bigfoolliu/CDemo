@@ -85,3 +85,9 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 先运行 `make compile-commands` 更新多文件编译记录，再选择 `C: 教学 CPU` 按 F5。配置通过现有调试任务构建 `build/debug/cpu/demo`，使用 `-O0 -g3` 保留便于观察的变量；传入 `--trace` 同时记录客体指令状态到 `logs/cpu/trace.log`。
 
 在 `src/cpu/cpu.c` 的 `cpu_step` 设置断点，观察 PC、原始字节、立即数与寄存器。PC 表示模拟机器的字节地址，编辑器行号表示宿主解释器位置，二者不是同一个地址空间。取消 `args` 中的 `--trace` 即可只看两个案例结果。
+
+## 字符 RNN 调试
+
+运行 `make compile-commands` 后选择 `C: ml/10_char_rnn.c`，按 F5 构建并启动调试版。默认不写日志，`args` 加入 `--log` 后双输出至 `logs/ml/10_char_rnn.log`。
+
+先在 main 的 `train` 调用处设置断点，跳过数值差分循环；前向观察 `forward->h[t]` 与概率，反向观察 `future` 沿时间传递及 W_h 梯度累加。每条独立序列重置初始状态，参数只在全部反向计算与裁剪完成后更新。详细步骤见 [字符 RNN 教程](char_rnn.md)。

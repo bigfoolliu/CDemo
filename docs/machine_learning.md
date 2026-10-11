@@ -120,6 +120,12 @@ d_bias = sum(error) / count
 
 阶段 4 的 `src/ml/09_denoising_autoencoder.c` 实现 `256→32→8→32→256` 去噪网络，训练噪声每轮更新、评估噪声固定，以 MSE 学习干净目标。`make autoencoder` 导出带噪/重建/目标拼图；测试检查全部参数和输入梯度、三图拟合及独立去噪效果，并对照带噪输入与训练集平均图基线。详见 [自编码器教程](denoising_autoencoder.md)。
 
+## 10. 字符 RNN
+
+阶段 5 的 `src/ml/10_char_rnn.c` 实现 one-hot→16 维 tanh 状态→softmax 下一字符预测，手写完整 BPTT、时间共享参数梯度和全局梯度裁剪。先拟合 `abcabc…`，再用完整独立序列划分的微型字符语料训练、验证和测试，对照只依赖当前字符的 bigram 基线。
+
+运行 `make char-rnn`，`make test-char-rnn` 验证全部参数及初始状态梯度、数值边界和训练效果；可用 `--log` 同时追加到 `logs/ml/10_char_rnn.log`。详见 [字符 RNN 教程](char_rnn.md)，其中解释 teacher forcing、生成、验证检查点和过拟合。
+
 ## 从教学案例走向真实数据
 
 进一步学习神经网络和强化学习，可阅读 [纯 C 深度强化学习贪吃蛇](snake_ai.md)。它包含两层隐藏层、反向传播、Adam、经验回放、目标网络以及独立评估，实现自动玩本项目的贪吃蛇。

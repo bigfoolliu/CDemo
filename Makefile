@@ -794,6 +794,27 @@ sanitize-autoencoder:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(AUTOENCODER_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/09_denoising_autoencoder
 	./build/sanitize/ml/09_denoising_autoencoder --test
 
+# 阶段 5：字符 RNN，无窗口/外部语料；显式 --log 才追加训练日志。
+.PHONY: char-rnn test-char-rnn sanitize-char-rnn
+char-rnn: build/ml/10_char_rnn
+	./build/ml/10_char_rnn
+
+build/ml/10_char_rnn: src/ml/10_char_rnn.c src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/10_char_rnn: src/ml/10_char_rnn.c src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+test-char-rnn: build/ml/10_char_rnn
+	./build/ml/10_char_rnn --test
+
+sanitize-char-rnn:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/10_char_rnn.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/10_char_rnn
+	./build/sanitize/ml/10_char_rnn --test
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -906,6 +927,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/10_char_rnn
 	rm -f build/tests/cpu_test build/sanitize/cpu_test
 	rm -f build/sanitize/ml/09_denoising_autoencoder
 	rm -f build/sanitize/ml/08_cnn_shapes
