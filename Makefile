@@ -691,6 +691,20 @@ build/ml/01_linear_regression: src/common/logger.h
 ml: $(ML_PROGRAMS)
 	@set -e; for program in $(ML_PROGRAMS); do "$$program"; done
 
+# 阶段 0 独立入口；该示例也由 SOURCES 自动接入默认运行、检查及调试。
+.PHONY: numeric-foundations test-numeric-foundations sanitize-numeric-foundations
+numeric-foundations: build/ml/05_numeric_foundations
+	./build/ml/05_numeric_foundations
+
+# 示例内部断言验证手算结果、梯度与矩阵失败路径，无需外部框架。
+test-numeric-foundations: numeric-foundations
+
+# 用独立产物验证动态矩阵的内存安全及未定义行为。
+sanitize-numeric-foundations:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/05_numeric_foundations.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/05_numeric_foundations
+	./build/sanitize/ml/05_numeric_foundations
+
 # 只构建并运行深入示例，自动纳入 src/advanced/ 新增的独立入口。
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done
@@ -773,6 +787,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/05_numeric_foundations
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/bezier_demo build/debug/graphics/bezier_demo build/tests/bezier_test build/tests/bezier_window_test build/sanitize/bezier_test
 	rm -f build/graphics/ripple_demo build/debug/graphics/ripple_demo build/tests/ripple_test build/tests/ripple_window_test build/sanitize/ripple_test

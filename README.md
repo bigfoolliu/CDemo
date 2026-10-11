@@ -134,7 +134,7 @@ make build/basics/01_types
 
 ## 机器学习入门案例
 
-`src/ml/` 提供四个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
+`src/ml/` 提供五个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -142,8 +142,11 @@ make build/basics/01_types
 | `02_logistic_regression.c` | 二分类、sigmoid、交叉熵及数值稳定性 |
 | `03_knn.c` | 距离排序、邻居投票与平局处理 |
 | `04_kmeans.c` | 无监督聚类、中心更新与空簇处理 |
+| `05_numeric_foundations.c` | 深度学习阶段 0：行优先矩阵、链式法则与梯度检查 |
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
+
+后续按 [纯 C 深度学习学习计划](docs/deep_learning_plan.md) 逐项学习：数值基础后实现 XOR 与二维 MLP，再实现 CNN、自编码器、RNN、GRU 和小型 Transformer，最后回看已有 DQN。阶段 0 已实现，运行 `make numeric-foundations`，配合 [数值基础教程](docs/numeric_foundations.md) 阅读。后续阶段尚待逐项实现，模型计算不依赖外部框架。
 
 线性回归的详细日志同时输出到屏幕和 `logs/linear_regression.log`，每行包含毫秒时间戳和调用源码位置，多次运行会追加。用 `less logs/linear_regression.log` 分页查看，或运行 `./build/ml/01_linear_regression logs/training.log` 指定日志文件，父目录自动创建。
 
