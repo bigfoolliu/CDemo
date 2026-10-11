@@ -68,7 +68,9 @@ int main(void)
     int number = 7;
     bool ok = parse_decimal(" -42", &number);
     assert(ok && number == -42);
+    // clang-format off
     const char *invalid[] = {"", "x", "12x", "12 ", "999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"};
+    // clang-format on
     for (size_t i = 0; i < sizeof(invalid) / sizeof(invalid[0]); ++i) {
         ok = parse_decimal(invalid[i], &number);
         assert(!ok && number == -42);

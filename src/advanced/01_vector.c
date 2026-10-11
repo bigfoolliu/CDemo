@@ -58,8 +58,9 @@ static bool push(Vector *vector, int value)
         if (vector->capacity == maximum) {
             return false;
         }
-        size_t next = vector->capacity == 0 ? 4 :
-            (vector->capacity > maximum / 2 ? maximum : vector->capacity * 2);
+        size_t next = vector->capacity == 0
+                          ? 4
+                          : (vector->capacity > maximum / 2 ? maximum : vector->capacity * 2);
         if (!reserve(vector, next)) {
             return false;
         }

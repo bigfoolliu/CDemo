@@ -6,7 +6,11 @@
 
 #include <stdint.h>
 
-enum { GFX_WIDTH = 320, GFX_HEIGHT = 240, GFX_COORD_LIMIT = 16384 };
+enum {
+    GFX_WIDTH = 320,
+    GFX_HEIGHT = 240,
+    GFX_COORD_LIMIT = 16384
+};
 
 /** 固定画布：左上角为原点，x 向右、y 向下；颜色数值为 0xFFRRGGBB。 */
 typedef struct {
@@ -14,7 +18,10 @@ typedef struct {
 } GfxCanvas;
 
 /** 变换阶段的浮点坐标；提交直线绘制前四舍五入为整数像素。 */
-typedef struct { double x; double y; } GfxPoint;
+typedef struct {
+    double x;
+    double y;
+} GfxPoint;
 
 /**
  * @brief 构造不透明 RGB 颜色。
@@ -62,8 +69,7 @@ void gfx_line(GfxCanvas *canvas, int x0, int y0, int x1, int y1, uint32_t color)
  * @param filled true 填充，false 只描边。
  * @param color 不透明颜色。
  */
-void gfx_rect(GfxCanvas *canvas, int x, int y, int width, int height,
-              bool filled, uint32_t color);
+void gfx_rect(GfxCanvas *canvas, int x, int y, int width, int height, bool filled, uint32_t color);
 
 /**
  * @brief 使用中点算法画圆周，半径零画一个点；非法范围请求忽略。
@@ -84,7 +90,7 @@ void gfx_circle(GfxCanvas *canvas, int center_x, int center_y, int radius, uint3
  * @param output 有效的结果地址，仅成功时修改；无资源分配。
  * @return 输入及结果有限且输出处于绘图坐标范围时为 true，否则为 false。
  */
-bool gfx_transform_point(GfxPoint point, GfxPoint translation, double radians,
-                         double scale, GfxPoint *output);
+bool gfx_transform_point(GfxPoint point, GfxPoint translation, double radians, double scale,
+                         GfxPoint *output);
 
 #endif

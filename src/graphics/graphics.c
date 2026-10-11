@@ -45,8 +45,8 @@ void gfx_pixel(GfxCanvas *canvas, int x, int y, uint32_t color)
 /** @copydoc gfx_line 参数范围及端点规则见 graphics.h。 */
 void gfx_line(GfxCanvas *canvas, int x0, int y0, int x1, int y1, uint32_t color)
 {
-    if (!valid_coordinate(x0) || !valid_coordinate(y0) ||
-        !valid_coordinate(x1) || !valid_coordinate(y1)) {
+    if (!valid_coordinate(x0) || !valid_coordinate(y0) || !valid_coordinate(x1) ||
+        !valid_coordinate(y1)) {
         return;
     }
     int dx = abs(x1 - x0), dy = -abs(y1 - y0);
@@ -71,8 +71,7 @@ void gfx_line(GfxCanvas *canvas, int x0, int y0, int x1, int y1, uint32_t color)
 }
 
 /** @copydoc gfx_rect 参数范围及尺寸规则见 graphics.h。 */
-void gfx_rect(GfxCanvas *canvas, int x, int y, int width, int height,
-              bool filled, uint32_t color)
+void gfx_rect(GfxCanvas *canvas, int x, int y, int width, int height, bool filled, uint32_t color)
 {
     if (!valid_coordinate(x) || !valid_coordinate(y) || width <= 0 || height <= 0 ||
         width > GFX_COORD_LIMIT || height > GFX_COORD_LIMIT) {
@@ -103,8 +102,8 @@ void gfx_rect(GfxCanvas *canvas, int x, int y, int width, int height,
 /** @copydoc gfx_circle 参数范围及半径规则见 graphics.h。 */
 void gfx_circle(GfxCanvas *canvas, int center_x, int center_y, int radius, uint32_t color)
 {
-    if (!valid_coordinate(center_x) || !valid_coordinate(center_y) ||
-        radius < 0 || radius > GFX_COORD_LIMIT) {
+    if (!valid_coordinate(center_x) || !valid_coordinate(center_y) || radius < 0 ||
+        radius > GFX_COORD_LIMIT) {
         return;
     }
     int x = radius, y = 0, error = 1 - radius;
@@ -129,8 +128,8 @@ void gfx_circle(GfxCanvas *canvas, int center_x, int center_y, int radius, uint3
 }
 
 /** @copydoc gfx_transform_point 参数、变换顺序及失败行为见 graphics.h。 */
-bool gfx_transform_point(GfxPoint point, GfxPoint translation, double radians,
-                         double scale, GfxPoint *output)
+bool gfx_transform_point(GfxPoint point, GfxPoint translation, double radians, double scale,
+                         GfxPoint *output)
 {
     if (!isfinite(point.x) || !isfinite(point.y) || !isfinite(translation.x) ||
         !isfinite(translation.y) || !isfinite(radians) || !isfinite(scale)) {

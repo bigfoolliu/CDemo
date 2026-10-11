@@ -5,9 +5,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { SAMPLE_COUNT = 6 };
-typedef struct { double x; double y; int label; } Sample;
-typedef struct { double distance; size_t index; int label; } Neighbor;
+enum {
+    SAMPLE_COUNT = 6
+};
+typedef struct {
+    double x;
+    double y;
+    int label;
+} Sample;
+typedef struct {
+    double distance;
+    size_t index;
+    int label;
+} Neighbor;
 
 /**
  * @brief 按距离和原始索引比较邻居，供 qsort 使用。
@@ -36,8 +46,7 @@ static int compare_neighbors(const void *left, const void *right)
  * @return 分类成功返回 true；k 非法返回 false 且输出不变。
  * @note 教学接口固定为六个样本、二分类；输入坐标要求有限。
  */
-static bool classify(const Sample samples[SAMPLE_COUNT], double x, double y,
-                     size_t k, int *output)
+static bool classify(const Sample samples[SAMPLE_COUNT], double x, double y, size_t k, int *output)
 {
     if (k == 0 || k > SAMPLE_COUNT) {
         return false;
@@ -64,10 +73,8 @@ static bool classify(const Sample samples[SAMPLE_COUNT], double x, double y,
  */
 int main(void)
 {
-    const Sample samples[SAMPLE_COUNT] = {
-        {0, 0, 0}, {0, 1, 0}, {1, 0, 0},
-        {4, 4, 1}, {4, 5, 1}, {5, 4, 1}
-    };
+    const Sample samples[SAMPLE_COUNT] = {{0, 0, 0}, {0, 1, 0}, {1, 0, 0},
+                                          {4, 4, 1}, {4, 5, 1}, {5, 4, 1}};
     int label = -1;
     bool success = classify(samples, 0.2, 0.3, 3, &label);
     assert(success && label == 0);

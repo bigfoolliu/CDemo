@@ -2,8 +2,8 @@
 #include "life.h"
 
 /* 网格必须恰好覆盖画布，改变尺寸时在编译期发现不匹配。 */
-_Static_assert(LIFE_WIDTH * LIFE_CELL_SIZE == GFX_WIDTH, "网格宽度不匹配");
-_Static_assert(LIFE_HEIGHT * LIFE_CELL_SIZE == GFX_HEIGHT, "网格高度不匹配");
+_Static_assert(LIFE_WIDTH *LIFE_CELL_SIZE == GFX_WIDTH, "网格宽度不匹配");
+_Static_assert(LIFE_HEIGHT *LIFE_CELL_SIZE == GFX_HEIGHT, "网格高度不匹配");
 
 /** @copydoc life_reset */
 void life_reset(LifeWorld *world, LifePattern pattern)
@@ -19,7 +19,9 @@ void life_reset(LifeWorld *world, LifePattern pattern)
         world->cells[0][y + 2][x + 1] = true;
         world->cells[0][y + 2][x + 2] = true;
     } else if (pattern == LIFE_BLINKER) {
-        for (int dx = 0; dx < 3; ++dx) { world->cells[0][y + 1][x + dx] = true; }
+        for (int dx = 0; dx < 3; ++dx) {
+            world->cells[0][y + 1][x + dx] = true;
+        }
     } else if (pattern == LIFE_RANDOM) {
         /* 独立线性同余随机流，不影响其他功能的随机状态。
          * 重置时固定种子，相同调用顺序生成相同图案；只用于教学。
@@ -55,7 +57,9 @@ void life_step(LifeWorld *world)
             /* 3×3 邻域跳过中心格，只统计八个方向；bool 可转为 0/1 累加。 */
             for (int dy = -1; dy <= 1; ++dy) {
                 for (int dx = -1; dx <= 1; ++dx) {
-                    if (dx != 0 || dy != 0) { neighbors += life_get(world, x + dx, y + dy); }
+                    if (dx != 0 || dy != 0) {
+                        neighbors += life_get(world, x + dx, y + dy);
+                    }
                 }
             }
             bool alive = life_get(world, x, y);
@@ -73,7 +77,9 @@ void life_step(LifeWorld *world)
 /** @copydoc life_toggle */
 bool life_toggle(LifeWorld *world, int x, int y)
 {
-    if (x < 0 || x >= LIFE_WIDTH || y < 0 || y >= LIFE_HEIGHT) { return false; }
+    if (x < 0 || x >= LIFE_WIDTH || y < 0 || y >= LIFE_HEIGHT) {
+        return false;
+    }
     world->cells[world->current][y][x] = !world->cells[world->current][y][x];
     world->generation = 0;
     return true;
@@ -84,7 +90,9 @@ size_t life_count(const LifeWorld *world)
 {
     size_t count = 0;
     for (int y = 0; y < LIFE_HEIGHT; ++y) {
-        for (int x = 0; x < LIFE_WIDTH; ++x) { count += life_get(world, x, y); }
+        for (int x = 0; x < LIFE_WIDTH; ++x) {
+            count += life_get(world, x, y);
+        }
     }
     return count;
 }
@@ -99,8 +107,8 @@ void life_draw(const LifeWorld *world, GfxCanvas *canvas)
                 /* 每格 4×4，画其中的 3×3，留下顶部和左侧的一像素间隔。
                  * 最右、最下的矩形也在画布内。先清屏避免死亡格留下旧图像。
                  */
-                gfx_rect(canvas, x * LIFE_CELL_SIZE + 1, y * LIFE_CELL_SIZE + 1,
-                         LIFE_CELL_SIZE - 1, LIFE_CELL_SIZE - 1, true, gfx_rgb(90, 220, 130));
+                gfx_rect(canvas, x * LIFE_CELL_SIZE + 1, y * LIFE_CELL_SIZE + 1, LIFE_CELL_SIZE - 1,
+                         LIFE_CELL_SIZE - 1, true, gfx_rgb(90, 220, 130));
             }
         }
     }

@@ -6,7 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
-enum ParseStatus { PARSE_OK, PARSE_EMPTY, PARSE_INVALID, PARSE_RANGE };
+enum ParseStatus {
+    PARSE_OK,
+    PARSE_EMPTY,
+    PARSE_INVALID,
+    PARSE_RANGE
+};
 
 /**
  * @brief 严格解析十进制整数并报告失败原因。
@@ -62,12 +67,9 @@ int main(void)
         const char *text;
         enum ParseStatus status;
         int value;
-    } cases[] = {
-        {"0", PARSE_OK, 0}, {"-0", PARSE_OK, 0}, {"+42", PARSE_OK, 42},
-        {"-17", PARSE_OK, -17}, {"", PARSE_EMPTY, 0},
-        {"+", PARSE_INVALID, 0}, {"12x", PARSE_INVALID, 0},
-        {" 1", PARSE_INVALID, 0}, {"--1", PARSE_INVALID, 0}
-    };
+    } cases[] = {{"0", PARSE_OK, 0},        {"-0", PARSE_OK, 0},      {"+42", PARSE_OK, 42},
+                 {"-17", PARSE_OK, -17},    {"", PARSE_EMPTY, 0},     {"+", PARSE_INVALID, 0},
+                 {"12x", PARSE_INVALID, 0}, {" 1", PARSE_INVALID, 0}, {"--1", PARSE_INVALID, 0}};
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
         int value = 99;
         enum ParseStatus status = parse_int(cases[i].text, &value);

@@ -29,8 +29,7 @@ static double sigmoid(double z)
  * @param count 样本数，须大于零。
  * @return 全部样本交叉熵的平均值。
  */
-static double loss(double weight, double bias, const double *x,
-                   const double *y, size_t count)
+static double loss(double weight, double bias, const double *x, const double *y, size_t count)
 {
     double total = 0;
     for (size_t i = 0; i < count; ++i) {
@@ -69,8 +68,7 @@ int main(void)
     assert(sigmoid(weight * -0.5 + bias) < 0.5);
     assert(sigmoid(weight * 0.5 + bias) > 0.5);
     assert(sigmoid(-1000) == 0 && sigmoid(1000) == 1);
-    printf("逻辑回归：交叉熵 %.4f → %.4f，x=-0.5 概率=%.4f，x=0.5 概率=%.4f\n",
-           initial_loss, final_loss, sigmoid(weight * -0.5 + bias),
-           sigmoid(weight * 0.5 + bias));
+    printf("逻辑回归：交叉熵 %.4f → %.4f，x=-0.5 概率=%.4f，x=0.5 概率=%.4f\n", initial_loss,
+           final_loss, sigmoid(weight * -0.5 + bias), sigmoid(weight * 0.5 + bias));
     return 0;
 }

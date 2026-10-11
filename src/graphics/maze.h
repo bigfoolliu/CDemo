@@ -5,13 +5,25 @@
 #include <stddef.h>
 
 enum {
-    MAZE_WIDTH = 39, MAZE_HEIGHT = 29, MAZE_CELLS = MAZE_WIDTH * MAZE_HEIGHT,
-    MAZE_CELL_SIZE = 8, MAZE_MARGIN = 4, MAZE_HZ = 120,
+    MAZE_WIDTH = 39,
+    MAZE_HEIGHT = 29,
+    MAZE_CELLS = MAZE_WIDTH * MAZE_HEIGHT,
+    MAZE_CELL_SIZE = 8,
+    MAZE_MARGIN = 4,
+    MAZE_HZ = 120,
     MAZE_START = MAZE_WIDTH + 1,
     MAZE_GOAL = (MAZE_HEIGHT - 2) * MAZE_WIDTH + MAZE_WIDTH - 2
 };
-typedef enum { MAZE_BFS, MAZE_DFS } MazeAlgorithm;
-typedef enum { MAZE_GENERATING, MAZE_SEARCHING, MAZE_FOUND, MAZE_NO_PATH } MazePhase;
+typedef enum {
+    MAZE_BFS,
+    MAZE_DFS
+} MazeAlgorithm;
+typedef enum {
+    MAZE_GENERATING,
+    MAZE_SEARCHING,
+    MAZE_FOUND,
+    MAZE_NO_PATH
+} MazePhase;
 
 /**
  * 所有数组由世界自己拥有，无动态内存。编号 id = y * MAZE_WIDTH + x。
@@ -25,11 +37,11 @@ typedef struct {
     MazeAlgorithm algorithm;
     MazePhase phase;
     bool discovered[MAZE_CELLS], expanded[MAZE_CELLS], path[MAZE_CELLS];
-    int parent[MAZE_CELLS]; /* 首次发现时记录前驱，起点前驱为 -1。 */
+    int parent[MAZE_CELLS];   /* 首次发现时记录前驱，起点前驱为 -1。 */
     int frontier[MAZE_CELLS]; /* BFS 的 FIFO 队列，或 DFS 的 LIFO 栈。 */
     size_t head, tail;
     size_t visited_count, path_length; /* 已展开节点数；最终路径的边数，不是节点数。 */
-    int current; /* 当前房间或当前展开格子；-1 表示没有。 */
+    int current;                       /* 当前房间或当前展开格子；-1 表示没有。 */
 } MazeWorld;
 
 /**

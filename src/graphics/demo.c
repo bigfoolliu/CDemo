@@ -13,7 +13,12 @@
 static const double PI = 3.14159265358979323846;
 
 /** 主循环状态；暂停只停止角度更新，不停止事件处理或显示。 */
-typedef struct { bool running; bool paused; bool capture; double angle; } DemoState;
+typedef struct {
+    bool running;
+    bool paused;
+    bool capture;
+    double angle;
+} DemoState;
 
 /**
  * @brief 处理一次窗口事件，便于在无窗口环境验证操作规则。
@@ -27,12 +32,25 @@ static bool handle_event(DemoState *state, const SDL_Event *event)
         state->running = false;
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         switch (event->key.keysym.sym) {
-        case SDLK_s: state->capture = true; break;
-        case SDLK_ESCAPE: state->running = false; break;
-        case SDLK_SPACE: state->paused = !state->paused; return true;
-        case SDLK_n: if (state->paused) { state->angle += PI / 240; } break;
-        case SDLK_r: state->angle = 0; return true;
-        default: break;
+        case SDLK_s:
+            state->capture = true;
+            break;
+        case SDLK_ESCAPE:
+            state->running = false;
+            break;
+        case SDLK_SPACE:
+            state->paused = !state->paused;
+            return true;
+        case SDLK_n:
+            if (state->paused) {
+                state->angle += PI / 240;
+            }
+            break;
+        case SDLK_r:
+            state->angle = 0;
+            return true;
+        default:
+            break;
         }
     }
     return false;

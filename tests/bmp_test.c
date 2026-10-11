@@ -1,5 +1,6 @@
 /** @file @brief BMP 字节验证及临时目录中的文件保护、命名和失败路径测试。 */
 #include "../src/graphics/bmp_capture.h"
+#include "../src/graphics/bmp.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>

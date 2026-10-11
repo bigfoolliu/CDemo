@@ -4,9 +4,19 @@
 #include "graphics.h"
 #include <stddef.h>
 
-enum { LIFE_WIDTH = 80, LIFE_HEIGHT = 60, LIFE_CELL_SIZE = 4, LIFE_HZ = 10 };
+enum {
+    LIFE_WIDTH = 80,
+    LIFE_HEIGHT = 60,
+    LIFE_CELL_SIZE = 4,
+    LIFE_HZ = 10
+};
 /** 预设种类；EMPTY 供清空和规则测试使用。 */
-typedef enum { LIFE_EMPTY, LIFE_GLIDER, LIFE_BLINKER, LIFE_RANDOM } LifePattern;
+typedef enum {
+    LIFE_EMPTY,
+    LIFE_GLIDER,
+    LIFE_BLINKER,
+    LIFE_RANDOM
+} LifePattern;
 
 /**
  * 两张网格属于此对象，无动态内存。current 只能为 0 或 1。

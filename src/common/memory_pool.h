@@ -15,11 +15,11 @@
  * 空闲链表用槽位索引表示，SIZE_MAX 表示链表结束。
  */
 typedef struct {
-    unsigned char *storage; /* malloc 获取的无声明类型存储，承载用户对象。 */
+    unsigned char *storage;   /* malloc 获取的无声明类型存储，承载用户对象。 */
     unsigned char *allocated; /* 每块一个状态字节：0 空闲，1 已分配，与载荷分离。 */
-    size_t block_size; /* 用户每次可请求的最大字节数，不包括对齐填充。 */
-    size_t stride; /* 两个块起始地址间距，至少能容纳一个 size_t 链接。 */
-    size_t capacity; /* 固定块数量，初始化后不扩容。 */
+    size_t block_size;        /* 用户每次可请求的最大字节数，不包括对齐填充。 */
+    size_t stride;            /* 两个块起始地址间距，至少能容纳一个 size_t 链接。 */
+    size_t capacity;          /* 固定块数量，初始化后不扩容。 */
     size_t in_use;
     size_t free_head;
 } MemoryPool;
@@ -60,17 +60,29 @@ static inline bool memory_pool_init(MemoryPool *pool, size_t block_size, size_t 
     size_t alignment = alignof(max_align_t);
     size_t remainder = minimum % alignment;
     size_t padding = remainder == 0 ? 0 : alignment - remainder;
-    if (minimum > SIZE_MAX - padding) { return false; }
+    if (minimum > SIZE_MAX - padding) {
+        return false;
+    }
     size_t stride = minimum + padding;
     /* 先验证，再计算乘法；不要等溢出后才检查结果。 */
-    if (capacity > SIZE_MAX / stride) { return false; }
+    if (capacity > SIZE_MAX / stride) {
+        return false;
+    }
     unsigned char *storage = malloc(capacity * stride);
-    if (storage == nullptr) { return false; }
+    if (storage == nullptr) {
+        return false;
+    }
     unsigned char *allocated = calloc(capacity, sizeof *allocated);
-    if (allocated == nullptr) { free(storage); return false; }
+    if (allocated == nullptr) {
+        free(storage);
+        return false;
+    }
     /* 两次分配都成功后才提交新状态，避免部分初始化交给调用者清理。 */
-    *pool = (MemoryPool){.storage = storage, .allocated = allocated,
-        .block_size = block_size, .stride = stride, .capacity = capacity};
+    *pool = (MemoryPool){.storage = storage,
+                         .allocated = allocated,
+                         .block_size = block_size,
+                         .stride = stride,
+                         .capacity = capacity};
     memory_pool_link_free_blocks(pool);
     return true;
 }
@@ -85,8 +97,8 @@ static inline bool memory_pool_init(MemoryPool *pool, size_t block_size, size_t 
  */
 static inline void *memory_pool_alloc(MemoryPool *pool, size_t bytes)
 {
-    if (pool == nullptr || pool->storage == nullptr || bytes == 0 ||
-        bytes > pool->block_size || pool->free_head == SIZE_MAX) {
+    if (pool == nullptr || pool->storage == nullptr || bytes == 0 || bytes > pool->block_size ||
+        pool->free_head == SIZE_MAX) {
         return nullptr;
     }
     size_t index = pool->free_head;
@@ -112,12 +124,20 @@ static inline void *memory_pool_alloc(MemoryPool *pool, size_t bytes)
  */
 static inline bool memory_pool_release(MemoryPool *pool, void *pointer)
 {
-    if (pool == nullptr || pool->storage == nullptr) { return false; }
-    if (pointer == nullptr) { return true; }
+    if (pool == nullptr || pool->storage == nullptr) {
+        return false;
+    }
+    if (pointer == nullptr) {
+        return true;
+    }
     for (size_t index = 0; index < pool->capacity; ++index) {
         unsigned char *block = pool->storage + index * pool->stride;
-        if ((void *)block != pointer) { continue; }
-        if (pool->allocated[index] == 0) { return false; }
+        if ((void *)block != pointer) {
+            continue;
+        }
+        if (pool->allocated[index] == 0) {
+            return false;
+        }
         /* 将原来的链表头写入刚释放的块，再让此块成为新头，形成 LIFO 复用。
          * 此时用户不再拥有这块载荷，空闲链表可以覆盖对象原先的字节。
          */
@@ -148,7 +168,9 @@ static inline size_t memory_pool_available(const MemoryPool *pool)
  */
 static inline void memory_pool_destroy(MemoryPool *pool)
 {
-    if (pool == nullptr) { return; }
+    if (pool == nullptr) {
+        return;
+    }
     free(pool->storage);
     free(pool->allocated);
     *pool = (MemoryPool){0};

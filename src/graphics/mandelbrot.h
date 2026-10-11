@@ -3,8 +3,11 @@
 #define CDEMO_MANDELBROT_H
 #include "graphics.h"
 
-enum { MANDELBROT_DEFAULT_ITERATIONS = 128, MANDELBROT_MIN_ITERATIONS = 32,
-       MANDELBROT_MAX_ITERATIONS = 1024 };
+enum {
+    MANDELBROT_DEFAULT_ITERATIONS = 128,
+    MANDELBROT_MIN_ITERATIONS = 32,
+    MANDELBROT_MAX_ITERATIONS = 1024
+};
 /**
  * 实轴向右，虚轴向上；span 是整个画面的实轴宽度。
  * 虚轴高度按画布 4:3 比例计算，保证复平面上的单位长度显示为正方形像素。
@@ -14,7 +17,10 @@ typedef struct {
     unsigned int max_iterations;
 } MandelbrotView;
 /** 逃逸发生在最后一次允许迭代时，也必须用 escaped 区分“未逃逸”。 */
-typedef struct { unsigned int iterations; bool escaped; } MandelbrotEscape;
+typedef struct {
+    unsigned int iterations;
+    bool escaped;
+} MandelbrotEscape;
 
 /** @brief 恢复中心 (-0.5,0)、宽度 3.5、迭代上限 128。 @param view 有效的可写视图。 */
 void mandelbrot_reset(MandelbrotView *view);

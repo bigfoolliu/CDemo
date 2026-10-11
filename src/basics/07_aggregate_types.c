@@ -9,7 +9,10 @@ typedef struct {
     int age;
 } Person; /* typedef 提供类型别名，不创建对象。 */
 
-enum ValueKind { INTEGER_VALUE, REAL_VALUE };
+enum ValueKind {
+    INTEGER_VALUE,
+    REAL_VALUE
+};
 struct Value {
     enum ValueKind kind;
     union {
@@ -25,7 +28,7 @@ struct Value {
 int main(void)
 {
     Person person = {.name = "小明", .age = 18}; /* 指定初始化。 */
-    Person copy = person; /* 结构体可整体赋值；指针成员只是复制地址。 */
+    Person copy = person;                        /* 结构体可整体赋值；指针成员只是复制地址。 */
     Person *pointer = &copy;
     pointer->age = 20; /* -> 等价于 (*pointer).age。 */
     struct Value value = {.kind = REAL_VALUE, .data.real = 3.5};

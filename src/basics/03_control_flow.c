@@ -15,7 +15,7 @@ int main(void)
         if (i == 2) {
             continue; /* 跳过本轮剩余语句。 */
         } else if (i == 5) {
-            break;    /* 结束最内层循环。 */
+            break; /* 结束最内层循环。 */
         }
         sum += i;
     }

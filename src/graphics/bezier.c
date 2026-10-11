@@ -5,17 +5,20 @@
 /** @brief 验证点为画布内有限坐标。 @param point 待验证的坐标。 */
 static bool valid_point(GfxPoint point)
 {
-    return isfinite(point.x) && isfinite(point.y) &&
-           point.x >= 0 && point.x <= GFX_WIDTH - 1 &&
+    return isfinite(point.x) && isfinite(point.y) && point.x >= 0 && point.x <= GFX_WIDTH - 1 &&
            point.y >= 0 && point.y <= GFX_HEIGHT - 1;
 }
 
 /** @brief 验证全部控制点。 @param curve 待验证曲线，可以为 nullptr。 */
 static bool valid_curve(const BezierCurve *curve)
 {
-    if (curve == nullptr) { return false; }
+    if (curve == nullptr) {
+        return false;
+    }
     for (int i = 0; i < BEZIER_POINT_COUNT; ++i) {
-        if (!valid_point(curve->points[i])) { return false; }
+        if (!valid_point(curve->points[i])) {
+            return false;
+        }
     }
     return true;
 }
@@ -36,7 +39,9 @@ void bezier_reset(BezierCurve *curve)
 static GfxPoint evaluate_unchecked(const BezierCurve *curve, double t)
 {
     GfxPoint work[BEZIER_POINT_COUNT];
-    for (int i = 0; i < BEZIER_POINT_COUNT; ++i) { work[i] = curve->points[i]; }
+    for (int i = 0; i < BEZIER_POINT_COUNT; ++i) {
+        work[i] = curve->points[i];
+    }
     /* 四点 -> 三点 -> 两点 -> 一点，每层都使用相同参数 t。
      * 加权平均保证曲线位于控制点凸包内，不会超出画布。
      */
@@ -72,8 +77,10 @@ bool bezier_move(BezierCurve *curve, int index, GfxPoint point)
 /** @copydoc bezier_hit */
 int bezier_hit(const BezierCurve *curve, GfxPoint point, double radius)
 {
-    if (!valid_curve(curve) || !valid_point(point) || !isfinite(radius) ||
-        radius < 0 || radius > GFX_COORD_LIMIT) { return -1; }
+    if (!valid_curve(curve) || !valid_point(point) || !isfinite(radius) || radius < 0 ||
+        radius > GFX_COORD_LIMIT) {
+        return -1;
+    }
     int found = -1;
     double best = radius * radius;
     for (int i = 0; i < BEZIER_POINT_COUNT; ++i) {
@@ -90,27 +97,32 @@ int bezier_hit(const BezierCurve *curve, GfxPoint point, double radius)
 /** @copydoc bezier_draw */
 bool bezier_draw(const BezierCurve *curve, int selected, GfxCanvas *canvas)
 {
-    if (!valid_curve(curve) || canvas == nullptr || selected < -1 || selected >= BEZIER_POINT_COUNT) {
+    if (!valid_curve(curve) || canvas == nullptr || selected < -1 ||
+        selected >= BEZIER_POINT_COUNT) {
         return false;
     }
     gfx_clear(canvas, gfx_rgb(18, 22, 32));
     for (int i = 1; i < BEZIER_POINT_COUNT; ++i) {
         gfx_line(canvas, (int)lround(curve->points[i - 1].x), (int)lround(curve->points[i - 1].y),
-                 (int)lround(curve->points[i].x), (int)lround(curve->points[i].y), gfx_rgb(90, 100, 120));
+                 (int)lround(curve->points[i].x), (int)lround(curve->points[i].y),
+                 gfx_rgb(90, 100, 120));
     }
     GfxPoint previous = curve->points[0];
     /* 均匀参数采样不是均匀弧长采样；128 段是固定画布上的显示近似。 */
     for (int i = 1; i <= BEZIER_SEGMENTS; ++i) {
         GfxPoint next = evaluate_unchecked(curve, (double)i / BEZIER_SEGMENTS);
-        gfx_line(canvas, (int)lround(previous.x), (int)lround(previous.y),
-                 (int)lround(next.x), (int)lround(next.y), gfx_rgb(80, 220, 240));
+        gfx_line(canvas, (int)lround(previous.x), (int)lround(previous.y), (int)lround(next.x),
+                 (int)lround(next.y), gfx_rgb(80, 220, 240));
         previous = next;
     }
     for (int i = 0; i < BEZIER_POINT_COUNT; ++i) {
         int x = (int)lround(curve->points[i].x), y = (int)lround(curve->points[i].y);
-        uint32_t color = i == 0 ? gfx_rgb(80, 220, 130) :
-                         i == 3 ? gfx_rgb(240, 110, 110) : gfx_rgb(100, 150, 255);
-        if (i == selected) { gfx_circle(canvas, x, y, 7, gfx_rgb(255, 220, 80)); }
+        uint32_t color = i == 0   ? gfx_rgb(80, 220, 130)
+                         : i == 3 ? gfx_rgb(240, 110, 110)
+                                  : gfx_rgb(100, 150, 255);
+        if (i == selected) {
+            gfx_circle(canvas, x, y, 7, gfx_rgb(255, 220, 80));
+        }
         gfx_rect(canvas, x - 3, y - 3, 7, 7, true, color);
     }
     return true;

@@ -9,7 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { SAND_DRAW_HZ = 60 };
+enum {
+    SAND_DRAW_HZ = 60
+};
 /** 绘制状态与物质网格分开；右键擦除优先于左键添加。 */
 typedef struct {
     SandWorld world;
@@ -28,11 +30,19 @@ static void reset_scene(SandDemoState *state, bool initial)
     sand_reset(&state->world);
     state->accumulator = 0;
     state->painting = state->erasing = false;
-    if (!initial) { return; }
-    for (int x = 30; x < 130; ++x) { sand_paint(&state->world, x, 80, 0, SAND_WALL); }
+    if (!initial) {
+        return;
+    }
+    for (int x = 30; x < 130; ++x) {
+        sand_paint(&state->world, x, 80, 0, SAND_WALL);
+    }
     for (int y = 20; y < 35; ++y) {
-        for (int x = 50; x < 70; ++x) { sand_paint(&state->world, x, y, 0, SAND_GRAIN); }
-        for (int x = 90; x < 115; ++x) { sand_paint(&state->world, x, y, 0, SAND_WATER); }
+        for (int x = 50; x < 70; ++x) {
+            sand_paint(&state->world, x, y, 0, SAND_GRAIN);
+        }
+        for (int x = 90; x < 115; ++x) {
+            sand_paint(&state->world, x, y, 0, SAND_WATER);
+        }
     }
 }
 
@@ -71,10 +81,18 @@ static void paint_mouse(SandDemoState *state, int x, int y, int width, int heigh
         state->mouse_x = start_x;
         state->mouse_y = start_y;
         paint_brush(state);
-        if (start_x == target_x && start_y == target_y) { break; }
+        if (start_x == target_x && start_y == target_y) {
+            break;
+        }
         int twice = 2 * error;
-        if (twice >= dy) { error += dy; start_x += sx; }
-        if (twice <= dx) { error += dx; start_y += sy; }
+        if (twice >= dy) {
+            error += dy;
+            start_x += sx;
+        }
+        if (twice <= dx) {
+            error += dx;
+            start_y += sy;
+        }
     }
 }
 
@@ -91,35 +109,69 @@ static bool handle_event(SandDemoState *state, const SDL_Event *event, int width
         state->running = false;
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         switch (event->key.keysym.sym) {
-        case SDLK_ESCAPE: state->running = false; break;
-        case SDLK_s: state->capture = true; break;
-        case SDLK_1: state->material = SAND_GRAIN; break;
-        case SDLK_2: state->material = SAND_WATER; break;
-        case SDLK_3: state->material = SAND_WALL; break;
-        case SDLK_LEFTBRACKET: if (state->radius > 1) { --state->radius; } break;
-        case SDLK_RIGHTBRACKET: if (state->radius < SAND_MAX_BRUSH) { ++state->radius; } break;
+        case SDLK_ESCAPE:
+            state->running = false;
+            break;
+        case SDLK_s:
+            state->capture = true;
+            break;
+        case SDLK_1:
+            state->material = SAND_GRAIN;
+            break;
+        case SDLK_2:
+            state->material = SAND_WATER;
+            break;
+        case SDLK_3:
+            state->material = SAND_WALL;
+            break;
+        case SDLK_LEFTBRACKET:
+            if (state->radius > 1) {
+                --state->radius;
+            }
+            break;
+        case SDLK_RIGHTBRACKET:
+            if (state->radius < SAND_MAX_BRUSH) {
+                ++state->radius;
+            }
+            break;
         case SDLK_SPACE:
             state->paused = !state->paused;
             state->accumulator = 0;
             return true;
         case SDLK_n:
-            if (state->paused) { sand_step(&state->world); }
+            if (state->paused) {
+                sand_step(&state->world);
+            }
             break;
-        case SDLK_r: reset_scene(state, true); return true;
-        case SDLK_c: reset_scene(state, false); return true;
-        default: break;
+        case SDLK_r:
+            reset_scene(state, true);
+            return true;
+        case SDLK_c:
+            reset_scene(state, false);
+            return true;
+        default:
+            break;
         }
     } else if (event->type == SDL_WINDOWEVENT &&
-               (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST || event->window.event == SDL_WINDOWEVENT_LEAVE)) {
+               (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST ||
+                event->window.event == SDL_WINDOWEVENT_LEAVE)) {
         state->painting = state->erasing = false;
     } else if (event->type == SDL_MOUSEBUTTONDOWN) {
-        if (event->button.button == SDL_BUTTON_LEFT) { state->painting = true; }
-        else if (event->button.button == SDL_BUTTON_RIGHT) { state->erasing = true; }
-        else { return false; }
+        if (event->button.button == SDL_BUTTON_LEFT) {
+            state->painting = true;
+        } else if (event->button.button == SDL_BUTTON_RIGHT) {
+            state->erasing = true;
+        } else {
+            return false;
+        }
         paint_mouse(state, event->button.x, event->button.y, width, height, false);
     } else if (event->type == SDL_MOUSEBUTTONUP) {
-        if (event->button.button == SDL_BUTTON_LEFT) { state->painting = false; }
-        if (event->button.button == SDL_BUTTON_RIGHT) { state->erasing = false; }
+        if (event->button.button == SDL_BUTTON_LEFT) {
+            state->painting = false;
+        }
+        if (event->button.button == SDL_BUTTON_RIGHT) {
+            state->erasing = false;
+        }
     } else if (event->type == SDL_MOUSEMOTION && (state->painting || state->erasing)) {
         state->painting = state->painting && (event->motion.state & SDL_BUTTON_LMASK) != 0;
         state->erasing = state->erasing && (event->motion.state & SDL_BUTTON_RMASK) != 0;
@@ -136,8 +188,13 @@ static bool handle_event(SandDemoState *state, const SDL_Event *event, int width
  */
 static void advance_time(SandDemoState *state, double elapsed)
 {
-    if (state->paused) { state->accumulator = 0; return; }
-    if (!isfinite(elapsed) || elapsed < 0) { return; }
+    if (state->paused) {
+        state->accumulator = 0;
+        return;
+    }
+    if (!isfinite(elapsed) || elapsed < 0) {
+        return;
+    }
     state->accumulator += fmin(elapsed, 0.1);
     const double tick = 1.0 / SAND_HZ;
     int count = 0;
@@ -161,8 +218,7 @@ int main(int argc, char *argv[])
     if (argc != 1) {
         char *end = nullptr;
         /* 短路求值确保 argc 合法后才读取后续参数。 */
-        if (argc != 3 || strcmp(argv[1], "--frames") != 0 ||
-            argv[2][0] < '0' || argv[2][0] > '9') {
+        if (argc != 3 || strcmp(argv[1], "--frames") != 0 || argv[2][0] < '0' || argv[2][0] > '9') {
             fputs("用法：sand_demo [--frames 1..10000]\n", stderr);
             return EXIT_FAILURE;
         }
@@ -175,16 +231,22 @@ int main(int argc, char *argv[])
     }
     GfxWindow display = {0};
     int status = EXIT_FAILURE;
-    if (!gfx_sdl_open(&display, "Sand")) { goto cleanup; }
-    static GfxCanvas canvas; /* 大画布放在静态存储区，避免占用约 300 KiB 栈。 */
+    if (!gfx_sdl_open(&display, "Sand")) {
+        goto cleanup;
+    }
+    static GfxCanvas canvas;    /* 大画布放在静态存储区，避免占用约 300 KiB 栈。 */
     static SandDemoState state; /* 网格及访问标记约 40 KiB，不放在栈上。 */
     state = (SandDemoState){.running = true, .material = SAND_GRAIN, .radius = 3};
     reset_scene(&state, true);
     Uint64 previous = SDL_GetPerformanceCounter();
     Uint64 frequency = SDL_GetPerformanceFrequency();
-    if (frequency == 0) { SDL_SetError("无法获取计时频率"); goto cleanup; }
+    if (frequency == 0) {
+        SDL_SetError("无法获取计时频率");
+        goto cleanup;
+    }
     unsigned long frames = 0;
-    puts("落沙模拟：1 沙/2 水/3 墙，左键绘制，右键擦除，[ / ] 调整笔刷，Space 暂停，N 单步，R 重置，C 清空，S 保存 BMP，Esc 退出。");
+    puts("落沙模拟：1 沙/2 水/3 墙，左键绘制，右键擦除，[ / ] 调整笔刷，Space 暂停，N 单步，R "
+         "重置，C 清空，S 保存 BMP，Esc 退出。");
     while (state.running) {
         Uint64 started = SDL_GetPerformanceCounter();
         /* 计数差除以每秒计数得到秒数；暂停也更新 previous，避免恢复时追赶。 */
@@ -194,15 +256,25 @@ int main(int argc, char *argv[])
         SDL_GetWindowSize(display.window, &width, &height);
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (handle_event(&state, &event, width, height)) { elapsed = 0; }
+            if (handle_event(&state, &event, width, height)) {
+                elapsed = 0;
+            }
         }
-        if (!state.running) { break; }
+        if (!state.running) {
+            break;
+        }
         advance_time(&state, elapsed);
-        if (!sand_draw(&state.world, &canvas)) { SDL_SetError("非法落沙状态"); goto cleanup; }
+        if (!sand_draw(&state.world, &canvas)) {
+            SDL_SetError("非法落沙状态");
+            goto cleanup;
+        }
         char title[256];
-        const char *name = state.material == SAND_GRAIN ? "sand" : state.material == SAND_WATER ? "water" : "wall";
+        const char *name = state.material == SAND_GRAIN   ? "sand"
+                           : state.material == SAND_WATER ? "water"
+                                                          : "wall";
         snprintf(title, sizeof title,
-                 "Falling sand | steps=%" PRIu64 " | %s | %s radius=%d | 1/2/3 | L: paint R: erase | [ ] | Space/N R/C S Esc",
+                 "Falling sand | steps=%" PRIu64
+                 " | %s | %s radius=%d | 1/2/3 | L: paint R: erase | [ ] | Space/N R/C S Esc",
                  state.world.steps, state.paused ? "paused" : "running", name, state.radius);
         SDL_SetWindowTitle(display.window, title);
         if (state.capture) {
@@ -215,8 +287,12 @@ int main(int argc, char *argv[])
             }
             state.capture = false;
         }
-        if (!gfx_sdl_present(&display, &canvas)) { goto cleanup; }
-        if (limit != 0 && ++frames >= limit) { break; } /* 显示次数与模拟步数分别统计。 */
+        if (!gfx_sdl_present(&display, &canvas)) {
+            goto cleanup;
+        }
+        if (limit != 0 && ++frames >= limit) {
+            break;
+        } /* 显示次数与模拟步数分别统计。 */
         double spent = (double)(SDL_GetPerformanceCounter() - started) / (double)frequency;
         /* 目标显示 60 FPS，模拟采用每秒 60 步；延时精度和调度影响实际 FPS。
          * 超时帧不等待；单帧时间截断意味着长停顿的额外模拟时间被丢弃。
@@ -227,7 +303,9 @@ int main(int argc, char *argv[])
     }
     status = EXIT_SUCCESS;
 cleanup:
-    if (status != EXIT_SUCCESS) { fprintf(stderr, "SDL 失败：%s\n", SDL_GetError()); }
+    if (status != EXIT_SUCCESS) {
+        fprintf(stderr, "SDL 失败：%s\n", SDL_GetError());
+    }
     gfx_sdl_close(&display);
     return status;
 }

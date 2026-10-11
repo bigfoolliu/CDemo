@@ -18,7 +18,8 @@
 typedef struct {
     ParticleSystem particles; /* 本演示自己拥有的粒子池。 */
     bool running, paused;
-    bool capture; /* S 请求保存本帧；重复按键忽略，同帧多次请求合并。 */ /* running 控制退出；paused 只控制自动模拟。 */
+    bool capture;
+    /* S 请求保存本帧；重复按键忽略，同帧多次请求合并。 */ /* running 控制退出；paused 只控制自动模拟。 */
     double accumulator; /* 尚未用于模拟的秒数，正常推进后小于 1/60 秒。 */
 } ParticleDemoState;
 
@@ -36,8 +37,12 @@ static bool handle_event(ParticleDemoState *state, const SDL_Event *event)
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         /* SDL 在按住键时会生成重复事件；忽略它们，避免连续切换暂停或单步。 */
         switch (event->key.keysym.sym) {
-        case SDLK_s: state->capture = true; break;
-        case SDLK_ESCAPE: state->running = false; break;
+        case SDLK_s:
+            state->capture = true;
+            break;
+        case SDLK_ESCAPE:
+            state->running = false;
+            break;
         case SDLK_SPACE:
             state->paused = !state->paused;
             /* 清掉前一阶段不足一步的余量；返回 true 还会丢弃当前帧 elapsed，
@@ -47,14 +52,17 @@ static bool handle_event(ParticleDemoState *state, const SDL_Event *event)
             return true;
         case SDLK_n:
             /* 单步直接调用核心，不依赖累积时间；运行状态下按 N 不额外加速。 */
-            if (state->paused) { particles_step(&state->particles); }
+            if (state->paused) {
+                particles_step(&state->particles);
+            }
             break;
         case SDLK_r:
             /* 固定种子重现相同发射序列；不改 paused，方便暂停后从头观察。 */
             particles_reset(&state->particles, 42);
             state->accumulator = 0;
             return true;
-        default: break;
+        default:
+            break;
         }
     }
     return false;
@@ -73,7 +81,9 @@ static void advance_time(ParticleDemoState *state, double elapsed)
         return;
     }
     /* 非有限数会污染累加器，负数也不是有效时长；在入口直接忽略。 */
-    if (!isfinite(elapsed) || elapsed < 0) { return; }
+    if (!isfinite(elapsed) || elapsed < 0) {
+        return;
+    }
     /* 最多接收 0.1 秒，避免断点/系统挂起后追赶大量更新。
      * 因此长停顿的额外时间被丢弃，模拟不保证严格追随真实时间。
      */
@@ -102,8 +112,7 @@ int main(int argc, char *argv[])
         /* 先验证参数数量再访问 argv[1]/argv[2]，利用 || 的短路求值保证安全。
          * 首字符必须为数字，拒绝 strtoul 本来可以接受的空白或正负号。
          */
-        if (argc != 3 || strcmp(argv[1], "--frames") != 0 ||
-            argv[2][0] < '0' || argv[2][0] > '9') {
+        if (argc != 3 || strcmp(argv[1], "--frames") != 0 || argv[2][0] < '0' || argv[2][0] > '9') {
             fputs("用法：particles_demo [--frames 1..10000]\n", stderr);
             return EXIT_FAILURE;
         }
@@ -120,7 +129,9 @@ int main(int argc, char *argv[])
      */
     GfxWindow display = {0};
     int status = EXIT_FAILURE;
-    if (!gfx_sdl_open(&display, "C particles")) { goto cleanup; }
+    if (!gfx_sdl_open(&display, "C particles")) {
+        goto cleanup;
+    }
     static GfxCanvas canvas; /* 约 300 KiB 的画布放在静态存储区，减少栈占用。 */
     ParticleDemoState state = {.running = true};
     particles_reset(&state.particles, 42);
@@ -141,17 +152,22 @@ int main(int argc, char *argv[])
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             /* 一帧处理完当前事件队列；暂停切换和重置要求丢弃本帧增量。 */
-            if (handle_event(&state, &event)) { elapsed = 0; }
+            if (handle_event(&state, &event)) {
+                elapsed = 0;
+            }
         }
-        if (!state.running) { break; } /* 收到退出请求后不再更新或显示下一帧。 */
+        if (!state.running) {
+            break;
+        } /* 收到退出请求后不再更新或显示下一帧。 */
         advance_time(&state, elapsed);
         /* 每帧重画背景，再根据当前粒子状态绘图；否则旧位置会留下拖尾。 */
         gfx_clear(&canvas, gfx_rgb(18, 23, 32));
         particles_draw(&state.particles, &canvas);
         char title[160]; /* snprintf 限制写入长度；%zu 对应 size_t 类型的存活数。 */
-        snprintf(title, sizeof title,
-                 "C particles | %zu/256 | %s | Space: pause | N: step | R: reset | S: BMP | Esc: quit",
-                 particles_count(&state.particles), state.paused ? "paused" : "running");
+        snprintf(
+            title, sizeof title,
+            "C particles | %zu/256 | %s | Space: pause | N: step | R: reset | S: BMP | Esc: quit",
+            particles_count(&state.particles), state.paused ? "paused" : "running");
         SDL_SetWindowTitle(display.window, title);
         /* 将 CPU 像素数组复制到 SDL 纹理；绘图核心不直接调用 SDL 图元 API。 */
         if (state.capture) {
@@ -164,11 +180,15 @@ int main(int argc, char *argv[])
             }
             state.capture = false;
         }
-        if (!gfx_sdl_present(&display, &canvas)) { goto cleanup; }
+        if (!gfx_sdl_present(&display, &canvas)) {
+            goto cleanup;
+        }
         /* --frames 统计显示次数，不是模拟步数；它们不一定一一对应。
          * && 的短路求值使无限运行模式下不必增加 frames。
          */
-        if (limit != 0 && ++frames >= limit) { break; }
+        if (limit != 0 && ++frames >= limit) {
+            break;
+        }
         /* 默认目标 60 FPS：先扣除本帧已经耗费的秒数，再等待剩余时间。
          * SDL_Delay 接受毫秒，转换为 Uint32 会截掉小数；调度也会引入误差，
          * 所以这里只是主动限速，不能保证精确 60 FPS。超时帧不再额外等待。
@@ -181,7 +201,9 @@ int main(int argc, char *argv[])
     status = EXIT_SUCCESS;
 cleanup:
     /* goto 只用于统一清理路径；SDL 错误要在清理前读取，避免错误信息被改变。 */
-    if (status != EXIT_SUCCESS) { fprintf(stderr, "SDL 失败：%s\n", SDL_GetError()); }
+    if (status != EXIT_SUCCESS) {
+        fprintf(stderr, "SDL 失败：%s\n", SDL_GetError());
+    }
     gfx_sdl_close(&display);
     return status;
 }

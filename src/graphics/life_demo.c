@@ -12,13 +12,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { LIFE_DRAW_HZ = 60 };
+enum {
+    LIFE_DRAW_HZ = 60
+};
 /** 世界与窗口控制分离：暂停不影响显示，鼠标编辑不替换最近选择的预设。 */
 typedef struct {
     LifeWorld world;
     LifePattern preset;
     bool running, paused, custom;
-    bool capture; /* S 请求保存本帧；重复按键忽略，同帧多次请求合并。 */
+    bool capture;       /* S 请求保存本帧；重复按键忽略，同帧多次请求合并。 */
     double accumulator; /* 尚未用于演化的秒数，不积累暂停时间。 */
 } LifeDemoState;
 
@@ -49,31 +51,45 @@ static bool handle_event(LifeDemoState *state, const SDL_Event *event, int width
         state->running = false;
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         switch (event->key.keysym.sym) {
-        case SDLK_s: state->capture = true; break;
-        case SDLK_ESCAPE: state->running = false; break;
+        case SDLK_s:
+            state->capture = true;
+            break;
+        case SDLK_ESCAPE:
+            state->running = false;
+            break;
         case SDLK_SPACE:
             state->paused = !state->paused;
             state->accumulator = 0;
             return true;
         case SDLK_n:
-            if (state->paused) { life_step(&state->world); }
+            if (state->paused) {
+                life_step(&state->world);
+            }
             break;
-        case SDLK_1: load_preset(state, LIFE_GLIDER); return true;
-        case SDLK_2: load_preset(state, LIFE_BLINKER); return true;
-        case SDLK_3: load_preset(state, LIFE_RANDOM); return true;
-        case SDLK_r: load_preset(state, state->preset); return true;
+        case SDLK_1:
+            load_preset(state, LIFE_GLIDER);
+            return true;
+        case SDLK_2:
+            load_preset(state, LIFE_BLINKER);
+            return true;
+        case SDLK_3:
+            load_preset(state, LIFE_RANDOM);
+            return true;
+        case SDLK_r:
+            load_preset(state, state->preset);
+            return true;
         case SDLK_c:
             life_reset(&state->world, LIFE_EMPTY);
             state->paused = true;
             state->custom = true;
             state->accumulator = 0;
             return true;
-        default: break;
+        default:
+            break;
         }
     } else if (event->type == SDL_MOUSEBUTTONDOWN && event->button.button == SDL_BUTTON_LEFT &&
-               state->paused && width > 0 && height > 0 &&
-               event->button.x >= 0 && event->button.x < width &&
-               event->button.y >= 0 && event->button.y < height) {
+               state->paused && width > 0 && height > 0 && event->button.x >= 0 &&
+               event->button.x < width && event->button.y >= 0 && event->button.y < height) {
         /* 整个窗口显示整张画布；按比例映射到格子，不硬编码两倍放大。
          * 先转 int64_t 再乘，避免较大窗口坐标的整数乘法溢出。
          */
@@ -95,8 +111,13 @@ static bool handle_event(LifeDemoState *state, const SDL_Event *event, int width
  */
 static void advance_time(LifeDemoState *state, double elapsed)
 {
-    if (state->paused) { state->accumulator = 0; return; }
-    if (!isfinite(elapsed) || elapsed < 0) { return; }
+    if (state->paused) {
+        state->accumulator = 0;
+        return;
+    }
+    if (!isfinite(elapsed) || elapsed < 0) {
+        return;
+    }
     state->accumulator += fmin(elapsed, 0.1);
     const double tick = 1.0 / LIFE_HZ; /* 1.0 保证浮点除法，整数 1/10 会得到零。 */
     while (state->accumulator >= tick) {
@@ -112,12 +133,18 @@ static void advance_time(LifeDemoState *state, double elapsed)
  */
 static const char *pattern_name(const LifeDemoState *state)
 {
-    if (state->custom) { return "custom"; }
+    if (state->custom) {
+        return "custom";
+    }
     switch (state->preset) {
-    case LIFE_GLIDER: return "glider";
-    case LIFE_BLINKER: return "blinker";
-    case LIFE_RANDOM: return "random";
-    default: return "empty";
+    case LIFE_GLIDER:
+        return "glider";
+    case LIFE_BLINKER:
+        return "blinker";
+    case LIFE_RANDOM:
+        return "random";
+    default:
+        return "empty";
     }
 }
 
@@ -133,8 +160,7 @@ int main(int argc, char *argv[])
     if (argc != 1) {
         char *end = nullptr;
         /* 短路求值确保 argc 合法后才读取后续参数。 */
-        if (argc != 3 || strcmp(argv[1], "--frames") != 0 ||
-            argv[2][0] < '0' || argv[2][0] > '9') {
+        if (argc != 3 || strcmp(argv[1], "--frames") != 0 || argv[2][0] < '0' || argv[2][0] > '9') {
             fputs("用法：life_demo [--frames 1..10000]\n", stderr);
             return EXIT_FAILURE;
         }
@@ -147,15 +173,21 @@ int main(int argc, char *argv[])
     }
     GfxWindow display = {0};
     int status = EXIT_FAILURE;
-    if (!gfx_sdl_open(&display, "Conway Life")) { goto cleanup; }
+    if (!gfx_sdl_open(&display, "Conway Life")) {
+        goto cleanup;
+    }
     static GfxCanvas canvas; /* 大画布放在静态存储区，避免占用约 300 KiB 栈。 */
     LifeDemoState state = {.running = true};
     load_preset(&state, LIFE_GLIDER);
     Uint64 previous = SDL_GetPerformanceCounter();
     Uint64 frequency = SDL_GetPerformanceFrequency();
-    if (frequency == 0) { SDL_SetError("无法获取计时频率"); goto cleanup; }
+    if (frequency == 0) {
+        SDL_SetError("无法获取计时频率");
+        goto cleanup;
+    }
     unsigned long frames = 0;
-    puts("生命游戏：Space 暂停/继续，N 单步，1/2/3 图案，R 重置，C 清空，暂停时左键编辑，S 保存 BMP，Esc 退出。");
+    puts("生命游戏：Space 暂停/继续，N 单步，1/2/3 图案，R 重置，C 清空，暂停时左键编辑，S 保存 "
+         "BMP，Esc 退出。");
     while (state.running) {
         Uint64 started = SDL_GetPerformanceCounter();
         /* 计数差除以每秒计数得到秒数；暂停也更新 previous，避免恢复时追赶。 */
@@ -165,15 +197,20 @@ int main(int argc, char *argv[])
         SDL_GetWindowSize(display.window, &width, &height);
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (handle_event(&state, &event, width, height)) { elapsed = 0; }
+            if (handle_event(&state, &event, width, height)) {
+                elapsed = 0;
+            }
         }
-        if (!state.running) { break; }
+        if (!state.running) {
+            break;
+        }
         advance_time(&state, elapsed);
         life_draw(&state.world, &canvas);
         char title[256];
         /* PRIu64 匹配 uint64_t，%zu 匹配 size_t；snprintf 限制写入长度。 */
         snprintf(title, sizeof title,
-                 "Life | %s | gen=%" PRIu64 " | alive=%zu | %s | Space/N | 1/2/3 | R/C | click | S: BMP | Esc",
+                 "Life | %s | gen=%" PRIu64
+                 " | alive=%zu | %s | Space/N | 1/2/3 | R/C | click | S: BMP | Esc",
                  pattern_name(&state), state.world.generation, life_count(&state.world),
                  state.paused ? "paused" : "running");
         SDL_SetWindowTitle(display.window, title);
@@ -187,8 +224,12 @@ int main(int argc, char *argv[])
             }
             state.capture = false;
         }
-        if (!gfx_sdl_present(&display, &canvas)) { goto cleanup; }
-        if (limit != 0 && ++frames >= limit) { break; } /* 显示次数与演化代数不同。 */
+        if (!gfx_sdl_present(&display, &canvas)) {
+            goto cleanup;
+        }
+        if (limit != 0 && ++frames >= limit) {
+            break;
+        } /* 显示次数与演化代数不同。 */
         double spent = (double)(SDL_GetPerformanceCounter() - started) / (double)frequency;
         /* 目标显示 60 FPS，模拟只有 10 代/秒；延时精度和调度影响实际 FPS。
          * 超时帧不等待；单帧时间截断意味着长停顿的额外模拟时间被丢弃。
@@ -199,7 +240,9 @@ int main(int argc, char *argv[])
     }
     status = EXIT_SUCCESS;
 cleanup:
-    if (status != EXIT_SUCCESS) { fprintf(stderr, "SDL 失败：%s\n", SDL_GetError()); }
+    if (status != EXIT_SUCCESS) {
+        fprintf(stderr, "SDL 失败：%s\n", SDL_GetError());
+    }
     gfx_sdl_close(&display);
     return status;
 }

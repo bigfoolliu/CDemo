@@ -20,16 +20,16 @@ int main(void)
         fputs("内存池初始化失败。\n", stderr);
         return EXIT_FAILURE;
     }
-    printf("初始化：块载荷=%zu 字节，实际间距=%zu 字节，对齐=%zu，容量=%zu\n",
-           pool.block_size, pool.stride, alignof(max_align_t), pool.capacity);
+    printf("初始化：块载荷=%zu 字节，实际间距=%zu 字节，对齐=%zu，容量=%zu\n", pool.block_size,
+           pool.stride, alignof(max_align_t), pool.capacity);
     PointObject *objects[3];
     for (size_t i = 0; i < 3; ++i) {
         objects[i] = memory_pool_alloc(&pool, sizeof *objects[i]);
         assert(objects[i] != nullptr);
         /* 池不会清零；以正确类型写入对象后才能读取字段。 */
         *objects[i] = (PointObject){.id = (unsigned int)i + 1, .x = (double)i * 10, .y = 20};
-        printf("分配对象 %u：地址=%p，剩余块=%zu\n", objects[i]->id,
-               (void *)objects[i], memory_pool_available(&pool));
+        printf("分配对象 %u：地址=%p，剩余块=%zu\n", objects[i]->id, (void *)objects[i],
+               memory_pool_available(&pool));
     }
     void *extra = memory_pool_alloc(&pool, sizeof(PointObject));
     assert(extra == nullptr);
@@ -49,9 +49,12 @@ int main(void)
     assert((void *)replacement == original);
     *replacement = (PointObject){.id = 99, .x = 1.5, .y = 2.5};
     printf("重新分配：复用原地址=%p，新对象 id=%u\n", (void *)replacement, replacement->id);
-    released = memory_pool_release(&pool, objects[0]); assert(released);
-    released = memory_pool_release(&pool, objects[2]); assert(released);
-    released = memory_pool_release(&pool, replacement); assert(released);
+    released = memory_pool_release(&pool, objects[0]);
+    assert(released);
+    released = memory_pool_release(&pool, objects[2]);
+    assert(released);
+    released = memory_pool_release(&pool, replacement);
+    assert(released);
     assert(memory_pool_available(&pool) == 3);
     memory_pool_destroy(&pool);
     memory_pool_destroy(&pool);

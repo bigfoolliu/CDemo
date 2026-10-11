@@ -11,7 +11,12 @@ enum {
     SAND_MAX_BRUSH = 8
 };
 /** 空气可被移动物质占据；沙可与水交换，墙永不自行移动。 */
-typedef enum { SAND_AIR, SAND_GRAIN, SAND_WATER, SAND_WALL } SandMaterial;
+typedef enum {
+    SAND_AIR,
+    SAND_GRAIN,
+    SAND_WATER,
+    SAND_WALL
+} SandMaterial;
 
 /** 调用者持有网格；reset 后仅通过接口修改，可只读观察 cells 和 steps。
  * 外圈为不可编辑墙，moved 是单步访问标记，不属于持久物质状态。

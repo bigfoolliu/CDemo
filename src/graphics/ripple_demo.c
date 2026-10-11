@@ -9,7 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { RIPPLE_DRAW_HZ = 60 };
+enum {
+    RIPPLE_DRAW_HZ = 60
+};
 /** 暂停只停止时间演进，仍可添加扰动、显示与截图。 */
 typedef struct {
     RippleWorld world;
@@ -24,7 +26,9 @@ typedef struct {
 static void reset_scene(RippleDemoState *state, bool initial)
 {
     ripple_reset(&state->world);
-    if (initial) { ripple_disturb(&state->world, RIPPLE_WIDTH / 2, RIPPLE_HEIGHT / 2, 6, 8); }
+    if (initial) {
+        ripple_disturb(&state->world, RIPPLE_WIDTH / 2, RIPPLE_HEIGHT / 2, 6, 8);
+    }
     state->accumulator = 0;
 }
 
@@ -41,21 +45,33 @@ static bool handle_event(RippleDemoState *state, const SDL_Event *event, int wid
         state->running = false;
     } else if (event->type == SDL_KEYDOWN && event->key.repeat == 0) {
         switch (event->key.keysym.sym) {
-        case SDLK_ESCAPE: state->running = false; break;
-        case SDLK_s: state->capture = true; break;
+        case SDLK_ESCAPE:
+            state->running = false;
+            break;
+        case SDLK_s:
+            state->capture = true;
+            break;
         case SDLK_SPACE:
             state->paused = !state->paused;
             state->accumulator = 0;
             return true;
         case SDLK_n:
-            if (state->paused) { ripple_step(&state->world); }
+            if (state->paused) {
+                ripple_step(&state->world);
+            }
             break;
-        case SDLK_r: reset_scene(state, true); return true;
-        case SDLK_c: reset_scene(state, false); return true;
-        default: break;
+        case SDLK_r:
+            reset_scene(state, true);
+            return true;
+        case SDLK_c:
+            reset_scene(state, false);
+            return true;
+        default:
+            break;
         }
     } else if (event->type == SDL_MOUSEBUTTONDOWN &&
-               (event->button.button == SDL_BUTTON_LEFT || event->button.button == SDL_BUTTON_RIGHT) &&
+               (event->button.button == SDL_BUTTON_LEFT ||
+                event->button.button == SDL_BUTTON_RIGHT) &&
                width > 0 && height > 0 && event->button.x >= 0 && event->button.x < width &&
                event->button.y >= 0 && event->button.y < height) {
         /* 先扩展到 int64_t 再乘，避免极大窗口尺寸下整数溢出。
@@ -74,8 +90,13 @@ static bool handle_event(RippleDemoState *state, const SDL_Event *event, int wid
  */
 static void advance_time(RippleDemoState *state, double elapsed)
 {
-    if (state->paused) { state->accumulator = 0; return; }
-    if (!isfinite(elapsed) || elapsed < 0) { return; }
+    if (state->paused) {
+        state->accumulator = 0;
+        return;
+    }
+    if (!isfinite(elapsed) || elapsed < 0) {
+        return;
+    }
     state->accumulator += fmin(elapsed, 0.1);
     const double tick = 1.0 / RIPPLE_HZ;
     int count = 0;
@@ -98,8 +119,7 @@ int main(int argc, char *argv[])
     if (argc != 1) {
         char *end = nullptr;
         /* 短路求值确保 argc 合法后才读取后续参数。 */
-        if (argc != 3 || strcmp(argv[1], "--frames") != 0 ||
-            argv[2][0] < '0' || argv[2][0] > '9') {
+        if (argc != 3 || strcmp(argv[1], "--frames") != 0 || argv[2][0] < '0' || argv[2][0] > '9') {
             fputs("用法：ripple_demo [--frames 1..10000]\n", stderr);
             return EXIT_FAILURE;
         }
@@ -112,16 +132,22 @@ int main(int argc, char *argv[])
     }
     GfxWindow display = {0};
     int status = EXIT_FAILURE;
-    if (!gfx_sdl_open(&display, "Ripple")) { goto cleanup; }
-    static GfxCanvas canvas; /* 大画布放在静态存储区，避免占用约 300 KiB 栈。 */
+    if (!gfx_sdl_open(&display, "Ripple")) {
+        goto cleanup;
+    }
+    static GfxCanvas canvas;      /* 大画布放在静态存储区，避免占用约 300 KiB 栈。 */
     static RippleDemoState state; /* 两层高度场约 150 KiB，不放在栈上。 */
     state = (RippleDemoState){.running = true};
     reset_scene(&state, true);
     Uint64 previous = SDL_GetPerformanceCounter();
     Uint64 frequency = SDL_GetPerformanceFrequency();
-    if (frequency == 0) { SDL_SetError("无法获取计时频率"); goto cleanup; }
+    if (frequency == 0) {
+        SDL_SetError("无法获取计时频率");
+        goto cleanup;
+    }
     unsigned long frames = 0;
-    puts("波纹模拟：左键凸起/右键凹陷，Space 暂停/继续，N 单步，R 初始波纹，C 清空，S 保存 BMP，Esc 退出。");
+    puts("波纹模拟：左键凸起/右键凹陷，Space 暂停/继续，N 单步，R 初始波纹，C 清空，S 保存 "
+         "BMP，Esc 退出。");
     while (state.running) {
         Uint64 started = SDL_GetPerformanceCounter();
         /* 计数差除以每秒计数得到秒数；暂停也更新 previous，避免恢复时追赶。 */
@@ -131,14 +157,22 @@ int main(int argc, char *argv[])
         SDL_GetWindowSize(display.window, &width, &height);
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (handle_event(&state, &event, width, height)) { elapsed = 0; }
+            if (handle_event(&state, &event, width, height)) {
+                elapsed = 0;
+            }
         }
-        if (!state.running) { break; }
+        if (!state.running) {
+            break;
+        }
         advance_time(&state, elapsed);
-        if (!ripple_draw(&state.world, &canvas)) { SDL_SetError("非法波纹状态"); goto cleanup; }
+        if (!ripple_draw(&state.world, &canvas)) {
+            SDL_SetError("非法波纹状态");
+            goto cleanup;
+        }
         char title[256];
         snprintf(title, sizeof title,
-                 "Ripple | steps=%" PRIu64 " | %s | left/right click | Space/N | R/C | S: BMP | Esc",
+                 "Ripple | steps=%" PRIu64
+                 " | %s | left/right click | Space/N | R/C | S: BMP | Esc",
                  state.world.steps, state.paused ? "paused" : "running");
         SDL_SetWindowTitle(display.window, title);
         if (state.capture) {
@@ -151,8 +185,12 @@ int main(int argc, char *argv[])
             }
             state.capture = false;
         }
-        if (!gfx_sdl_present(&display, &canvas)) { goto cleanup; }
-        if (limit != 0 && ++frames >= limit) { break; } /* 显示次数与模拟步数分别统计。 */
+        if (!gfx_sdl_present(&display, &canvas)) {
+            goto cleanup;
+        }
+        if (limit != 0 && ++frames >= limit) {
+            break;
+        } /* 显示次数与模拟步数分别统计。 */
         double spent = (double)(SDL_GetPerformanceCounter() - started) / (double)frequency;
         /* 目标显示 60 FPS，模拟采用每秒 60 步；延时精度和调度影响实际 FPS。
          * 超时帧不等待；单帧时间截断意味着长停顿的额外模拟时间被丢弃。
@@ -163,7 +201,9 @@ int main(int argc, char *argv[])
     }
     status = EXIT_SUCCESS;
 cleanup:
-    if (status != EXIT_SUCCESS) { fprintf(stderr, "SDL 失败：%s\n", SDL_GetError()); }
+    if (status != EXIT_SUCCESS) {
+        fprintf(stderr, "SDL 失败：%s\n", SDL_GetError());
+    }
     gfx_sdl_close(&display);
     return status;
 }

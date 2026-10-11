@@ -62,8 +62,8 @@ void particles_step(ParticleSystem *system)
          * 回收只改标记，不必擦除旧字段；第二轮发射会覆盖整个槽位。
          * 寿命刚减到零的槽位也会被第二轮直接视为空闲。
          */
-        if (particle->x < 0 || particle->x >= GFX_WIDTH ||
-            particle->y < 0 || particle->y >= GFX_HEIGHT) {
+        if (particle->x < 0 || particle->x >= GFX_WIDTH || particle->y < 0 ||
+            particle->y >= GFX_HEIGHT) {
             particle->remaining = 0;
         }
     }
@@ -86,8 +86,13 @@ void particles_step(ParticleSystem *system)
         /* 发射点在画布底部附近；整体赋值替换上次使用该槽位留下的字段。
          * 保存初始 lifetime，后续才能计算剩余寿命占比。
          */
-        system->pool[i] = (Particle){.x = 160, .y = 210, .vx = vx, .vy = vy,
-            .remaining = lifetime, .lifetime = lifetime, .green = green};
+        system->pool[i] = (Particle){.x = 160,
+                                     .y = 210,
+                                     .vx = vx,
+                                     .vy = vy,
+                                     .remaining = lifetime,
+                                     .lifetime = lifetime,
+                                     .green = green};
         ++emitted;
     }
 }
@@ -118,9 +123,9 @@ void particles_draw(const ParticleSystem *system, GfxCanvas *canvas)
          * 例：剩余一半寿命时，(255,200,60) 变为 (127,100,30)。
          */
         double brightness = (double)particle->remaining / particle->lifetime;
-        uint32_t color = gfx_rgb((uint8_t)(255 * brightness),
-                                (uint8_t)(particle->green * brightness),
-                                (uint8_t)(60 * brightness));
+        uint32_t color =
+            gfx_rgb((uint8_t)(255 * brightness), (uint8_t)(particle->green * brightness),
+                    (uint8_t)(60 * brightness));
         /* 模拟保留亚像素精度，只有提交绘图时才取整。
          * true 表示填充；逻辑 2×2 像素在两倍窗口中显示为 4×4 色块。
          * gfx_rect 会裁切跨越右/下边界的部分。未做 alpha 混合，后画覆盖先画。

@@ -18,7 +18,6 @@ int main(void)
     assert(flags == 165u);
     assert(population == 1000000u);
     assert(mask == 65280u);
-    printf("数字字面量：flags=%u，population=%u，mask=0x%X\n",
-           flags, population, mask);
+    printf("数字字面量：flags=%u，population=%u，mask=0x%X\n", flags, population, mask);
     return 0;
 }

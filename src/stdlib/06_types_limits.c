@@ -42,8 +42,8 @@ int main(void)
     assert(CHAR_BIT >= 8 && INT_MIN < 0 && INT_MAX >= 32767);
     assert(SIZE_MAX >= count && DBL_MAX >= 1 && DBL_EPSILON > 0);
     uint_least32_t identifier = UINT32_C(123456);
-    printf("types：size_t=%zu，ptrdiff_t=%td，整数=%" PRIuLEAST32 "，CHAR_BIT=%d\n",
-           count, distance, identifier, CHAR_BIT);
+    printf("types：size_t=%zu，ptrdiff_t=%td，整数=%" PRIuLEAST32 "，CHAR_BIT=%d\n", count,
+           distance, identifier, CHAR_BIT);
     /* uint_least32_t 保证至少 32 位；精确宽度 uint32_t 依赖实现提供。 */
     return 0;
 }

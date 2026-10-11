@@ -13,7 +13,10 @@
 /* 容量限制同时约束内存和每步扫描量；模拟频率决定一个寿命单位的时长。
  * 演示主循环也借用 PARTICLE_HZ 作为绘制限速目标，但绘制与更新分别执行。
  */
-enum { PARTICLE_CAPACITY = 256, PARTICLE_HZ = 60 };
+enum {
+    PARTICLE_CAPACITY = 256,
+    PARTICLE_HZ = 60
+};
 
 /**
  * 单粒子状态。位置用浮点数累积，绘制时才取整，避免慢速移动被整数截断。
@@ -21,10 +24,10 @@ enum { PARTICLE_CAPACITY = 256, PARTICLE_HZ = 60 };
  * 0 < remaining <= lifetime。remaining == 0 时其他字段不参与更新或绘制。
  */
 typedef struct {
-    double x, y; /* 像素坐标；原点在左上角，x 向右，y 向下。 */
-    double vx, vy; /* 像素/秒；vy < 0 向上，vy > 0 向下。 */
+    double x, y;                      /* 像素坐标；原点在左上角，x 向右，y 向下。 */
+    double vx, vy;                    /* 像素/秒；vy < 0 向上，vy > 0 向下。 */
     unsigned int remaining, lifetime; /* 剩余/初始寿命，单位为 1/PARTICLE_HZ 秒。 */
-    uint8_t green; /* 初始 RGB 为 (255, green, 60)，三通道按寿命比例渐暗。 */
+    uint8_t green;                    /* 初始 RGB 为 (255, green, 60)，三通道按寿命比例渐暗。 */
 } Particle;
 
 /**
@@ -33,7 +36,7 @@ typedef struct {
  */
 typedef struct {
     Particle pool[PARTICLE_CAPACITY]; /* 不压缩数组，空槽可在下次发射时复用。 */
-    uint32_t rng; /* 每次取随机数都会推进此状态；相同种子和调用顺序可重现。 */
+    uint32_t rng;                     /* 每次取随机数都会推进此状态；相同种子和调用顺序可重现。 */
 } ParticleSystem;
 
 /**

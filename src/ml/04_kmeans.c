@@ -5,8 +5,14 @@
 #include <math.h>
 #include <stdio.h>
 
-enum { POINT_COUNT = 6, CLUSTER_COUNT = 2 };
-typedef struct { double x; double y; } Point;
+enum {
+    POINT_COUNT = 6,
+    CLUSTER_COUNT = 2
+};
+typedef struct {
+    double x;
+    double y;
+} Point;
 
 /**
  * @brief 计算两点的欧氏距离平方。
@@ -30,7 +36,8 @@ static double distance_squared(Point a, Point b)
 static size_t nearest(Point point, const Point centers[CLUSTER_COUNT])
 {
     return distance_squared(point, centers[0]) <= distance_squared(point, centers[1])
-        ? 0 : 1; /* 等距离时选编号较小的簇。 */
+               ? 0
+               : 1; /* 等距离时选编号较小的簇。 */
 }
 
 /**
@@ -106,7 +113,7 @@ int main(void)
     Point empty_test[CLUSTER_COUNT] = {{1, 1}, {100, 100}};
     (void)train(identical, empty_test);
     assert(empty_test[1].x == 100 && isfinite(objective(identical, empty_test)));
-    printf("K-means：%zu 次迭代，中心0=(%.3f,%.3f)，中心1=(%.3f,%.3f)\n",
-           iterations, centers[0].x, centers[0].y, centers[1].x, centers[1].y);
+    printf("K-means：%zu 次迭代，中心0=(%.3f,%.3f)，中心1=(%.3f,%.3f)\n", iterations, centers[0].x,
+           centers[0].y, centers[1].x, centers[1].y);
     return 0;
 }

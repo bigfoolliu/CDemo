@@ -4,7 +4,10 @@
 
 #include "graphics.h"
 
-enum { BEZIER_POINT_COUNT = 4, BEZIER_SEGMENTS = 128 };
+enum {
+    BEZIER_POINT_COUNT = 4,
+    BEZIER_SEGMENTS = 128
+};
 /** P0/P3 是端点，P1/P2 控制切线；所有点属于调用者，坐标限制在画布内。 */
 typedef struct {
     GfxPoint points[BEZIER_POINT_COUNT];

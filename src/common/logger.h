@@ -102,7 +102,8 @@ static inline bool logger_open(Logger *logger, const char *path, FILE *console)
  * @note 一次调用是一条消息：每个物理行都有前缀，没有末尾换行时自动补齐。
  *       同一消息的所有行及输出目标共用时间戳，格式化只执行一次。
  */
-static inline void logger_write_at(Logger *logger, const char *source, int line, const char *format, ...)
+static inline void logger_write_at(Logger *logger, const char *source, int line, const char *format,
+                                   ...)
 {
     struct timespec now;
     char timestamp[32];
@@ -111,7 +112,8 @@ static inline void logger_write_at(Logger *logger, const char *source, int line,
         return;
     }
     struct tm *local = localtime(&now.tv_sec);
-    if (local == nullptr || strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", local) == 0) {
+    if (local == nullptr ||
+        strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", local) == 0) {
         logger->failed = true;
         return;
     }
@@ -154,8 +156,8 @@ static inline void logger_write_at(Logger *logger, const char *source, int line,
             if (end == (size_t)length && start == end && length > 0) {
                 break;
             }
-            if (fprintf(streams[i], "%s,%03ld | %s:%d | ", timestamp,
-                        now.tv_nsec / 1000000L, filename, line) < 0 ||
+            if (fprintf(streams[i], "%s,%03ld | %s:%d | ", timestamp, now.tv_nsec / 1000000L,
+                        filename, line) < 0 ||
                 fwrite(message + start, 1, end - start, streams[i]) != end - start ||
                 fputc('\n', streams[i]) == EOF) {
                 logger->failed = true;

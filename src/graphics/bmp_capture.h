@@ -1,8 +1,11 @@
 /** @file @brief 演示程序共用的截图路径管理；目录创建使用 POSIX API。 */
 #ifndef CDEMO_BMP_CAPTURE_H
 #define CDEMO_BMP_CAPTURE_H
-#include "bmp.h"
-enum { BMP_CAPTURE_PATH_SIZE = 256 };
+#include "graphics.h"
+
+enum {
+    BMP_CAPTURE_PATH_SIZE = 256
+};
 /**
  * @brief 创建 exports 目录，并以时间与序号新建一张完整画布图片。
  * @param canvas 有效的只读画布，导出原始 320×240 像素，不含标题栏。

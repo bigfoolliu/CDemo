@@ -23,7 +23,7 @@ int main(void)
     assert(count == 5 && count < limit && positive == 4u);
     assert(letter == 'A' && fraction == 0.5f && ratio == 1.5 && enabled);
     /* sizeof 的结果是 size_t，使用 %zu；字节不保证恰好是 8 位。 */
-    printf("类型：int=%zu 字节，double=%zu 字节，每字节=%d 位\n",
-           sizeof(int), sizeof(double), CHAR_BIT);
+    printf("类型：int=%zu 字节，double=%zu 字节，每字节=%d 位\n", sizeof(int), sizeof(double),
+           CHAR_BIT);
     return 0;
 }

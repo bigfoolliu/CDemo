@@ -50,8 +50,8 @@ int main(void)
         puts("time：日历与格式化验证通过；此实现无法提供 CPU 时间");
         return EXIT_SUCCESS;
     }
-    printf("time：本地时间=%s，纳秒字段=%ld，CPU 秒数=%.6f\n",
-           text, precise.tv_nsec, (double)cpu / CLOCKS_PER_SEC);
+    printf("time：本地时间=%s，纳秒字段=%ld，CPU 秒数=%.6f\n", text, precise.tv_nsec,
+           (double)cpu / CLOCKS_PER_SEC);
     /* clock 是进程 CPU 时间；time/timespec_get 不保证是单调计时源。 */
     return EXIT_SUCCESS;
 }
