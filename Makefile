@@ -769,6 +769,29 @@ sanitize-cnn-shapes:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(CNN_SHAPES_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/08_cnn_shapes
 	./build/sanitize/ml/08_cnn_shapes --test
 
+# 阶段 4：纯 C 去噪自编码器，默认不导出；显式入口展示带噪/重建/目标。
+AUTOENCODER_SOURCES := src/ml/09_denoising_autoencoder.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+AUTOENCODER_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS)
+.PHONY: autoencoder test-autoencoder sanitize-autoencoder
+autoencoder: build/ml/09_denoising_autoencoder
+	./build/ml/09_denoising_autoencoder --export
+
+build/ml/09_denoising_autoencoder: $(AUTOENCODER_SOURCES) $(AUTOENCODER_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $(AUTOENCODER_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/09_denoising_autoencoder: $(AUTOENCODER_SOURCES) $(AUTOENCODER_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(AUTOENCODER_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+test-autoencoder: build/ml/09_denoising_autoencoder
+	./build/ml/09_denoising_autoencoder --test
+
+sanitize-autoencoder:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(AUTOENCODER_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/09_denoising_autoencoder
+	./build/sanitize/ml/09_denoising_autoencoder --test
+
 # 只构建并运行深入示例，自动纳入 src/advanced/ 新增的独立入口。
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done
@@ -851,6 +874,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/09_denoising_autoencoder
 	rm -f build/sanitize/ml/08_cnn_shapes
 	rm -f build/sanitize/ml/07_mlp_2d
 	rm -f build/sanitize/ml/06_xor_mlp
