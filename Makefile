@@ -719,6 +719,33 @@ sanitize-xor-mlp:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/06_xor_mlp.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/06_xor_mlp
 	./build/sanitize/ml/06_xor_mlp
 
+# 阶段 2 使用纯 C 绘图/BMP 多文件链接，无 SDL；默认运行不生成图片。
+MLP_2D_SOURCES := src/ml/07_mlp_2d.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+MLP_2D_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS)
+.PHONY: mlp-2d test-mlp-2d sanitize-mlp-2d
+# 显式演示入口导出初始、训练中途及最佳参数的决策边界。
+mlp-2d: build/ml/07_mlp_2d
+	./build/ml/07_mlp_2d --export
+
+# 覆盖单文件规则以链接软件画布；-O2 缩短小型训练，数学库由 ML_PROGRAMS 提供。
+build/ml/07_mlp_2d: $(MLP_2D_SOURCES) $(MLP_2D_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $(MLP_2D_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+# 保留无优化独立调试程序，让前向缓存与梯度易于观察。
+build/debug/ml/07_mlp_2d: $(MLP_2D_SOURCES) $(MLP_2D_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(MLP_2D_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+# 安静模式仍完成数值检查和固定短训练，不创建图片或日志。
+test-mlp-2d: build/ml/07_mlp_2d
+	./build/ml/07_mlp_2d --test
+
+sanitize-mlp-2d:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(MLP_2D_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/07_mlp_2d
+	./build/sanitize/ml/07_mlp_2d --test
+
 # 只构建并运行深入示例，自动纳入 src/advanced/ 新增的独立入口。
 advanced: $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c))
 	@set -e; for program in $(patsubst src/%.c,build/%,$(wildcard src/advanced/*.c)); do "$$program"; done
@@ -801,6 +828,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/07_mlp_2d
 	rm -f build/sanitize/ml/06_xor_mlp
 	rm -f build/sanitize/ml/05_numeric_foundations
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
