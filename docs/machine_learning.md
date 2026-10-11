@@ -126,6 +126,12 @@ d_bias = sum(error) / count
 
 运行 `make char-rnn`，`make test-char-rnn` 验证全部参数及初始状态梯度、数值边界和训练效果；可用 `--log` 同时追加到 `logs/ml/10_char_rnn.log`。详见 [字符 RNN 教程](char_rnn.md)，其中解释 teacher forcing、生成、验证检查点和过拟合。
 
+## 11. GRU 记忆比特
+
+阶段 6 的 `src/ml/11_gru_memory.c` 用开始比特、无关噪声和结束标记学习序列记忆，只在终点监督。实现 reset-before GRU 的更新门、重置门、候选状态及完整 BPTT，并与同宽 RNN 在相同300轮数据预算下比较三种间隔和两个初始化种子。
+
+运行 `make gru-memory`，`make test-gru-memory` 和 `make sanitize-gru-memory` 验证梯度、边界与训练；`--log` 追加双输出日志至 `logs/ml/11_gru_memory.log`。详见 [GRU 记忆比特教程](gru_memory.md)，包括门控公式、种子敏感性和公平比较的边界。LSTM 尚未实现，保留为选做。
+
 ## 从教学案例走向真实数据
 
 进一步学习神经网络和强化学习，可阅读 [纯 C 深度强化学习贪吃蛇](snake_ai.md)。它包含两层隐藏层、反向传播、Adam、经验回放、目标网络以及独立评估，实现自动玩本项目的贪吃蛇。
