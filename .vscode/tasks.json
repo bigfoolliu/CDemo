@@ -355,6 +355,68 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "C: 构建波纹调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "ripple-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试波纹核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-ripple"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "C: 构建落沙调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "sand-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试落沙核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-sand"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

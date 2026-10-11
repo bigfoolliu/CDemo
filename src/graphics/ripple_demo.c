@@ -114,7 +114,8 @@ int main(int argc, char *argv[])
     int status = EXIT_FAILURE;
     if (!gfx_sdl_open(&display, "Ripple")) { goto cleanup; }
     static GfxCanvas canvas; /* 大画布放在静态存储区，避免占用约 300 KiB 栈。 */
-    static RippleDemoState state = {.running = true};
+    static RippleDemoState state; /* 两层高度场约 150 KiB，不放在栈上。 */
+    state = (RippleDemoState){.running = true};
     reset_scene(&state, true);
     Uint64 previous = SDL_GetPerformanceCounter();
     Uint64 frequency = SDL_GetPerformanceFrequency();

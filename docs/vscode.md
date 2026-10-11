@@ -67,3 +67,11 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## 贝塞尔曲线编辑器调试
 
 选择 `C: 贝塞尔曲线编辑器` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/bezier_demo`。在 `evaluate_unchecked` 的逐层插值循环设置断点，观察 `work` 如何从四点减少为一点；在 `handle_event` 中观察窗口坐标、`offset` 和控制点坐标。断点期间窗口暂停响应是正常现象，继续执行后恢复。任务 `C: 测试贝塞尔曲线核心` 无需 SDL；操作与原理见 [曲线教程](bezier.md)。
+
+## 波纹模拟调试
+
+选择 `C: 波纹模拟` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/ripple_demo`。Space 暂停后，在 `ripple_step` 的 `laplacian` 或 `next` 处设置条件断点（例如 `x == 80 && y == 60`），按 N 单步，观察中心与邻居高度、旧层覆写和 `current` 交换。任务 `C: 测试波纹核心` 无需 SDL；数值原理与使用方法见 [波纹教程](ripple.md)。
+
+## 落沙模拟调试
+
+选择 `C: 落沙模拟` 按 F5，自动生成图形编译数据库并构建 `build/debug/graphics/sand_demo`。Space 暂停后按 N 单步，在 `try_move` 中观察 `source`、`target` 和 `moved`；可设置 `x == 60` 等条件断点，减少逐格停顿。`sand_step` 原地交换物质，不采用生命游戏的同步双缓冲规则。任务 `C: 测试落沙核心` 无需 SDL；规则与操作见 [落沙教程](sand.md)。

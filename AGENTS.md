@@ -8,6 +8,10 @@
 
 `src/graphics/` 的纯 C 绘制核心与 SDL2 窗口分离，教程为 `docs/graphics_2d.md`。`make graphics` 启动可选窗口；`make test-graphics` 和 `make sanitize-graphics` 无需 SDL。默认测试不打开窗口，普通构建不引入 SDL 依赖。窗口使用 `make graphics-debug` 调试，`make compile-commands-graphics` 生成对应代码提示。新增绘图接口需说明坐标边界并验证裁切、退化图形和数值失败。
 
+落沙核心为 `src/graphics/sand.h/c`，窗口为 `sand_demo.c`，教程为 `docs/sand.md`。`make sand` 启动、`make sand-debug` 调试；`make test-sand`、`make sanitize-sand` 无需 SDL。外圈固定墙不可编辑；自底向上、左右交替更新，标记移动目标及交换回源格的水，空出的空气可继续填入。无编辑时保持沙、水及墙格数，保证粒子每步最多移动一次；`make test-sand-window` 验证笔刷路径、持续绘制、失焦取消、时间及截图。
+
+波纹核心为 `src/graphics/ripple.h/c`，窗口为 `ripple_demo.c`，教程为 `docs/ripple.md`。`make ripple` 启动、`make ripple-debug` 调试；`make test-ripple`、`make sanitize-ripple` 无需 SDL。两层高度必须保持有限数和零边界，读取当前层、覆盖旧层后交换；保持固定步长和稳定系数，说明阻尼、限幅与反射边界。`make test-ripple-window` 验证输入、时间、暂停、截图和主循环。
+
 贝塞尔曲线核心为 `src/graphics/bezier.h/c`，窗口为 `bezier_demo.c`，教程为 `docs/bezier.md`。`make bezier` 启动，`make bezier-debug` 调试；`make test-bezier`、`make sanitize-bezier` 无需 SDL。控制点须为画布内有限数，参数 t 为 [0,1]；失败不修改输出。保留拖动抓取偏移，处理松键、失焦与离开窗口；`make test-bezier-window` 验证坐标映射、输入、截图和主循环。
 
 曼德勃罗核心为 `src/graphics/mandelbrot.h/c`，窗口为 `mandelbrot_demo.c`，教程为 `docs/mandelbrot.md`。`make mandelbrot` 启动，`make mandelbrot-debug` 调试；`make test-mandelbrot`、`make sanitize-mandelbrot` 无需 SDL。区分最后一次迭代逃逸与达到上限未逃逸，有限迭代不能证明集合成员；视图须验证有限数和范围，修改失败保留状态。窗口只在视图变化时重算，`make test-mandelbrot-window` 验证输入、缓存标记、截图和主循环。

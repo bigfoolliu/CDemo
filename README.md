@@ -34,6 +34,18 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 落沙模拟
+
+运行 `make sand`，用 1/2/3 选择沙、水、墙，左键绘制，右键擦除，按住左键持续添加；[ / ] 调整笔刷，Space 暂停，N 单步，R 重置，C 清空，S 保存 BMP，Esc 退出。观察沙堆、水流和沙沉入水中，窗口需 SDL2 与 pkg-config。
+
+阅读 [落沙模拟教程](docs/sand.md)，学习网格局部规则、更新顺序、访问标记和物质量守恒。目标显示 60 FPS、每秒模拟 60 步；`make test-sand` 与 `make sanitize-sand` 无需 SDL，VS Code 选择 `C: 落沙模拟` 按 F5。
+
+## 波纹模拟
+
+运行 `make ripple`，点击水面观察波纹传播、叠加、反射与衰减。左键凸起、右键凹陷，Space 暂停，N 单步，R 恢复初始波纹，C 清空，S 保存 BMP，Esc 退出。窗口需 SDL2 与 pkg-config，目标显示 60 FPS，固定每秒模拟 60 步。
+
+阅读 [波纹模拟教程](docs/ripple.md)，学习高度场、有限差分、双缓冲、阻尼和坡度着色。`make test-ripple` 与 `make sanitize-ripple` 无需 SDL；VS Code 选择 `C: 波纹模拟` 按 F5。
+
 ## 贝塞尔曲线编辑器
 
 运行 `make bezier`，左键拖动四个控制点实时编辑三次曲线。绿色 P0、红色 P3 是端点，蓝色 P1/P2 控制弯曲方向；R 重置，S 保存 BMP，Esc 退出。窗口需 SDL2 与 pkg-config，目标显示 60 FPS。
@@ -54,7 +66,7 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 ## BMP 图片导出
 
-运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、生命游戏、迷宫、分形和贝塞尔曲线窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
+运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、生命游戏、迷宫、分形、贝塞尔曲线、波纹和落沙窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
 
 阅读 [BMP 导出教程](docs/bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
 
