@@ -28,6 +28,9 @@ MANDELBROT_SOURCES := src/graphics/mandelbrot_demo.c $(MANDELBROT_CORE) $(GRAPHI
 BEZIER_CORE := src/graphics/bezier.c $(GRAPHICS_CORE)
 BEZIER_HEADERS := src/graphics/bezier.h $(GRAPHICS_HEADER)
 BEZIER_SOURCES := src/graphics/bezier_demo.c $(BEZIER_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
+RIPPLE_CORE := src/graphics/ripple.c $(GRAPHICS_CORE)
+RIPPLE_HEADERS := src/graphics/ripple.h $(GRAPHICS_HEADER)
+RIPPLE_SOURCES := src/graphics/ripple_demo.c $(RIPPLE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 MAZE_CORE := src/graphics/maze.c $(GRAPHICS_CORE)
 MAZE_HEADERS := src/graphics/maze.h $(GRAPHICS_HEADER)
 MAZE_SOURCES := src/graphics/maze_demo.c $(MAZE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
@@ -257,6 +260,41 @@ test-bezier-window: build/tests/bezier_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/bezier_window_test
 
 
+.PHONY: ripple ripple-build ripple-debug test-ripple sanitize-ripple test-ripple-window
+ripple: ripple-build
+	./build/graphics/ripple_demo
+
+ripple-build: check-sdl build/graphics/ripple_demo
+ripple-debug: check-sdl build/debug/graphics/ripple_demo
+
+build/graphics/ripple_demo: $(RIPPLE_SOURCES) $(RIPPLE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(RIPPLE_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/ripple_demo: $(RIPPLE_SOURCES) $(RIPPLE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(RIPPLE_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/ripple_test: tests/ripple_test.c $(RIPPLE_CORE) $(RIPPLE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/ripple_test.c $(RIPPLE_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-ripple: build/tests/ripple_test
+	./build/tests/ripple_test
+
+sanitize-ripple:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/ripple_test.c $(RIPPLE_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ripple_test
+	./build/sanitize/ripple_test
+
+build/tests/ripple_window_test: tests/ripple_window_test.c tests/bmp_window_helpers.h $(RIPPLE_SOURCES) $(RIPPLE_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/ripple_window_test.c $(RIPPLE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-ripple-window: build/tests/ripple_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/ripple_window_test
+
+
 .PHONY: bmp bmp-build bmp-debug test-bmp sanitize-bmp
 bmp: bmp-build
 	./build/graphics/bmp_demo
@@ -399,7 +437,7 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test
+test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -411,8 +449,10 @@ test: run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test buil
 	./build/tests/maze_test
 	./build/tests/mandelbrot_test
 	./build/tests/bezier_test
+	./build/tests/ripple_test
 
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(RIPPLE_CORE) tests/ripple_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BEZIER_CORE) tests/bezier_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MANDELBROT_CORE) tests/mandelbrot_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MAZE_CORE) tests/maze_test.c
@@ -431,6 +471,7 @@ lint:
 clean:
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/bezier_demo build/debug/graphics/bezier_demo build/tests/bezier_test build/tests/bezier_window_test build/sanitize/bezier_test
+	rm -f build/graphics/ripple_demo build/debug/graphics/ripple_demo build/tests/ripple_test build/tests/ripple_window_test build/sanitize/ripple_test
 	rm -f build/graphics/maze_demo build/debug/graphics/maze_demo build/tests/maze_test build/tests/maze_window_test build/sanitize/maze_test
 	rm -f build/tests/memory_pool_test build/sanitize/memory_pool_test
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
