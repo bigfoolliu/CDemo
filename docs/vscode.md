@@ -97,3 +97,9 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 运行 `make compile-commands` 后选择 `C: ml/11_gru_memory.c`，按 F5 启动。默认不写文件，`args` 可设为 `["--log"]`，同时追加到 `logs/ml/11_gru_memory.log`。先在 main 的 `train` 调用处断住，再进入前向和反向函数，观察 `z/r/n`、`future` 和共享参数梯度。
 
 模型只在终点计算损失，每条序列重置隐藏状态；GRU 的 z 表示保留旧状态比例。完整公式和对照实验见 [GRU 记忆比特教程](gru_memory.md)。
+
+## 小型 Transformer 调试
+
+运行 `make compile-commands` 后选择 `C: ml/12_tiny_transformer.c`，按 F5 启动独立调试版。在 main 的 `train` 调用处设置断点可跳过数值差分循环，再观察 `network_forward` 的Q/K/V、注意力和LayerNorm缓存；在反向观察残差分支及Q/K/V导数的累加。
+
+默认不写文件，`args` 设为 `["--log"]` 后追加至 `logs/ml/12_tiny_transformer.log`。教程与矩阵读法见 [小型 Transformer 教程](tiny_transformer.md)。

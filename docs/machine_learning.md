@@ -132,6 +132,12 @@ d_bias = sum(error) / count
 
 运行 `make gru-memory`，`make test-gru-memory` 和 `make sanitize-gru-memory` 验证梯度、边界与训练；`--log` 追加双输出日志至 `logs/ml/11_gru_memory.log`。详见 [GRU 记忆比特教程](gru_memory.md)，包括门控公式、种子敏感性和公平比较的边界。LSTM 尚未实现，保留为选做。
 
+## 12. 小型 Transformer
+
+阶段 7 的 `src/ml/12_tiny_transformer.c` 实现16维、双头、上下文16的单层decoder-only模型，包含因果掩码、可学习位置、pre-LayerNorm、残差和GELU。手写全部反向传播，先微型拟合，再复用字符语料的完整训练/验证/测试分组，并展示两头注意力矩阵。
+
+运行 `make tiny-transformer`，用 `make test-tiny-transformer` 和 `make sanitize-tiny-transformer` 验证全部参数、局部梯度、因果性和训练；`--log` 双输出至 `logs/ml/12_tiny_transformer.log`。详见 [小型 Transformer 教程](tiny_transformer.md)，包括数据分块、过拟合、贪心生成和上下文限制。
+
 ## 从教学案例走向真实数据
 
 进一步学习神经网络和强化学习，可阅读 [纯 C 深度强化学习贪吃蛇](snake_ai.md)。它包含两层隐藏层、反向传播、Adam、经验回放、目标网络以及独立评估，实现自动玩本项目的贪吃蛇。

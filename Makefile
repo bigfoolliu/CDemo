@@ -836,6 +836,27 @@ sanitize-gru-memory:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/11_gru_memory.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/11_gru_memory
 	./build/sanitize/ml/11_gru_memory --test
 
+# 阶段 7：纯 C 单层字符 Transformer，默认不创建日志或图片。
+.PHONY: tiny-transformer test-tiny-transformer sanitize-tiny-transformer
+tiny-transformer: build/ml/12_tiny_transformer
+	./build/ml/12_tiny_transformer
+
+build/ml/12_tiny_transformer: src/ml/12_tiny_transformer.c src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/12_tiny_transformer: src/ml/12_tiny_transformer.c src/common/logger.h Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+test-tiny-transformer: build/ml/12_tiny_transformer
+	./build/ml/12_tiny_transformer --test
+
+sanitize-tiny-transformer:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/12_tiny_transformer.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/12_tiny_transformer
+	./build/sanitize/ml/12_tiny_transformer --test
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -948,6 +969,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/12_tiny_transformer
 	rm -f build/sanitize/ml/11_gru_memory
 	rm -f build/sanitize/ml/10_char_rnn
 	rm -f build/tests/cpu_test build/sanitize/cpu_test
