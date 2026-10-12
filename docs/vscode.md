@@ -109,3 +109,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 运行 `make compile-commands` 后选择 `C: ml/13_vae_shapes.c`，按 F5 启动并导出BMP。默认 `args` 为 `["--export"]`，可加 `--log` 双输出到 `logs/ml/13_vae_shapes.log`。先在 main 的 `train` 调用处断住，再观察前向缓存的mu/logvar/sigma/epsilon/z，以及反向的dmu/dlv/draw。
 
 梯度差分时必须保持同一epsilon；零epsilon表示解码分布均值，图形先验生成则跳过编码器。详细公式与图片布局见 [VAE 教程](vae.md)。
+
+## GAN 示例调试
+
+选择 `C: ml/14_gan_2d.c` 后按 F5，默认带 `--export`。在 `train` 的 D 更新前后观察 `dg`、生成器参数和独立的 Adam 状态；在 G 阶段观察 `point_gradient` 如何从 D 回传，确认 D 参数未改变。`--log` 可在启动参数中追加，日志位于 `logs/ml/14_gan_2d.log`。`make compile-commands` 更新代码提示数据库。

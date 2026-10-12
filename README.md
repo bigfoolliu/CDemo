@@ -140,7 +140,7 @@ make build/basics/01_types
 
 ## 机器学习入门案例
 
-`src/ml/` 提供十三个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
+`src/ml/` 提供十四个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -157,8 +157,11 @@ make build/basics/01_types
 | `11_gru_memory.c` | 阶段 6：GRU更新/重置门、记忆比特与同预算 RNN 对比 |
 | `12_tiny_transformer.c` | 阶段 7：双头因果注意力、位置表示、LayerNorm与完整反向传播 |
 | `13_vae_shapes.c` | VAE选修：重参数化、KL、二维潜在空间与图形生成 |
+| `14_gan_2d.c` | GAN选修：八簇点生成、交替优化、非饱和损失与模式覆盖 |
 
 运行 `make vae` 导出重建对照、二维潜在网格、插值与先验随机样本四张 BMP；阅读 [VAE 教程](docs/vae.md)。`make test-vae` 和 `make sanitize-vae` 验证全部参数及重参数化导数；`--log` 追加日志至 `logs/ml/13_vae_shapes.log`。
+
+运行 `make gan` 导出训练前后散点、判别器热图与潜在网格四张 BMP；阅读 [GAN 教程](docs/gan_2d.md)。`make test-gan` 和 `make sanitize-gan` 验证 D→G 梯度链及交替冻结；`--log` 追加至 `logs/ml/14_gan_2d.log`。
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 

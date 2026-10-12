@@ -880,6 +880,29 @@ sanitize-vae:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(VAE_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/13_vae_shapes
 	./build/sanitize/ml/13_vae_shapes --test
 
+# GAN：八簇二维点分布与对抗训练；显式入口导出BMP，默认测试不写文件。
+GAN_SOURCES := src/ml/14_gan_2d.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+GAN_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS) src/common/logger.h
+.PHONY: gan test-gan sanitize-gan
+gan: build/ml/14_gan_2d
+	./build/ml/14_gan_2d --export
+
+build/ml/14_gan_2d: $(GAN_SOURCES) $(GAN_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $(GAN_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/14_gan_2d: $(GAN_SOURCES) $(GAN_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(GAN_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+test-gan: build/ml/14_gan_2d
+	./build/ml/14_gan_2d --test
+
+sanitize-gan:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(GAN_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/14_gan_2d
+	./build/sanitize/ml/14_gan_2d --test
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -992,6 +1015,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/14_gan_2d
 	rm -f build/sanitize/ml/13_vae_shapes
 	rm -f build/sanitize/ml/12_tiny_transformer
 	rm -f build/sanitize/ml/11_gru_memory
