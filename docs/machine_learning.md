@@ -138,6 +138,12 @@ d_bias = sum(error) / count
 
 运行 `make tiny-transformer`，用 `make test-tiny-transformer` 和 `make sanitize-tiny-transformer` 验证全部参数、局部梯度、因果性和训练；`--log` 双输出至 `logs/ml/12_tiny_transformer.log`。详见 [小型 Transformer 教程](tiny_transformer.md)，包括数据分块、过拟合、贪心生成和上下文限制。
 
+## 13. VAE 图形生成
+
+`src/ml/13_vae_shapes.c` 将16×16图形编码成二维均值/对数方差，用重参数化采样后解码。优化每图Bernoulli重建负对数似然加标准正态KL，固定噪声验证全部参数及输入/epsilon导数，按独立验证负ELBO选择检查点。
+
+运行 `make vae` 将重建对照、潜在网格、潜在插值和先验样本导出到 `exports/`；`make test-vae` 不写文件。`--log` 双输出至 `logs/ml/13_vae_shapes.log`。详见 [VAE 教程](vae.md)，其中区分随机重建、解码均值、先验采样及生成质量的评估边界。
+
 ## 从教学案例走向真实数据
 
 进一步学习神经网络和强化学习，可阅读 [纯 C 深度强化学习贪吃蛇](snake_ai.md)。它包含两层隐藏层、反向传播、Adam、经验回放、目标网络以及独立评估，实现自动玩本项目的贪吃蛇。

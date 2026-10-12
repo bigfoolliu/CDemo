@@ -857,6 +857,29 @@ sanitize-tiny-transformer:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/12_tiny_transformer.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/12_tiny_transformer
 	./build/sanitize/ml/12_tiny_transformer --test
 
+# VAE：二维潜在空间和图形生成；显式入口导出BMP，默认测试不写文件。
+VAE_SOURCES := src/ml/13_vae_shapes.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+VAE_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS) src/common/logger.h
+.PHONY: vae test-vae sanitize-vae
+vae: build/ml/13_vae_shapes
+	./build/ml/13_vae_shapes --export
+
+build/ml/13_vae_shapes: $(VAE_SOURCES) $(VAE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O2 $(VAE_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/13_vae_shapes: $(VAE_SOURCES) $(VAE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(VAE_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+test-vae: build/ml/13_vae_shapes
+	./build/ml/13_vae_shapes --test
+
+sanitize-vae:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(VAE_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/13_vae_shapes
+	./build/sanitize/ml/13_vae_shapes --test
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -969,6 +992,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/13_vae_shapes
 	rm -f build/sanitize/ml/12_tiny_transformer
 	rm -f build/sanitize/ml/11_gru_memory
 	rm -f build/sanitize/ml/10_char_rnn

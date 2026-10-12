@@ -103,3 +103,9 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 运行 `make compile-commands` 后选择 `C: ml/12_tiny_transformer.c`，按 F5 启动独立调试版。在 main 的 `train` 调用处设置断点可跳过数值差分循环，再观察 `network_forward` 的Q/K/V、注意力和LayerNorm缓存；在反向观察残差分支及Q/K/V导数的累加。
 
 默认不写文件，`args` 设为 `["--log"]` 后追加至 `logs/ml/12_tiny_transformer.log`。教程与矩阵读法见 [小型 Transformer 教程](tiny_transformer.md)。
+
+## VAE 图形生成调试
+
+运行 `make compile-commands` 后选择 `C: ml/13_vae_shapes.c`，按 F5 启动并导出BMP。默认 `args` 为 `["--export"]`，可加 `--log` 双输出到 `logs/ml/13_vae_shapes.log`。先在 main 的 `train` 调用处断住，再观察前向缓存的mu/logvar/sigma/epsilon/z，以及反向的dmu/dlv/draw。
+
+梯度差分时必须保持同一epsilon；零epsilon表示解码分布均值，图形先验生成则跳过编码器。详细公式与图片布局见 [VAE 教程](vae.md)。
