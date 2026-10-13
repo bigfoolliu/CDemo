@@ -976,6 +976,33 @@ sanitize-naive-bayes:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/naive_bayes_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/naive_bayes_test
 	./build/sanitize/ml/naive_bayes_test
 
+# 阶段 9.2：二维决策树；仅显式入口导出BMP，默认运行与测试不写图片。
+DECISION_TREE_SOURCES := src/ml/16_decision_tree.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+DECISION_TREE_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS)
+.PHONY: decision-tree test-decision-tree sanitize-decision-tree
+decision-tree: build/ml/16_decision_tree
+	./build/ml/16_decision_tree --export
+
+build/ml/16_decision_tree: $(DECISION_TREE_SOURCES) $(DECISION_TREE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DECISION_TREE_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/16_decision_tree: $(DECISION_TREE_SOURCES) $(DECISION_TREE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(DECISION_TREE_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/tests/decision_tree_test: tests/decision_tree_test.c $(DECISION_TREE_SOURCES) $(DECISION_TREE_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/decision_tree_test.c $(GRAPHICS_CORE) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-decision-tree: build/tests/decision_tree_test
+	./build/tests/decision_tree_test
+
+sanitize-decision-tree:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/decision_tree_test.c $(GRAPHICS_CORE) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/decision_tree_test
+	./build/sanitize/ml/decision_tree_test
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -1047,7 +1074,8 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/naive_bayes_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
+	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
@@ -1069,6 +1097,7 @@ test: build/tests/naive_bayes_test build/tests/word_frequency_test build/tests/i
 # 以严格警告执行 -fsyntax-only，不链接、不生成可执行文件，也不验证运行行为。
 # 覆盖普通示例、纯 C 图形核心及核心测试，无需 SDL；窗口编译由专用目标验证。
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(DECISION_TREE_SOURCES) tests/decision_tree_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/naive_bayes_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/word_frequency_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(FILTER_SOURCES) tests/image_filters_test.c
@@ -1094,6 +1123,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/tests/decision_tree_test build/sanitize/ml/decision_tree_test
 	rm -f build/tests/naive_bayes_test build/sanitize/ml/naive_bayes_test
 	rm -f build/tests/word_frequency_test build/sanitize/word_frequency_test
 	rm -f build/tests/image_filters_test build/sanitize/image_filters_test
