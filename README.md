@@ -40,6 +40,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 图像滤镜实验室
+
+运行 `make filters`，无需SDL或OpenCV，将合成测试图与均值模糊、Gaussian模糊、锐化、浮雕、Sobel结果导出到 `exports/`，共七张BMP，保留已有文件。默认使用边缘复制；`./build/vision/filters_demo --export --zero` 对照零填充边界。
+
+核心为 `src/vision/image_filters.h/c`，入口为 `filters_demo.c`。阅读 [滤镜学习教程](docs/image_filters.md)，学习RGB转灰度、3×3互相关、边界采样与浮点响应；显示时才限幅到0..255。`make test-filters`、`make sanitize-filters` 无需窗口，默认构建/测试/检查包含本例。VS Code选择 `C: 图像滤镜实验室` 按F5。
+
 ## 落沙模拟
 
 运行 `make sand`，用 1/2/3 选择沙、水、墙，左键绘制，右键擦除，按住左键持续添加；[ / ] 调整笔刷，Space 暂停，N 单步，R 重置，C 清空，S 保存 BMP，Esc 退出。观察沙堆、水流和沙沉入水中，窗口需 SDL2 与 pkg-config。

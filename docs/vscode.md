@@ -113,3 +113,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## GAN 示例调试
 
 选择 `C: ml/14_gan_2d.c` 后按 F5，默认带 `--export`。在 `train` 的 D 更新前后观察 `dg`、生成器参数和独立的 Adam 状态；在 G 阶段观察 `point_gradient` 如何从 D 回传，确认 D 参数未改变。`--log` 可在启动参数中追加，日志位于 `logs/ml/14_gan_2d.log`。`make compile-commands` 更新代码提示数据库。
+
+## 图像滤镜实验室调试
+
+选择 `C: 图像滤镜实验室` 按F5，默认 `--export` 导出七张BMP。在 `correlate_pixel` 中观察九个核系数与边界采样，在 `apply_kernels` 中观察带符号响应与候选缓冲；Sobel会计算两个方向的响应。给启动参数追加 `--zero` 比较零填充。`make filters-debug` 只构建调试入口，`make compile-commands` 更新核心、入口与测试的代码提示。
