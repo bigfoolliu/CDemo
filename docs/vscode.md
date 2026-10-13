@@ -117,3 +117,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 ## 图像滤镜实验室调试
 
 选择 `C: 图像滤镜实验室` 按F5，默认 `--export` 导出七张BMP。在 `correlate_pixel` 中观察九个核系数与边界采样，在 `apply_kernels` 中观察带符号响应与候选缓冲；Sobel会计算两个方向的响应。给启动参数追加 `--zero` 比较零填充。`make filters-debug` 只构建调试入口，`make compile-commands` 更新核心、入口与测试的代码提示。
+
+## 哈希表与词频统计调试
+
+选择 `C: 哈希表与词频统计` 按F5，默认运行内置文本。可在 `word_map_increment`、`word_map_grow` 与 `counter_feed` 处下断点，观察哈希起始槽、线性探测、键副本和跨块单词。需要文件输入时将调试配置的 `args` 改为 `["--file", "README.md", "--top", "5"]`。`make compile-commands` 会加入核心测试的编译记录。

@@ -83,3 +83,9 @@
 本例为避免对任意外来指针做减法，归还采用逐块地址相等比较，故分配为 O(1)，归还为 O(capacity)。归还后不得再读写对象，销毁池后全部地址失效；直接重复释放可检测，地址重新分配后的陈旧别名仍由调用者管理。
 
 运行 `make memory-pool` 观察过程，`make test-memory-pool` 验证对齐、耗尽、非法释放、复用、算术溢出及系统分配失败，`make sanitize-memory-pool` 检查内存与未定义行为。
+
+## 7. 哈希表与词频统计：槽位不是键身份
+
+源码：`src/advanced/07_word_frequency.c`，可复用表：`src/common/word_map.h`；完整教程见 [词频统计器](word_frequency.md)。表使用FNV-1a、线性探测与75%负载扩容；碰撞时必须比较词的长度和内容。新键复制到表内，调用者可复用读入缓冲；扩容只移动键指针。
+
+默认 `make word-frequency` 统计内置文本；`--file` 或 `--stdin` 才读取外部输入。测试验证碰撞、扩容、两处内存分配失败、词频排序和跨块长词；`make test-word-frequency`、`make sanitize-word-frequency` 均不写日志。练习：实现删除及墓碑，验证删除后同探测链上的其他键仍可查询。

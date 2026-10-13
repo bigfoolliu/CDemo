@@ -40,6 +40,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
+## 哈希表与词频统计器
+
+运行 `make word-frequency` 统计内置英文短文，也可运行 `./build/advanced/07_word_frequency --file README.md --top 15` 读取文件，或用 `--stdin` 从管道读取。结果按词频降序、同频按ASCII字典序输出；只识别ASCII英文字母，其他字节作为分隔符。
+
+可复用的线性探测哈希表位于 `src/common/word_map.h`，程序位于 `src/advanced/07_word_frequency.c`。阅读 [词频统计教程](docs/word_frequency.md) 学习哈希碰撞、扩容、键所有权与流式分词；运行 `make test-word-frequency` 和 `make sanitize-word-frequency` 验证边界与失败路径。VS Code选择 `C: 哈希表与词频统计` 按F5。
+
 ## 图像滤镜实验室
 
 运行 `make filters`，无需SDL或OpenCV，将合成测试图与均值模糊、Gaussian模糊、锐化、浮雕、Sobel结果导出到 `exports/`，共七张BMP，保留已有文件。默认使用边缘复制；`./build/vision/filters_demo --export --zero` 对照零填充边界。
@@ -139,6 +145,7 @@ make build/basics/01_types
 | `04_callbacks.c` | 回调与上下文、策略复用、提前终止 |
 | `05_atomics.c` | 双线程原子计数与 release/acquire 发布 |
 | `06_memory_pool.c` | 固定块内存池、对齐、空闲链表、生命周期与失败安全 |
+| `07_word_frequency.c` | 开放寻址哈希表、字符串所有权、流式分词与词频排序 |
 
 运行 `make memory-pool` 观察小对象分配与地址复用，配合 [内存池教程](docs/memory_pool.md) 学习。`make test-memory-pool` 和 `make sanitize-memory-pool` 验证边界；VS Code 选择 `C: 固定块内存池` 按 F5 调试。
 

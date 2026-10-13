@@ -2,6 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "C: 哈希表与词频统计",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/advanced/07_word_frequency",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
       "name": "C: 图像滤镜实验室",
       "type": "lldb",
       "request": "launch",

@@ -628,6 +628,26 @@ sanitize-filters:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/image_filters_test.c $(FILTER_CORE) $(GRAPHICS_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/image_filters_test
 	./build/sanitize/image_filters_test
 
+# --- 哈希表与词频统计：单文件入口，公共实现为头文件 ---
+WORD_FREQUENCY_HEADER := src/common/word_map.h
+.PHONY: word-frequency test-word-frequency sanitize-word-frequency
+word-frequency: build/advanced/07_word_frequency
+	./build/advanced/07_word_frequency
+
+build/advanced/07_word_frequency build/debug/advanced/07_word_frequency: $(WORD_FREQUENCY_HEADER)
+
+build/tests/word_frequency_test: tests/word_frequency_test.c src/advanced/07_word_frequency.c $(WORD_FREQUENCY_HEADER) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+test-word-frequency: build/tests/word_frequency_test
+	./build/tests/word_frequency_test
+
+sanitize-word-frequency:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/word_frequency_test.c $(LDFLAGS) $(LDLIBS) -o build/sanitize/word_frequency_test
+	./build/sanitize/word_frequency_test
+
 # --- 普通调试构建与编辑器代码提示 ---
 .PHONY: debug compile-commands
 .PHONY: stdlib
@@ -1007,7 +1027,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
+test: build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -1023,10 +1043,12 @@ test: build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) bu
 	./build/tests/sand_test
 	./build/tests/cpu_test
 	./build/tests/image_filters_test
+	./build/tests/word_frequency_test
 
 # 以严格警告执行 -fsyntax-only，不链接、不生成可执行文件，也不验证运行行为。
 # 覆盖普通示例、纯 C 图形核心及核心测试，无需 SDL；窗口编译由专用目标验证。
 lint:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/word_frequency_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(FILTER_SOURCES) tests/image_filters_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(CPU_SOURCES) tests/cpu_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(SAND_CORE) tests/sand_test.c
@@ -1050,6 +1072,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/tests/word_frequency_test build/sanitize/word_frequency_test
 	rm -f build/tests/image_filters_test build/sanitize/image_filters_test
 	rm -f build/sanitize/ml/14_gan_2d
 	rm -f build/sanitize/ml/13_vae_shapes
