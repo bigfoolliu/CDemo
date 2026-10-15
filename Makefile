@@ -1033,6 +1033,26 @@ sanitize-pca:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(PCA_SOURCES) $(LDFLAGS) $(LDLIBS) -o build/sanitize/ml/18_pca
 	./build/sanitize/ml/18_pca
 
+# 阶段 9.5：软间隔线性 SVM，与相同数据上的逻辑回归比较。
+SVM_SOURCES := src/ml/19_linear_svm.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+SVM_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS)
+.PHONY: linear-svm sanitize-linear-svm
+linear-svm: build/ml/19_linear_svm
+	./build/ml/19_linear_svm --export
+
+build/ml/19_linear_svm: $(SVM_SOURCES) $(SVM_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SVM_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/19_linear_svm: $(SVM_SOURCES) $(SVM_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SVM_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+sanitize-linear-svm:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(SVM_SOURCES) $(LDFLAGS) $(LDLIBS) -o build/sanitize/ml/19_linear_svm
+	./build/sanitize/ml/19_linear_svm
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -1153,6 +1173,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/19_linear_svm
 	rm -f build/sanitize/ml/18_pca
 	rm -f build/tests/decision_tree_test build/sanitize/ml/decision_tree_test
 	rm -f build/tests/naive_bayes_test build/sanitize/ml/naive_bayes_test
