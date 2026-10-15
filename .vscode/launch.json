@@ -2,6 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "C: ml/17_random_forest.c",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/ml/17_random_forest",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      "preLaunchTask": "C: 构建调试版本"
+    },
+    {
       "name": "C: ml/16_decision_tree.c",
       "type": "lldb",
       "request": "launch",

@@ -1003,6 +1003,16 @@ sanitize-decision-tree:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/decision_tree_test.c $(GRAPHICS_CORE) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/decision_tree_test
 	./build/sanitize/ml/decision_tree_test
 
+# 阶段 9.3：自助采样的二维随机森林；默认输出多个固定种子的评估结果。
+.PHONY: random-forest sanitize-random-forest
+random-forest: build/ml/17_random_forest
+	./build/ml/17_random_forest
+
+sanitize-random-forest:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/17_random_forest.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/17_random_forest
+	./build/sanitize/ml/17_random_forest
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
