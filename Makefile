@@ -104,6 +104,10 @@ SAND_CORE := src/graphics/sand.c $(GRAPHICS_CORE)
 SAND_HEADERS := src/graphics/sand.h $(GRAPHICS_HEADER)
 # 落沙模拟窗口入口 + 纯 C 核心 + 共享 SDL/BMP 模块，用于普通及调试窗口。
 SAND_SOURCES := src/graphics/sand_demo.c $(SAND_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
+# 三维粒子玫瑰核心使用 CPU 透视投影，窗口只负责事件、计时和显示。
+ROSE3D_CORE := src/graphics/rose3d.c $(GRAPHICS_CORE)
+ROSE3D_HEADERS := src/graphics/rose3d.h $(GRAPHICS_HEADER)
+ROSE3D_SOURCES := src/graphics/rose3d_demo.c $(ROSE3D_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 # 迷宫生成与寻路的纯 C 核心与共享绘图源码，核心测试只链接这些文件。
 MAZE_CORE := src/graphics/maze.c $(GRAPHICS_CORE)
 # 迷宫生成与寻路核心接口与画布依赖，修改头文件后重建相关目标。
@@ -138,6 +142,42 @@ SDL_LIBS = $(shell pkg-config --libs sdl2)
 # SDL_VIDEODRIVER 只作用于这条命令，截图测试在临时目录执行。
 test-graphics-window: build/tests/graphics_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/graphics_window_test
+
+# --- 三维粒子玫瑰：自动旋转的参数曲线点云与 CPU 透视绘制 ---
+.PHONY: rose rose-build rose-debug test-rose3d sanitize-rose3d test-rose3d-window
+rose: rose-build
+	./build/graphics/rose3d_demo
+
+rose-build: check-sdl build/graphics/rose3d_demo
+
+rose-debug: check-sdl build/debug/graphics/rose3d_demo
+
+build/graphics/rose3d_demo: $(ROSE3D_SOURCES) $(ROSE3D_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(ROSE3D_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/rose3d_demo: $(ROSE3D_SOURCES) $(ROSE3D_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(ROSE3D_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/rose3d_test: tests/rose3d_test.c $(ROSE3D_CORE) $(ROSE3D_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/rose3d_test.c $(ROSE3D_CORE) $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-rose3d: build/tests/rose3d_test
+	./build/tests/rose3d_test
+
+sanitize-rose3d:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/rose3d_test.c $(ROSE3D_CORE) $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/rose3d_test
+	./build/sanitize/rose3d_test
+
+test-rose3d-window: build/tests/rose3d_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/rose3d_window_test
+
+build/tests/rose3d_window_test: tests/rose3d_window_test.c $(ROSE3D_SOURCES) $(ROSE3D_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/rose3d_window_test.c $(ROSE3D_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
 
 # 编译 SDL 窗口集成测试：测试入口包含演示入口，命令不再单独编译 *_demo.c。
 # 演示源码仍列为依赖，确保修改入口会重建；共享截图测试助手也参与依赖判断。
@@ -1142,7 +1182,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	$(GAME_PROGRAM) --test
@@ -1158,6 +1198,7 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/wo
 	./build/tests/bezier_test
 	./build/tests/ripple_test
 	./build/tests/sand_test
+	./build/tests/rose3d_test
 	./build/tests/cpu_test
 	./build/tests/image_filters_test
 	./build/tests/word_frequency_test
@@ -1179,6 +1220,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(LIFE_CORE) tests/life_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(PARTICLES_CORE) tests/particles_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(ROSE3D_CORE) tests/rose3d_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(GRAPHICS_CORE) tests/graphics_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/games/snake_ai.c
@@ -1218,6 +1260,8 @@ clean:
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
 	rm -f build/graphics/life_demo build/debug/graphics/life_demo build/tests/life_test build/tests/life_window_test build/sanitize/life_test
 	rm -f build/graphics/particles_demo build/debug/graphics/particles_demo build/tests/particles_test build/tests/particles_window_test build/sanitize/particles_test
+	rm -f build/graphics/rose3d_demo build/debug/graphics/rose3d_demo
+	rm -f build/tests/rose3d_test build/tests/rose3d_window_test build/sanitize/rose3d_test
 	rm -f build/graphics/demo build/debug/graphics/demo build/tests/graphics_test build/tests/graphics_window_test build/sanitize/graphics_test
 	rm -f $(DEBUG_PROGRAMS) build/compile_commands.json
 	rm -f $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)

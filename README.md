@@ -84,7 +84,7 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 ## BMP 图片导出
 
-运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、生命游戏、迷宫、分形、贝塞尔曲线、波纹和落沙窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
+运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、三维粒子玫瑰、生命游戏、迷宫、分形、贝塞尔曲线、波纹和落沙窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
 
 阅读 [BMP 导出教程](docs/bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
 
@@ -99,6 +99,12 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 在二维引擎上用纯 C 实现固定粒子池、重力、寿命回收和颜色渐暗。运行 `make particles`；Space 暂停/继续，暂停时 N 单步，R 重置，Esc 退出。窗口标题显示存活粒子数。
 
 阅读 [粒子效果教程](docs/particles.md)。`make test-particles` 和 `make sanitize-particles` 无需 SDL；窗口与二维演示共用 SDL2 依赖。VS Code 选择 `C: 粒子喷泉演示` 按 F5 调试。
+
+## 三维粒子玫瑰
+
+运行 `make rose`，观察由 16,000 个粒子构成的粉白体积云团缓慢旋转、漂动并柔和发光，画面采用竖屏构图。左右/上下方向键调整观察角度，Space 暂停，暂停时 N 单步，R 重置，S 保存 170×240 BMP，Esc 退出。窗口需 SDL2 与 pkg-config；`make test-rose3d`、`make sanitize-rose3d` 验证纯 C 核心，`make test-rose3d-window` 验证窗口与截图。
+
+阅读 [三维粒子玫瑰教程](docs/rose3d.md)，学习体积粒子采样、三维旋转、透视投影和加色光晕；运行 `make rose-build` 只构建，`make rose-debug` 构建调试版。VS Code 选择 `C: 三维粒子玫瑰` 按 F5。
 
 ## 最小二维图形引擎
 

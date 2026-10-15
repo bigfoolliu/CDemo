@@ -2,6 +2,7 @@
  * @brief SDL 资源创建、像素提交与清理；几何算法仍由 graphics.c 提供。
  */
 #include "graphics_sdl.h"
+#include <errno.h>
 #include <string.h>
 
 /** @copydoc gfx_sdl_open */
@@ -39,6 +40,22 @@ bool gfx_sdl_open(GfxWindow *display, const char *title)
 /** @copydoc gfx_sdl_present */
 bool gfx_sdl_present(const GfxWindow *display, const GfxCanvas *canvas)
 {
+    const SDL_Rect source = {0, 0, GFX_WIDTH, GFX_HEIGHT};
+    return gfx_sdl_present_region(display, canvas, &source);
+}
+
+/** @copydoc gfx_sdl_present_region */
+bool gfx_sdl_present_region(const GfxWindow *display, const GfxCanvas *canvas,
+                            const SDL_Rect *source)
+{
+    if (display == nullptr || display->texture == nullptr || display->renderer == nullptr ||
+        canvas == nullptr || source == nullptr || source->x < 0 || source->y < 0 ||
+        source->w <= 0 || source->h <= 0 || source->x > GFX_WIDTH - source->w ||
+        source->y > GFX_HEIGHT - source->h) {
+        SDL_SetError("无效的画布呈现区域");
+        errno = EINVAL;
+        return false;
+    }
     void *pixels; /* SDL 借出的可写纹理地址，只在锁定期间使用，不由调用者 free。 */
     int pitch;    /* 相邻两行起始地址相隔的字节数，可能包含行末填充。 */
     if (SDL_LockTexture(display->texture, nullptr, &pixels, &pitch) != 0) {
@@ -55,7 +72,7 @@ bool gfx_sdl_present(const GfxWindow *display, const GfxCanvas *canvas)
     SDL_UnlockTexture(display->texture); /* 提交写入后不再使用 pixels 指针。 */
     /* 清理渲染目标，再将整张纹理缩放到窗口；这里没有画单个粒子。 */
     if (SDL_RenderClear(display->renderer) != 0 ||
-        SDL_RenderCopy(display->renderer, display->texture, nullptr, nullptr) != 0) {
+        SDL_RenderCopy(display->renderer, display->texture, source, nullptr) != 0) {
         return false;
     }
     SDL_RenderPresent(display->renderer); /* 将本帧渲染结果交给窗口显示。 */

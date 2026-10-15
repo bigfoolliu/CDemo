@@ -14,10 +14,12 @@ def main():
     parser.add_argument("--graphics", action="store_true", help="加入依赖 SDL2 的图形窗口编译命令")
     options = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
-    targets = ["all", "build/tests/word_frequency_test", "build/tests/image_filters_test", "build/tests/cpu_test", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo", "build/tests/memory_pool_test", "build/tests/maze_test", "build/tests/mandelbrot_test", "build/tests/bezier_test", "build/tests/ripple_test", "build/tests/sand_test"]
+    targets = ["all", "build/tests/word_frequency_test", "build/tests/image_filters_test", "build/tests/cpu_test", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo", "build/tests/memory_pool_test", "build/tests/maze_test", "build/tests/mandelbrot_test", "build/tests/bezier_test", "build/tests/ripple_test", "build/tests/sand_test", "build/tests/rose3d_test"]
     if options.graphics:
         targets.extend(["build/graphics/demo", "build/tests/graphics_window_test",
                         "build/graphics/particles_demo", "build/tests/particles_window_test",
+                        "build/graphics/rose3d_demo",
+                        "build/tests/rose3d_window_test",
                         "build/graphics/life_demo", "build/tests/life_window_test",
                         "build/graphics/maze_demo", "build/tests/maze_window_test",
                         "build/graphics/mandelbrot_demo", "build/tests/mandelbrot_window_test",
@@ -54,6 +56,9 @@ def main():
         optional_files = {str(root / "src" / "graphics" / "demo.c"),
                           str(root / "tests" / "graphics_window_test.c"),
                           str(root / "src" / "graphics" / "particles_demo.c"),
+                          str(root / "src" / "graphics" / "rose3d_demo.c"),
+                          str(root / "tests" / "rose3d_window_test.c"),
+                          str(root / "src" / "graphics" / "rose3d.c"),
                           str(root / "src" / "graphics" / "graphics_sdl.c"),
                           str(root / "tests" / "particles_window_test.c"),
                           str(root / "src" / "graphics" / "life_demo.c"),

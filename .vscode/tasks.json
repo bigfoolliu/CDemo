@@ -2,6 +2,17 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "C: 构建三维玫瑰调试版本",
+      "type": "process",
+      "command": "make",
+      "args": ["rose-debug"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$gcc"],
+      "dependsOn": ["C: 生成图形编译数据库"]
+    },
+    {
       "label": "C: 生成编译数据库",
       "type": "process",
       "command": "make",

@@ -24,8 +24,15 @@ static void little_endian(unsigned char *out, uint32_t value, unsigned int n)
 /** @copydoc gfx_bmp_write */
 bool gfx_bmp_write(FILE *stream, const GfxCanvas *canvas, int width, int height)
 {
-    if (stream == nullptr || canvas == nullptr || width <= 0 || width > GFX_WIDTH || height <= 0 ||
-        height > GFX_HEIGHT) {
+    return gfx_bmp_write_region(stream, canvas, 0, 0, width, height);
+}
+
+/** @copydoc gfx_bmp_write_region */
+bool gfx_bmp_write_region(FILE *stream, const GfxCanvas *canvas, int x, int y, int width,
+                          int height)
+{
+    if (stream == nullptr || canvas == nullptr || x < 0 || y < 0 || width <= 0 || height <= 0 ||
+        x > GFX_WIDTH - width || y > GFX_HEIGHT - height) {
         errno = EINVAL;
         return false;
     }
@@ -51,15 +58,15 @@ bool gfx_bmp_write(FILE *stream, const GfxCanvas *canvas, int width, int height)
         goto failure;
     }
     unsigned char row[(GFX_WIDTH * 3 + 3) / 4 * 4];
-    for (int y = height - 1; y >= 0; --y) {
+    for (int row_index = height - 1; row_index >= 0; --row_index) {
         /* BMP 第一行是画面的最下方，画布第一行是最上方，所以逆序读取行。
          * 通过移位取通道，不依赖 uint32_t 在内存中的实际字节排列。
          */
-        for (int x = 0; x < width; ++x) {
-            uint32_t color = canvas->pixels[y][x];
-            row[x * 3] = (unsigned char)color;
-            row[x * 3 + 1] = (unsigned char)(color >> 8);
-            row[x * 3 + 2] = (unsigned char)(color >> 16);
+        for (int column = 0; column < width; ++column) {
+            uint32_t color = canvas->pixels[y + row_index][x + column];
+            row[column * 3] = (unsigned char)color;
+            row[column * 3 + 1] = (unsigned char)(color >> 8);
+            row[column * 3 + 2] = (unsigned char)(color >> 16);
         }
         for (uint32_t i = (uint32_t)width * 3; i < stride; ++i) {
             row[i] = 0;
@@ -82,7 +89,15 @@ failure:
 /** @copydoc gfx_bmp_save */
 bool gfx_bmp_save(const GfxCanvas *canvas, const char *path)
 {
-    if (canvas == nullptr || path == nullptr || path[0] == '\0') {
+    return gfx_bmp_save_region(canvas, 0, 0, GFX_WIDTH, GFX_HEIGHT, path);
+}
+
+/** @copydoc gfx_bmp_save_region */
+bool gfx_bmp_save_region(const GfxCanvas *canvas, int x, int y, int width, int height,
+                         const char *path)
+{
+    if (canvas == nullptr || path == nullptr || path[0] == '\0' || x < 0 || y < 0 || width <= 0 ||
+        height <= 0 || x > GFX_WIDTH - width || y > GFX_HEIGHT - height) {
         errno = EINVAL;
         return false;
     }
@@ -92,7 +107,7 @@ bool gfx_bmp_save(const GfxCanvas *canvas, const char *path)
         return false;
     }
     errno = 0;
-    bool ok = gfx_bmp_write(stream, canvas, GFX_WIDTH, GFX_HEIGHT);
+    bool ok = gfx_bmp_write_region(stream, canvas, x, y, width, height);
     int saved_error = errno;
     if (fclose(stream) != 0 && ok) {
         ok = false;

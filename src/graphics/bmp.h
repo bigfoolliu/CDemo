@@ -16,6 +16,19 @@
 bool gfx_bmp_write(FILE *stream, const GfxCanvas *canvas, int width, int height);
 
 /**
+ * @brief 将画布内任意矩形编码为未压缩 24 位 BMP。
+ * @param stream 有效的可写二进制流，从当前位置写入；调用者负责关闭。
+ * @param canvas 有效的只读画布。
+ * @param x 矩形左边界，须满足 x >= 0 且区域完全在画布内。
+ * @param y 矩形上边界，须满足 y >= 0 且区域完全在画布内。
+ * @param width 正区域宽度。
+ * @param height 正区域高度。
+ * @return 成功为 true；参数或写入失败为 false，errno 提供原因。
+ */
+bool gfx_bmp_write_region(FILE *stream, const GfxCanvas *canvas, int x, int y, int width,
+                          int height);
+
+/**
  * @brief 新建 BMP 文件并保存完整画布，禁止覆盖已有文件。
  * @param canvas 有效的只读画布。
  * @param path 非空文件路径，父目录须已存在。
@@ -24,4 +37,17 @@ bool gfx_bmp_write(FILE *stream, const GfxCanvas *canvas, int width, int height)
  * 已有文件不会删除；若清理也失败，不完整文件可能保留。
  */
 bool gfx_bmp_save(const GfxCanvas *canvas, const char *path);
+
+/**
+ * @brief 独占创建 BMP 文件并保存画布矩形，禁止覆盖已有文件。
+ * @param canvas 有效的只读画布。
+ * @param x 矩形左边界，须在画布内。
+ * @param y 矩形上边界，须在画布内。
+ * @param width 正区域宽度，且矩形完全位于画布内。
+ * @param height 正区域高度，且矩形完全位于画布内。
+ * @param path 非空文件路径，父目录须已存在。
+ * @return 成功为 true；失败为 false 并设置 errno。
+ */
+bool gfx_bmp_save_region(const GfxCanvas *canvas, int x, int y, int width, int height,
+                         const char *path);
 #endif

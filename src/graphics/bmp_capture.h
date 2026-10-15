@@ -15,4 +15,18 @@ enum {
  * @note 从仓库根目录运行；exports 是图片目录，不是日志目录。
  */
 bool gfx_bmp_capture(const GfxCanvas *canvas, const char *name, char path[BMP_CAPTURE_PATH_SIZE]);
+
+/**
+ * @brief 在 exports/ 内独占创建画布矩形截图，保留已有图片。
+ * @param canvas 有效的只读画布。
+ * @param x 区域左边界，须使整个区域位于画布中。
+ * @param y 区域上边界，须使整个区域位于画布中。
+ * @param width 正区域宽度。
+ * @param height 正区域高度。
+ * @param name 文件名前缀，只接受 ASCII 字母、数字、下划线和连字符。
+ * @param path 有效的输出数组，容量至少 BMP_CAPTURE_PATH_SIZE。
+ * @return 成功为 true；目录、参数或写入失败为 false，errno 提供原因。
+ */
+bool gfx_bmp_capture_region(const GfxCanvas *canvas, int x, int y, int width, int height,
+                            const char *name, char path[BMP_CAPTURE_PATH_SIZE]);
 #endif

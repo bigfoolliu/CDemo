@@ -68,6 +68,31 @@ static void test_bytes(void)
     assert(fclose(stream) == 0);
 }
 
+/** @brief 区域 BMP 应从指定偏移读取像素，并仍按 BMP 底行优先编码。 */
+static void test_region_bytes(void)
+{
+    static GfxCanvas canvas;
+    canvas.pixels[0][1] = gfx_rgb(11, 21, 31);
+    canvas.pixels[0][2] = gfx_rgb(12, 22, 32);
+    canvas.pixels[1][1] = gfx_rgb(41, 51, 61);
+    canvas.pixels[1][2] = gfx_rgb(42, 52, 62);
+    FILE *stream = tmpfile();
+    assert(stream != nullptr && gfx_bmp_write_region(stream, &canvas, 1, 0, 2, 2));
+    rewind(stream);
+    unsigned char bytes[70];
+    assert(fread(bytes, 1, sizeof bytes, stream) == sizeof bytes);
+    assert(read_le(bytes + 18, 4) == 2 && read_le(bytes + 22, 4) == 2);
+    assert(bytes[54] == 61 && bytes[55] == 51 && bytes[56] == 41);
+    assert(bytes[57] == 62 && bytes[58] == 52 && bytes[59] == 42);
+    assert(bytes[62] == 31 && bytes[63] == 21 && bytes[64] == 11);
+    assert(bytes[65] == 32 && bytes[66] == 22 && bytes[67] == 12);
+    assert(fclose(stream) == 0);
+    stream = tmpfile();
+    assert(stream != nullptr);
+    assert(!gfx_bmp_write_region(stream, &canvas, GFX_WIDTH - 1, 0, 2, 1) && errno == EINVAL);
+    assert(ftell(stream) == 0 && fclose(stream) == 0);
+}
+
 /** @brief 所有持久文件测试都在临时目录中，不创建或清理用户已有图片。 */
 static void test_files(void)
 {
@@ -108,7 +133,7 @@ static void test_files(void)
 /** @brief 运行全部 BMP 格式与失败行为断言。 @return 成功返回零。 */
 int main(void)
 {
-    test_bytes(); test_files();
+    test_bytes(); test_region_bytes(); test_files();
     puts("BMP 测试通过：文件头、BGR、上下方向、行填充、追加截图与失败路径。");
     return 0;
 }

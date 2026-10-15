@@ -30,6 +30,16 @@ bool gfx_sdl_open(GfxWindow *display, const char *title);
 bool gfx_sdl_present(const GfxWindow *display, const GfxCanvas *canvas);
 
 /**
+ * @brief 将画布指定矩形放大填满窗口，适合竖屏或局部构图。
+ * @param display 已创建的显示资源，借用。
+ * @param canvas 有效的只读画布，借用。
+ * @param source 非空有效矩形，必须完全位于逻辑画布内。
+ * @return 成功为 true；参数、纹理或呈现失败为 false。
+ */
+bool gfx_sdl_present_region(const GfxWindow *display, const GfxCanvas *canvas,
+                            const SDL_Rect *source);
+
+/**
  * @brief 释放已创建资源，清空句柄并退出 SDL；可清理创建失败的部分状态。
  * @param display 有效的可读写资源对象。
  * @note 各演示独占一个进程的 SDL 生命周期，不用于同时管理多个窗口。

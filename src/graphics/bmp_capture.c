@@ -8,7 +8,16 @@
 /** @copydoc gfx_bmp_capture */
 bool gfx_bmp_capture(const GfxCanvas *canvas, const char *name, char path[BMP_CAPTURE_PATH_SIZE])
 {
-    if (canvas == nullptr || name == nullptr || name[0] == '\0' || path == nullptr) {
+    return gfx_bmp_capture_region(canvas, 0, 0, GFX_WIDTH, GFX_HEIGHT, name, path);
+}
+
+/** @copydoc gfx_bmp_capture_region */
+bool gfx_bmp_capture_region(const GfxCanvas *canvas, int x, int y, int width, int height,
+                            const char *name, char path[BMP_CAPTURE_PATH_SIZE])
+{
+    if (canvas == nullptr || name == nullptr || name[0] == '\0' || path == nullptr || x < 0 ||
+        y < 0 || width <= 0 || height <= 0 || x > GFX_WIDTH - width ||
+        y > GFX_HEIGHT - height) {
         errno = EINVAL;
         return false;
     }
@@ -52,7 +61,7 @@ bool gfx_bmp_capture(const GfxCanvas *canvas, const char *name, char path[BMP_CA
             errno = ENAMETOOLONG;
             return false;
         }
-        if (gfx_bmp_save(canvas, path)) {
+        if (gfx_bmp_save_region(canvas, x, y, width, height, path)) {
             return true;
         }
         if (errno != EEXIST) {
