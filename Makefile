@@ -1130,6 +1130,31 @@ sanitize-regularization:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/regularization_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/regularization_test
 	./build/sanitize/ml/regularization_test
 
+# 阶段 11.1：同参数量对比普通 CNN 与带恒等捷径的 ResNet。
+.PHONY: resnet test-resnet sanitize-resnet
+resnet: build/ml/22_resnet
+	./build/ml/22_resnet
+
+build/ml/22_resnet: src/ml/22_resnet.c Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+build/debug/ml/22_resnet: src/ml/22_resnet.c Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+build/tests/resnet_test: tests/resnet_test.c src/ml/22_resnet.c Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-resnet: build/tests/resnet_test
+	./build/tests/resnet_test
+
+sanitize-resnet:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/resnet_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/resnet_test
+	./build/sanitize/ml/resnet_test
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -1201,10 +1226,11 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
+	./build/tests/resnet_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
 	./build/tests/logger_test
@@ -1227,6 +1253,7 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 # 覆盖普通示例、纯 C 图形核心及核心测试，无需 SDL；窗口编译由专用目标验证。
 lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/21_regularization.c tests/regularization_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/22_resnet.c tests/resnet_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(DECISION_TREE_SOURCES) tests/decision_tree_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/naive_bayes_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/word_frequency_test.c
@@ -1255,6 +1282,7 @@ lint:
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
 	rm -f build/tests/regularization_test build/sanitize/ml/regularization_test build/sanitize/ml/21_regularization
+	rm -f build/tests/resnet_test build/sanitize/ml/resnet_test build/sanitize/ml/22_resnet
 	rm -f build/sanitize/ml/20_cross_validation
 	rm -f build/sanitize/ml/19_linear_svm
 	rm -f build/sanitize/ml/18_pca
