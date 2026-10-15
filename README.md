@@ -153,7 +153,7 @@ make build/basics/01_types
 
 ## 机器学习入门案例
 
-`src/ml/` 提供十九个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
+`src/ml/` 提供二十个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -176,6 +176,7 @@ make build/basics/01_types
 | `17_random_forest.c` | 阶段 9.3：bootstrap、随机特征、投票与袋外评估 |
 | `18_pca.c` | 阶段 9.4：协方差、幂迭代、二维投影与重建误差 |
 | `19_linear_svm.c` | 阶段 9.5：hinge 损失、L2 正则、软间隔与线性分类对照 |
+| `20_cross_validation.c` | 阶段 10.1：分层 K 折、折内标准化、正则选参与独立测试集 |
 
 运行 `make vae` 导出重建对照、二维潜在网格、插值与先验随机样本四张 BMP；阅读 [VAE 教程](docs/vae.md)。`make test-vae` 和 `make sanitize-vae` 验证全部参数及重参数化导数；`--log` 追加日志至 `logs/ml/13_vae_shapes.log`。
 
@@ -190,6 +191,8 @@ make build/basics/01_types
 运行 `make pca` 用训练集拟合两个主成分，并将训练/测试样本的二维投影图导出到 `exports/`；直接运行 `./build/ml/18_pca` 只显示数值，不写图片。阅读 [PCA 教程](docs/pca.md)，学习训练集中心化、协方差、幂迭代及独立测试集重建误差；`make sanitize-pca` 可运行消毒器版本。
 
 运行 `make linear-svm` 训练带 L2 正则的线性 SVM，并与逻辑回归比较训练/测试错误和分类边界；图片保存到 `exports/`。直接运行 `./build/ml/19_linear_svm` 只显示数值；阅读 [线性 SVM 教程](docs/linear_svm.md)，学习 hinge 损失、次梯度和几何间隔。`make sanitize-linear-svm` 可运行消毒器版本。
+
+运行 `make cross-validation` 在训练开发集上做 4 折分层交叉验证，按平均 log-loss 选择逻辑回归的 L2 系数；每折只用折内训练部分拟合标准化参数，选参后再用完整开发集重训并评估封存的最终测试集。阅读 [交叉验证教程](docs/cross_validation.md)，学习折分、预处理和测试集隔离；`make sanitize-cross-validation` 可运行消毒器版本。
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 
