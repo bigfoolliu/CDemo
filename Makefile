@@ -1013,6 +1013,26 @@ sanitize-random-forest:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/17_random_forest.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/17_random_forest
 	./build/sanitize/ml/17_random_forest
 
+# 阶段 9.4：PCA 拟合与二维可视化；只在显式目标下导出图片。
+PCA_SOURCES := src/ml/18_pca.c $(GRAPHICS_CORE) $(BMP_SOURCES)
+PCA_HEADERS := $(GRAPHICS_HEADER) $(BMP_HEADERS)
+.PHONY: pca sanitize-pca
+pca: build/ml/18_pca
+	./build/ml/18_pca --export
+
+build/ml/18_pca: $(PCA_SOURCES) $(PCA_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(PCA_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/18_pca: $(PCA_SOURCES) $(PCA_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(PCA_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
+
+sanitize-pca:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(PCA_SOURCES) $(LDFLAGS) $(LDLIBS) -o build/sanitize/ml/18_pca
+	./build/sanitize/ml/18_pca
+
 # 教学 CPU 多文件链接；核心无需第三方依赖，追踪由宿主日志记录器处理。
 CPU_SOURCES := src/cpu/demo.c src/cpu/cpu.c
 CPU_HEADERS := src/cpu/cpu.h src/cpu/programs.h src/common/logger.h
@@ -1133,6 +1153,7 @@ lint:
 # 不删除 logs/、exports/、sessions/ 或用户得分文件，也不递归删除整个 build/。
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
+	rm -f build/sanitize/ml/18_pca
 	rm -f build/tests/decision_tree_test build/sanitize/ml/decision_tree_test
 	rm -f build/tests/naive_bayes_test build/sanitize/ml/naive_bayes_test
 	rm -f build/tests/word_frequency_test build/sanitize/word_frequency_test
