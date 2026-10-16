@@ -18,6 +18,8 @@
 
 迷宫核心为 `src/graphics/maze.h/c`，入口为 `maze_demo.c`，教程为 `docs/maze.md`。`make maze` 启动、`make maze-debug` 调试，`make test-maze`、`make sanitize-maze` 无需 SDL。DFS 回溯生成可重复的连通无环地图，BFS/DFS 在入队或入栈时标记，前驱链用于路径回溯；需区分无权图 BFS 最短路保证与树中路径唯一。默认测试验证核心，`make test-maze-window` 验证控制、时间、截图和有界循环。
 
+寻路学习核心为 `src/graphics/pathfinding.h/c`，窗口为 `pathfinding_demo.c`，教程为 `docs/pathfinding.md`。`make pathfinding` 启动，`make pathfinding-debug` 调试；`make test-pathfinding` 和 `make sanitize-pathfinding` 只编译纯 C 核心，不依赖 SDL。核心实现 BFS、Dijkstra 和 A*，与地图绘制、SDL 输入分离；网格零代价代表墙，正代价表示进入格子的移动成本。Dijkstra/A* 当前用线性数组选择最小优先级节点，需在教程说明其 `O(V²)` 复杂度。`make test-pathfinding-window` 验证算法切换、鼠标编辑、暂停、截图与主循环。
+
 BMP 编码位于 `src/graphics/bmp.h/c`，截图路径由 `bmp_capture.h/c` 管理，教程为 `docs/bmp_export.md`。`make bmp` 无需 SDL 导出示例，窗口按 S 截图。图片保存在 `exports/`，必须独占创建并保留已有文件；清理构建产物不得删除图片。`make test-bmp`、`make sanitize-bmp` 验证小端头、BGR、底部行优先和四字节填充，测试使用临时目录。编码与文件写入使用 C 标准 API；errno 错误码约定和目录创建使用 POSIX 平台接口。
 
 康威生命游戏位于 `src/graphics/life.h/c` 和 `life_demo.c`，教程为 `docs/life.md`。`make life` 启动，`make life-debug` 调试；`make test-life`、`make sanitize-life` 无需 SDL，核心接入默认测试和检查。使用固定死亡边界与双缓冲同步更新，不得原地覆盖当前代；随机预设应可重现。`make test-life-window` 验证输入、鼠标映射与时间控制，窗口复用共享 SDL 模块。

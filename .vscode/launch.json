@@ -715,6 +715,17 @@
       "stopOnEntry": false
     },
     {
+      "name": "C: 寻路算法演示",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/graphics/pathfinding_demo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "preLaunchTask": "C: 构建寻路演示调试版本",
+      "stopOnEntry": false
+    },
+    {
       "name": "C: 迷宫生成与寻路",
       "type": "lldb",
       "request": "launch",

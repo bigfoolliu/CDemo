@@ -114,6 +114,10 @@ MAZE_CORE := src/graphics/maze.c $(GRAPHICS_CORE)
 MAZE_HEADERS := src/graphics/maze.h $(GRAPHICS_HEADER)
 # 迷宫生成与寻路窗口入口 + 纯 C 核心 + 共享 SDL/BMP 模块，用于普通及调试窗口。
 MAZE_SOURCES := src/graphics/maze_demo.c $(MAZE_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
+# 独立路径搜索核心不依赖 graphics.c；窗口演示单独组合绘图、SDL 与 BMP 截图模块。
+PATHFINDING_CORE := src/graphics/pathfinding.c
+PATHFINDING_HEADERS := src/graphics/pathfinding.h
+PATHFINDING_SOURCES := src/graphics/pathfinding_demo.c $(PATHFINDING_CORE) $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 # 康威生命游戏的纯 C 核心与共享绘图源码，核心测试只链接这些文件。
 LIFE_CORE := src/graphics/life.c $(GRAPHICS_CORE)
 # 康威生命游戏核心接口与画布依赖，修改头文件后重建相关目标。
@@ -374,6 +378,43 @@ build/tests/maze_window_test: tests/maze_window_test.c tests/bmp_window_helpers.
 # SDL_VIDEODRIVER 只作用于这条命令，截图测试在临时目录执行。
 test-maze-window: build/tests/maze_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/maze_window_test
+
+# --- 寻路算法学习：独立核心、逐步图形演示、核心与窗口测试 ---
+.PHONY: pathfinding pathfinding-build pathfinding-debug
+.PHONY: test-pathfinding sanitize-pathfinding test-pathfinding-window
+pathfinding: pathfinding-build
+	./build/graphics/pathfinding_demo
+
+pathfinding-build: check-sdl build/graphics/pathfinding_demo
+
+pathfinding-debug: check-sdl build/debug/graphics/pathfinding_demo
+
+build/graphics/pathfinding_demo: $(PATHFINDING_SOURCES) $(PATHFINDING_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(PATHFINDING_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/pathfinding_demo: $(PATHFINDING_SOURCES) $(PATHFINDING_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(PATHFINDING_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/pathfinding_test: tests/pathfinding_test.c $(PATHFINDING_CORE) $(PATHFINDING_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/pathfinding_test.c $(PATHFINDING_CORE) $(LDFLAGS) $(LDLIBS) -o $@
+
+test-pathfinding: build/tests/pathfinding_test
+	./build/tests/pathfinding_test
+
+sanitize-pathfinding:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/pathfinding_test.c $(PATHFINDING_CORE) $(LDFLAGS) $(LDLIBS) -o build/sanitize/pathfinding_test
+	./build/sanitize/pathfinding_test
+
+build/tests/pathfinding_window_test: tests/pathfinding_window_test.c tests/bmp_window_helpers.h $(PATHFINDING_SOURCES) $(PATHFINDING_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/pathfinding_window_test.c $(PATHFINDING_CORE) $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-pathfinding-window: build/tests/pathfinding_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/pathfinding_window_test
 
 
 # --- 曼德勃罗分形：启动、仅构建、调试、核心测试与可选窗口验证 ---
@@ -1226,7 +1267,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1240,6 +1281,7 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 	./build/tests/bmp_test
 	./build/tests/memory_pool_test
 	./build/tests/maze_test
+	./build/tests/pathfinding_test
 	./build/tests/mandelbrot_test
 	./build/tests/bezier_test
 	./build/tests/ripple_test
@@ -1264,6 +1306,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BEZIER_CORE) tests/bezier_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MANDELBROT_CORE) tests/mandelbrot_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MAZE_CORE) tests/maze_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(PATHFINDING_CORE) tests/pathfinding_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/memory_pool_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(LIFE_CORE) tests/life_test.c
@@ -1306,6 +1349,7 @@ clean:
 	rm -f build/graphics/ripple_demo build/debug/graphics/ripple_demo build/tests/ripple_test build/tests/ripple_window_test build/sanitize/ripple_test
 	rm -f build/graphics/sand_demo build/debug/graphics/sand_demo build/tests/sand_test build/tests/sand_window_test build/sanitize/sand_test
 	rm -f build/graphics/maze_demo build/debug/graphics/maze_demo build/tests/maze_test build/tests/maze_window_test build/sanitize/maze_test
+	rm -f build/graphics/pathfinding_demo build/debug/graphics/pathfinding_demo build/tests/pathfinding_test build/tests/pathfinding_window_test build/sanitize/pathfinding_test
 	rm -f build/tests/memory_pool_test build/sanitize/memory_pool_test
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
 	rm -f build/graphics/life_demo build/debug/graphics/life_demo build/tests/life_test build/tests/life_window_test build/sanitize/life_test

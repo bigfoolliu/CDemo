@@ -82,6 +82,10 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 阅读 [迷宫算法教程](docs/maze.md)，学习显式栈、FIFO 队列、前驱链和最短路。核心测试 `make test-maze` 与 `make sanitize-maze` 无需 SDL；VS Code 选择 `C: 迷宫生成与寻路` 按 F5。
 
+## 寻路算法学习
+
+运行 `make pathfinding`，在可编辑网格上逐步比较 BFS、Dijkstra 和 A*。1/2/3 切换算法，Space 暂停/继续，N 单步，左键切换墙，右键切换普通/高代价地形，R 重置，S 保存 BMP。阅读 [寻路算法教程](docs/pathfinding.md)，理解步数最短与总代价最低的区别。`make test-pathfinding`、`make sanitize-pathfinding` 不依赖 SDL；`make test-pathfinding-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 寻路算法演示` 按 F5。
+
 ## BMP 图片导出
 
 运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、三维粒子玫瑰、生命游戏、迷宫、分形、贝塞尔曲线、波纹和落沙窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
