@@ -26,10 +26,12 @@ static bool algorithm_is_valid(PathfindingAlgorithm algorithm)
  */
 static uint32_t heuristic(int first, int second, uint8_t minimum_cost)
 {
+    /* 网格只允许上下左右移动，因此曼哈顿距离是最少步数下界。 */
     int first_x = first % PATHFINDING_WIDTH;
     int first_y = first / PATHFINDING_WIDTH;
     int second_x = second % PATHFINDING_WIDTH;
     int second_y = second / PATHFINDING_WIDTH;
+    /* 每一步至少要付出全图最小通行代价，乘积仍不会高估剩余代价。 */
     unsigned int dx = (unsigned int)(first_x > second_x ? first_x - second_x : second_x - first_x);
     unsigned int dy = (unsigned int)(first_y > second_y ? first_y - second_y : second_y - first_y);
     return (dx + dy) * minimum_cost;
@@ -43,16 +45,18 @@ static uint32_t heuristic(int first, int second, uint8_t minimum_cost)
  */
 static int select_lowest_priority(const PathfindingSearch *search)
 {
+    /* Dijkstra 比较 g；A* 比较 f = g + h。 */
     int selected = -1;
     uint32_t selected_priority = UINT32_MAX;
     for (int cell = 0; cell < PATHFINDING_CELLS; ++cell) {
         if (!search->discovered[cell] || search->expanded[cell]) {
             continue;
         }
-        uint32_t priority = search->best_cost[cell];
+        uint32_t priority = search->best_cost[cell]; /* 当前路径代价 g，A* 再加启发式 h。 */
         if (search->algorithm == PATHFINDING_A_STAR) {
             priority += heuristic(cell, search->goal, search->minimum_cost);
         }
+        /* 相同优先级保留先遇到的格子，使结果可重复。 */
         if (priority < selected_priority) {
             selected = cell;
             selected_priority = priority;
@@ -68,6 +72,7 @@ static int select_lowest_priority(const PathfindingSearch *search)
  */
 static void mark_path(const PathfindingGrid *grid, PathfindingSearch *search)
 {
+    /* 从终点逆着前驱走回起点；起点不计入边数和进入代价。 */
     int cell = search->goal;
     while (cell != -1) {
         search->path[cell] = true;
@@ -95,6 +100,7 @@ bool pathfinding_start(const PathfindingGrid *grid, int start, int goal,
                                .goal = goal,
                                .current = -1,
                                .minimum_cost = UINT8_MAX};
+    /* 先在局部状态中完整初始化，参数失败时不会破坏调用者的旧结果。 */
     for (int cell = 0; cell < PATHFINDING_CELLS; ++cell) {
         result.parent[cell] = -1;
         result.best_cost[cell] = UINT32_MAX;
@@ -102,6 +108,7 @@ bool pathfinding_start(const PathfindingGrid *grid, int start, int goal,
             result.minimum_cost = grid->cost[cell];
         }
     }
+    /* 起点的 g 为 0；BFS 额外把起点放入 FIFO 队列。 */
     result.discovered[start] = true;
     result.best_cost[start] = 0;
     if (algorithm == PATHFINDING_BFS) {
@@ -119,18 +126,21 @@ void pathfinding_step(const PathfindingGrid *grid, PathfindingSearch *search)
     }
     int cell;
     if (search->algorithm == PATHFINDING_BFS) {
+        /* BFS 按层出队；队列耗尽说明所有可达格子都检查过。 */
         if (search->head == search->tail) {
             search->phase = PATHFINDING_NO_PATH;
             return;
         }
         cell = search->frontier[search->head++];
     } else {
+        /* Dijkstra/A* 从未展开格中选最低优先级者。 */
         cell = select_lowest_priority(search);
         if (cell == -1) {
             search->phase = PATHFINDING_NO_PATH;
             return;
         }
     }
+    /* BFS 按层处理；加权算法的代价为正且 A* 启发式一致，展开后无需重访。 */
     search->current = cell;
     search->expanded[cell] = true;
     ++search->expanded_count;
@@ -138,6 +148,7 @@ void pathfinding_step(const PathfindingGrid *grid, PathfindingSearch *search)
         mark_path(grid, search);
         return;
     }
+    /* 邻居按上、右、下、左检查；固定顺序让并列路径保持稳定。 */
     const int dx[4] = {0, 1, 0, -1};
     const int dy[4] = {-1, 0, 1, 0};
     int x = cell % PATHFINDING_WIDTH;
@@ -153,8 +164,10 @@ void pathfinding_step(const PathfindingGrid *grid, PathfindingSearch *search)
         if (grid->cost[next] == 0 || search->expanded[next]) {
             continue;
         }
+        /* BFS 只优化步数；加权算法把进入邻居格子的代价计入 g。 */
         uint32_t step_cost = search->algorithm == PATHFINDING_BFS ? 1 : grid->cost[next];
         uint32_t candidate = search->best_cost[cell] + step_cost;
+        /* 仅在找到更便宜路线时更新前驱和代价，完成一次松弛。 */
         if (search->discovered[next] && candidate >= search->best_cost[next]) {
             continue;
         }

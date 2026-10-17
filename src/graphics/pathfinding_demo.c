@@ -23,13 +23,13 @@ enum {
 
 /** 窗口只保存交互、时间和绘制状态；图搜索数据由纯 C 核心处理。 */
 typedef struct {
-    PathfindingGrid grid;
-    PathfindingSearch search;
-    PathfindingAlgorithm algorithm;
-    bool running;
-    bool paused;
-    bool capture;
-    double accumulator;
+    PathfindingGrid grid;             /* 当前可编辑的地形与进入代价。 */
+    PathfindingSearch search;          /* 纯 C 核心维护的逐步搜索状态。 */
+    PathfindingAlgorithm algorithm;    /* 切换算法时用于重新开始搜索。 */
+    bool running;                      /* false 时退出窗口主循环。 */
+    bool paused;                       /* 暂停自动推进，但允许手动单步。 */
+    bool capture;                      /* 下一帧绘制后保存截图。 */
+    double accumulator;                /* 尚未凑满一个搜索时间步的秒数。 */
 } PathfindingDemoState;
 
 /**
@@ -77,6 +77,7 @@ static void reset_grid(PathfindingDemoState *state)
  */
 static int cell_from_window(int window_x, int window_y)
 {
+    /* 先还原逻辑画布坐标，再去掉网格边距。 */
     int x = window_x / PATH_WINDOW_SCALE;
     int y = window_y / PATH_WINDOW_SCALE;
     x -= PATH_GRID_LEFT;
@@ -86,6 +87,7 @@ static int cell_from_window(int window_x, int window_y)
     }
     int column = x / PATH_CELL_SIZE;
     int row = y / PATH_CELL_SIZE;
+    /* 每格最后一个像素是格间距，不属于可编辑区域。 */
     if (column >= PATHFINDING_WIDTH || row >= PATHFINDING_HEIGHT ||
         x % PATH_CELL_SIZE == PATH_CELL_SIZE - 1 ||
         y % PATH_CELL_SIZE == PATH_CELL_SIZE - 1) {
@@ -107,8 +109,10 @@ static bool edit_cell(PathfindingDemoState *state, const SDL_MouseButtonEvent *e
         return false;
     }
     if (event->button == SDL_BUTTON_LEFT) {
+        /* 左键在墙与普通地面间切换。 */
         state->grid.cost[cell] = state->grid.cost[cell] == 0 ? 1 : 0;
     } else if (event->button == SDL_BUTTON_RIGHT) {
+        /* 右键把墙或普通地面设为高代价，再次点击恢复普通代价。 */
         if (state->grid.cost[cell] == 0 || state->grid.cost[cell] == 1) {
             state->grid.cost[cell] = PATH_EXPENSIVE_COST;
         } else {
@@ -156,6 +160,7 @@ static bool handle_event(PathfindingDemoState *state, const SDL_Event *event)
     case SDLK_1:
     case SDLK_2:
     case SDLK_3:
+        /* 算法变化后清空旧搜索结果，并从当前地图重新开始。 */
         state->algorithm = event->key.keysym.sym == SDLK_1 ? PATHFINDING_BFS :
                            event->key.keysym.sym == SDLK_2 ? PATHFINDING_DIJKSTRA : PATHFINDING_A_STAR;
         restart_search(state);
@@ -188,8 +193,10 @@ static void advance_time(PathfindingDemoState *state, double elapsed)
     if (!isfinite(elapsed) || elapsed < 0) {
         return;
     }
+    /* 限制单帧补算量，避免窗口卡顿后长时间追赶积压时间。 */
     state->accumulator += fmin(elapsed, 0.1);
     const double tick = 1.0 / PATH_STEP_HZ;
+    /* 固定时间步让搜索速度不受绘制帧率波动影响。 */
     while (state->accumulator >= tick && state->search.phase == PATHFINDING_RUNNING) {
         pathfinding_step(&state->grid, &state->search);
         state->accumulator -= tick;
