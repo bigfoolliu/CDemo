@@ -351,6 +351,51 @@
       ]
     },
     {
+      "label": "C: 构建排序演示调试版本",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "sorting-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "C: 生成图形编译数据库"
+      ]
+    },
+    {
+      "label": "C: 测试排序核心",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-sorting"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "C: 测试排序窗口",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-sorting-window"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
       "label": "C: 构建曼德勃罗调试版本",
       "type": "process",
       "command": "make",

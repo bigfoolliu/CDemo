@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--graphics", action="store_true", help="加入依赖 SDL2 的图形窗口编译命令")
     options = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
-    targets = ["all", "build/tests/word_frequency_test", "build/tests/image_filters_test", "build/tests/cpu_test", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo", "build/tests/memory_pool_test", "build/tests/maze_test", "build/tests/pathfinding_test", "build/tests/mandelbrot_test", "build/tests/bezier_test", "build/tests/ripple_test", "build/tests/sand_test", "build/tests/rose3d_test", "build/tests/regularization_test", "build/tests/resnet_test"]
+    targets = ["all", "build/tests/word_frequency_test", "build/tests/image_filters_test", "build/tests/cpu_test", "build/tests/snake_ai_test", "build/tests/logger_test", "build/tests/graphics_test", "build/tests/particles_test", "build/tests/life_test", "build/tests/bmp_test", "build/graphics/bmp_demo", "build/tests/memory_pool_test", "build/tests/maze_test", "build/tests/pathfinding_test", "build/tests/sorting_test", "build/tests/mandelbrot_test", "build/tests/bezier_test", "build/tests/ripple_test", "build/tests/sand_test", "build/tests/rose3d_test", "build/tests/regularization_test", "build/tests/resnet_test"]
     if options.graphics:
         targets.extend(["build/graphics/demo", "build/tests/graphics_window_test",
                         "build/graphics/particles_demo", "build/tests/particles_window_test",
@@ -23,6 +23,7 @@ def main():
                         "build/graphics/life_demo", "build/tests/life_window_test",
                         "build/graphics/maze_demo", "build/tests/maze_window_test",
                         "build/graphics/pathfinding_demo", "build/tests/pathfinding_window_test",
+                        "build/graphics/sorting_demo", "build/tests/sorting_window_test",
                         "build/graphics/mandelbrot_demo", "build/tests/mandelbrot_window_test",
                         "build/graphics/bezier_demo", "build/tests/bezier_window_test",
                         "build/graphics/ripple_demo", "build/tests/ripple_window_test",

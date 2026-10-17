@@ -20,6 +20,8 @@
 
 寻路学习核心为 `src/graphics/pathfinding.h/c`，窗口为 `pathfinding_demo.c`，教程为 `docs/pathfinding.md`。`make pathfinding` 启动，`make pathfinding-debug` 调试；`make test-pathfinding` 和 `make sanitize-pathfinding` 只编译纯 C 核心，不依赖 SDL。核心实现 BFS、Dijkstra 和 A*，与地图绘制、SDL 输入分离；网格零代价代表墙，正代价表示进入格子的移动成本。Dijkstra/A* 当前用线性数组选择最小优先级节点，需在教程说明其 `O(V²)` 复杂度。`make test-pathfinding-window` 验证算法切换、鼠标编辑、暂停、截图与主循环。
 
+排序学习核心为 `src/graphics/sorting.h/c`，窗口为 `sorting_demo.c`，教程为 `docs/sorting.md`。`make sorting` 启动，`make sorting-debug` 调试；`make test-sorting`、`make sanitize-sorting` 只验证纯 C 核心，`make test-sorting-window` 验证图例、控件、计时和截图。核心提供冒泡、插入、选择和快速排序；快速排序使用末元素枢轴、Lomuto 分区和固定容量显式区间栈，须说明其不稳定性及有序输入下的最坏复杂度。比较键值而保留原始次序字段；不同算法须使用同一确定性输入便于比较，计数定义、稳定性和复杂度需在教程说明。
+
 BMP 编码位于 `src/graphics/bmp.h/c`，截图路径由 `bmp_capture.h/c` 管理，教程为 `docs/bmp_export.md`。`make bmp` 无需 SDL 导出示例，窗口按 S 截图。图片保存在 `exports/`，必须独占创建并保留已有文件；清理构建产物不得删除图片。`make test-bmp`、`make sanitize-bmp` 验证小端头、BGR、底部行优先和四字节填充，测试使用临时目录。编码与文件写入使用 C 标准 API；errno 错误码约定和目录创建使用 POSIX 平台接口。
 
 康威生命游戏位于 `src/graphics/life.h/c` 和 `life_demo.c`，教程为 `docs/life.md`。`make life` 启动，`make life-debug` 调试；`make test-life`、`make sanitize-life` 无需 SDL，核心接入默认测试和检查。使用固定死亡边界与双缓冲同步更新，不得原地覆盖当前代；随机预设应可重现。`make test-life-window` 验证输入、鼠标映射与时间控制，窗口复用共享 SDL 模块。

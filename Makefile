@@ -118,6 +118,10 @@ MAZE_SOURCES := src/graphics/maze_demo.c $(MAZE_CORE) $(GRAPHICS_SDL) $(BMP_SOUR
 PATHFINDING_CORE := src/graphics/pathfinding.c
 PATHFINDING_HEADERS := src/graphics/pathfinding.h
 PATHFINDING_SOURCES := src/graphics/pathfinding_demo.c $(PATHFINDING_CORE) $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
+# 排序核心纯 C 且不依赖画布；窗口只链接共享绘图、SDL 与 BMP 截图模块。
+SORTING_CORE := src/graphics/sorting.c
+SORTING_HEADERS := src/graphics/sorting.h
+SORTING_SOURCES := src/graphics/sorting_demo.c $(SORTING_CORE) $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES)
 # 康威生命游戏的纯 C 核心与共享绘图源码，核心测试只链接这些文件。
 LIFE_CORE := src/graphics/life.c $(GRAPHICS_CORE)
 # 康威生命游戏核心接口与画布依赖，修改头文件后重建相关目标。
@@ -415,6 +419,43 @@ build/tests/pathfinding_window_test: tests/pathfinding_window_test.c tests/bmp_w
 
 test-pathfinding-window: build/tests/pathfinding_window_test
 	SDL_VIDEODRIVER=dummy ./build/tests/pathfinding_window_test
+
+# --- 排序算法学习：独立核心、逐步柱形演示、核心与窗口测试 ---
+.PHONY: sorting sorting-build sorting-debug
+.PHONY: test-sorting sanitize-sorting test-sorting-window
+sorting: sorting-build
+	./build/graphics/sorting_demo
+
+sorting-build: check-sdl build/graphics/sorting_demo
+
+sorting-debug: check-sdl build/debug/graphics/sorting_demo
+
+build/graphics/sorting_demo: $(SORTING_SOURCES) $(SORTING_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) $(SORTING_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/debug/graphics/sorting_demo: $(SORTING_SOURCES) $(SORTING_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $(SDL_CFLAGS) $(SORTING_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+build/tests/sorting_test: tests/sorting_test.c $(SORTING_CORE) $(SORTING_HEADERS) Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/sorting_test.c $(SORTING_CORE) $(LDFLAGS) $(LDLIBS) -o $@
+
+test-sorting: build/tests/sorting_test
+	./build/tests/sorting_test
+
+sanitize-sorting:
+	mkdir -p build/sanitize
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/sorting_test.c $(SORTING_CORE) $(LDFLAGS) $(LDLIBS) -o build/sanitize/sorting_test
+	./build/sanitize/sorting_test
+
+build/tests/sorting_window_test: tests/sorting_window_test.c tests/bmp_window_helpers.h $(SORTING_SOURCES) $(SORTING_HEADERS) $(GRAPHICS_WINDOW_HEADERS) Makefile | check-sdl
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SDL_CFLAGS) tests/sorting_window_test.c $(SORTING_CORE) $(GRAPHICS_CORE) $(GRAPHICS_SDL) $(BMP_SOURCES) $(LDFLAGS) $(LDLIBS) $(SDL_LIBS) -lm -o $@
+
+test-sorting-window: build/tests/sorting_window_test
+	SDL_VIDEODRIVER=dummy ./build/tests/sorting_window_test
 
 
 # --- 曼德勃罗分形：启动、仅构建、调试、核心测试与可选窗口验证 ---
@@ -1267,7 +1308,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1282,6 +1323,7 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 	./build/tests/memory_pool_test
 	./build/tests/maze_test
 	./build/tests/pathfinding_test
+	./build/tests/sorting_test
 	./build/tests/mandelbrot_test
 	./build/tests/bezier_test
 	./build/tests/ripple_test
@@ -1307,6 +1349,7 @@ lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MANDELBROT_CORE) tests/mandelbrot_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(MAZE_CORE) tests/maze_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(PATHFINDING_CORE) tests/pathfinding_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(SORTING_CORE) tests/sorting_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/memory_pool_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(BMP_SOURCES) src/graphics/bmp_demo.c tests/bmp_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(LIFE_CORE) tests/life_test.c
@@ -1350,6 +1393,7 @@ clean:
 	rm -f build/graphics/sand_demo build/debug/graphics/sand_demo build/tests/sand_test build/tests/sand_window_test build/sanitize/sand_test
 	rm -f build/graphics/maze_demo build/debug/graphics/maze_demo build/tests/maze_test build/tests/maze_window_test build/sanitize/maze_test
 	rm -f build/graphics/pathfinding_demo build/debug/graphics/pathfinding_demo build/tests/pathfinding_test build/tests/pathfinding_window_test build/sanitize/pathfinding_test
+	rm -f build/graphics/sorting_demo build/debug/graphics/sorting_demo build/tests/sorting_test build/tests/sorting_window_test build/sanitize/sorting_test
 	rm -f build/tests/memory_pool_test build/sanitize/memory_pool_test
 	rm -f build/graphics/bmp_demo build/debug/graphics/bmp_demo build/tests/bmp_test build/sanitize/bmp_test
 	rm -f build/graphics/life_demo build/debug/graphics/life_demo build/tests/life_test build/tests/life_window_test build/sanitize/life_test

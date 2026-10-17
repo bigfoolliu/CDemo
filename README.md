@@ -86,6 +86,10 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make pathfinding`，在可编辑网格上逐步比较 BFS、Dijkstra 和 A*。1/2/3 切换算法，Space 暂停/继续，N 单步，左键切换墙，右键切换普通/高代价地形，R 重置，S 保存 BMP。阅读 [寻路算法教程](docs/pathfinding.md)，理解步数最短与总代价最低的区别。`make test-pathfinding`、`make sanitize-pathfinding` 不依赖 SDL；`make test-pathfinding-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 寻路算法演示` 按 F5。
 
+## 排序算法学习
+
+运行 `make sorting`，以柱状图逐步观察冒泡、插入、选择和快速排序。主键盘或数字小键盘的 1/2/3/4 切换算法，画布左上角会显示当前算法名称；所有算法使用相同的确定性数据。Space 暂停/继续，N 单步，R 换数据，S 保存 BMP。界面用颜色标记比较元素、快速排序枢轴、数组写入和已排定位置。阅读 [排序算法教程](docs/sorting.md)，比较复杂度、移动方式与稳定性。`make test-sorting`、`make sanitize-sorting` 不依赖 SDL；`make test-sorting-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 排序算法演示` 按 F5。
+
 ## BMP 图片导出
 
 运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、三维粒子玫瑰、生命游戏、迷宫、分形、贝塞尔曲线、波纹和落沙窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
