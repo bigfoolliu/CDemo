@@ -172,7 +172,7 @@ d_bias = sum(error) / count
 
 阶段 10.1 的 `src/ml/20_cross_validation.c` 用分层 4 折交叉验证选择逻辑回归的 L2 系数。每折只从折内训练数据拟合标准化参数；选参后在完整开发集重训，最终测试集只评估一次。运行 `make cross-validation` 查看每折和平均 log-loss、所选系数与最终测试指标。详见 [交叉验证教程](cross_validation.md)。
 
-阶段 10.2 的 `src/ml/21_regularization.c` 用 24 条训练样本拟合 `2→24→1` MLP，每条训练标签以 20% 概率翻转，对照无正则与五种非零 L2 强度。运行 `make regularization` 观察训练 BCE、含惩罚项的优化目标、验证 BCE 和权重范数；验证集选择系数，三个种子的独立测试集只用于最终报告。`make test-regularization` 对全部 49 个参数做中心差分检查，并验证偏置不受惩罚；`make sanitize-regularization` 运行消毒器。详见 [正则化教程](regularization.md)。
+阶段 10.2 的 `src/ml/21_regularization.c` 用 $24$ 条训练样本拟合 $2\to24\to1$ MLP，每条训练标签以 $20\%$ 概率翻转，对照无正则与五种非零 L2 强度。运行 `make regularization` 观察训练 BCE、含惩罚项的优化目标、验证 BCE 和权重范数；验证集选择系数，三个种子的独立测试集只用于最终报告。网络共有 $97$ 个参数；`make test-regularization` 对全部参数做中心差分检查，并验证偏置不受惩罚；`make sanitize-regularization` 运行消毒器。详见 [正则化教程](regularization.md)。
 
 进一步学习神经网络和强化学习，可阅读 [纯 C 深度强化学习贪吃蛇](snake_ai.md)。它包含两层隐藏层、反向传播、Adam、经验回放、目标网络以及独立评估，实现自动玩本项目的贪吃蛇。
 
