@@ -1,6 +1,6 @@
 # 交叉验证：分层 K 折与训练集隔离
 
-本案例对应[学习计划阶段 10.1](deep_learning_plan.md)，核心实现位于 [`src/ml/20_cross_validation.c`](../src/ml/20_cross_validation.c)。程序用纯 C 在合成二分类数据上比较逻辑回归的 $4$ 个 L2 系数，再用选中的系数在完整开发集上重训，最后评估独立测试集。理解重点是：每折的预处理只能看该折训练数据，测试集不能参与选参。
+本案例对应[学习计划阶段 10.1](50_deep_learning_plan.md)，核心实现位于 [`src/ml/20_cross_validation.c`](../src/ml/20_cross_validation.c)。程序用纯 C 在合成二分类数据上比较逻辑回归的 $4$ 个 L2 系数，再用选中的系数在完整开发集上重训，最后评估独立测试集。理解重点是：每折的预处理只能看该折训练数据，测试集不能参与选参。
 
 运行 `make cross-validation` 查看各候选值的折内 `log-loss`、平均分和最终测试结果；运行 `make sanitize-cross-validation` 检查本案例执行期间的内存访问和未定义行为。对应构建规则位于 [Makefile](../Makefile#L1179)。
 

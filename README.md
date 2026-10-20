@@ -18,6 +18,10 @@ make ml        # 构建并运行机器学习案例
 make stdlib    # 构建并运行常用标准库示例
 ```
 
+## 文档阅读顺序
+
+`docs/` 中的文档已按学习路线添加数字前缀。零基础建议从 [文档阅读顺序](docs/00_reading_order.md) 开始，再按兴趣进入图形模拟、经典机器学习或深度学习路线。
+
 `src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
 
 Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接受标准选项并不代表完整实现 C23。示例使用真正的新语法，缺少支持时会编译失败，以便明确识别工具链限制。macOS 上名为 `gcc` 的命令也可能实际是 Apple Clang。
@@ -26,17 +30,17 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 仓库提供扩展推荐、clangd 代码提示、Make 构建任务、CodeLLDB 调试入口及 `.clang-format`。首次打开后安装推荐扩展，按 `Cmd+Shift+B` 构建，在“运行和调试”选择示例并按 F5。
 
-配置原因、环境要求、断点操作及常见问题见 [VS Code 开发指南](docs/vscode.md)。也可运行 `make compile-commands` 更新代码提示，运行 `make debug` 构建独立调试版本。
+配置原因、环境要求、断点操作及常见问题见 [VS Code 开发指南](docs/02_vscode.md)。也可运行 `make compile-commands` 更新代码提示，运行 `make debug` 构建独立调试版本。
 
 ## 教学 CPU 模拟器
 
 运行 `make cpu`，通过十条自定义指令学习取指、解码与执行；两个机器码案例演示累加 1～10 和内存读写，均输出 55。核心使用纯 C，包含八个 16 位寄存器、64 KiB 内存、条件跳转与有界执行。
 
-阅读 [CPU 模拟教程](docs/cpu_emulation.md)。`./build/cpu/demo --trace` 将逐指令状态同时输出到终端并追加到 `logs/cpu/trace.log`；`make test-cpu` 和 `make sanitize-cpu` 验证核心，VS Code 选择 `C: 教学 CPU` 调试。该指令集用于教学，不运行真实 x86/RISC-V 程序。
+阅读 [CPU 模拟教程](docs/07_cpu_emulation.md)。`./build/cpu/demo --trace` 将逐指令状态同时输出到终端并追加到 `logs/cpu/trace.log`；`make test-cpu` 和 `make sanitize-cpu` 验证核心，VS Code 选择 `C: 教学 CPU` 调试。该指令集用于教学，不运行真实 x86/RISC-V 程序。
 
 ## 常用标准库学习专区
 
-阅读 [C 常用标准库学习指南](docs/c_standard_library.md)，按头文件导航、API 契约和小练习逐步学习。`src/stdlib/` 提供 10 个独立示例：输入输出、字符串与字节、动态内存、数值转换、字符分类、类型与范围、排序搜索、数学、时间、可变参数。
+阅读 [C 常用标准库学习指南](docs/03_c_standard_library.md)，按头文件导航、API 契约和小练习逐步学习。`src/stdlib/` 提供 10 个独立示例：输入输出、字符串与字节、动态内存、数值转换、字符分类、类型与范围、排序搜索、数学、时间、可变参数。
 
 运行 `make stdlib` 学习本专区，或在 VS Code 中选择 `C: stdlib/对应文件.c`，设置断点后按 F5。示例包含中文函数及参数说明、正常和边界验证，仅使用 ISO C 接口，尚未覆盖全部标准库 API。
 
@@ -44,85 +48,85 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 
 运行 `make word-frequency` 统计内置英文短文，也可运行 `./build/advanced/07_word_frequency --file README.md --top 15` 读取文件，或用 `--stdin` 从管道读取。结果按词频降序、同频按ASCII字典序输出；只识别ASCII英文字母，其他字节作为分隔符。
 
-可复用的线性探测哈希表位于 `src/common/word_map.h`，程序位于 `src/advanced/07_word_frequency.c`。阅读 [词频统计教程](docs/word_frequency.md) 学习哈希碰撞、扩容、键所有权与流式分词；运行 `make test-word-frequency` 和 `make sanitize-word-frequency` 验证边界与失败路径。VS Code选择 `C: 哈希表与词频统计` 按F5。
+可复用的线性探测哈希表位于 `src/common/word_map.h`，程序位于 `src/advanced/07_word_frequency.c`。阅读 [词频统计教程](docs/05_word_frequency.md) 学习哈希碰撞、扩容、键所有权与流式分词；运行 `make test-word-frequency` 和 `make sanitize-word-frequency` 验证边界与失败路径。VS Code选择 `C: 哈希表与词频统计` 按F5。
 
 ## 图像滤镜实验室
 
 运行 `make filters`，无需SDL或OpenCV，将合成测试图与均值模糊、Gaussian模糊、锐化、浮雕、Sobel结果导出到 `exports/`，共七张BMP，保留已有文件。默认使用边缘复制；`./build/vision/filters_demo --export --zero` 对照零填充边界。
 
-核心为 `src/vision/image_filters.h/c`，入口为 `filters_demo.c`。阅读 [滤镜学习教程](docs/image_filters.md)，学习RGB转灰度、3×3互相关、边界采样与浮点响应；显示时才限幅到0..255。`make test-filters`、`make sanitize-filters` 无需窗口，默认构建/测试/检查包含本例。VS Code选择 `C: 图像滤镜实验室` 按F5。
+核心为 `src/vision/image_filters.h/c`，入口为 `filters_demo.c`。阅读 [滤镜学习教程](docs/20_image_filters.md)，学习RGB转灰度、3×3互相关、边界采样与浮点响应；显示时才限幅到0..255。`make test-filters`、`make sanitize-filters` 无需窗口，默认构建/测试/检查包含本例。VS Code选择 `C: 图像滤镜实验室` 按F5。
 
 ## 落沙模拟
 
 运行 `make sand`，用 1/2/3 选择沙、水、墙，左键绘制，右键擦除，按住左键持续添加；[ / ] 调整笔刷，Space 暂停，N 单步，R 重置，C 清空，S 保存 BMP，Esc 退出。观察沙堆、水流和沙沉入水中，窗口需 SDL2 与 pkg-config。
 
-阅读 [落沙模拟教程](docs/sand.md)，学习网格局部规则、更新顺序、访问标记和物质量守恒。目标显示 60 FPS、每秒模拟 60 步；`make test-sand` 与 `make sanitize-sand` 无需 SDL，VS Code 选择 `C: 落沙模拟` 按 F5。
+阅读 [落沙模拟教程](docs/19_sand.md)，学习网格局部规则、更新顺序、访问标记和物质量守恒。目标显示 60 FPS、每秒模拟 60 步；`make test-sand` 与 `make sanitize-sand` 无需 SDL，VS Code 选择 `C: 落沙模拟` 按 F5。
 
 ## 波纹模拟
 
 运行 `make ripple`，点击水面观察波纹传播、叠加、反射与衰减。左键凸起、右键凹陷，Space 暂停，N 单步，R 恢复初始波纹，C 清空，S 保存 BMP，Esc 退出。窗口需 SDL2 与 pkg-config，目标显示 60 FPS，固定每秒模拟 60 步。
 
-阅读 [波纹模拟教程](docs/ripple.md)，学习高度场、有限差分、双缓冲、阻尼和坡度着色。`make test-ripple` 与 `make sanitize-ripple` 无需 SDL；VS Code 选择 `C: 波纹模拟` 按 F5。
+阅读 [波纹模拟教程](docs/18_ripple.md)，学习高度场、有限差分、双缓冲、阻尼和坡度着色。`make test-ripple` 与 `make sanitize-ripple` 无需 SDL；VS Code 选择 `C: 波纹模拟` 按 F5。
 
 ## 贝塞尔曲线编辑器
 
 运行 `make bezier`，左键拖动四个控制点实时编辑三次曲线。绿色 P0、红色 P3 是端点，蓝色 P1/P2 控制弯曲方向；R 重置，S 保存 BMP，Esc 退出。窗口需 SDL2 与 pkg-config，目标显示 60 FPS。
 
-阅读 [贝塞尔曲线教程](docs/bezier.md)，学习 de Casteljau 插值、控制多边形、鼠标坐标映射和折线采样。`make test-bezier` 与 `make sanitize-bezier` 无需 SDL；VS Code 选择 `C: 贝塞尔曲线编辑器` 按 F5。
+阅读 [贝塞尔曲线教程](docs/16_bezier.md)，学习 de Casteljau 插值、控制多边形、鼠标坐标映射和折线采样。`make test-bezier` 与 `make sanitize-bezier` 无需 SDL；VS Code 选择 `C: 贝塞尔曲线编辑器` 按 F5。
 
 ## 曼德勃罗分形
 
 运行 `make mandelbrot`，通过复数迭代生成彩色分形。左键/滚轮放大，右键缩小，方向键平移，+/- 调整迭代上限，R 重置，S 保存 BMP，Esc 退出。图像只在视图改变时重新计算。
 
-阅读 [曼德勃罗分形教程](docs/mandelbrot.md)，学习逃逸时间、复平面坐标、鼠标锚点和着色。`make test-mandelbrot` 与 `make sanitize-mandelbrot` 无需 SDL；VS Code 选择 `C: 曼德勃罗分形` 按 F5。
+阅读 [曼德勃罗分形教程](docs/21_mandelbrot.md)，学习逃逸时间、复平面坐标、鼠标锚点和着色。`make test-mandelbrot` 与 `make sanitize-mandelbrot` 无需 SDL；VS Code 选择 `C: 曼德勃罗分形` 按 F5。
 
 ## 迷宫生成与寻路
 
 运行 `make maze`，观察 DFS 回溯生成，再用 BFS 自动寻找路径。Space 暂停，N 单步，R 同种子重建，G 新迷宫，1/2 在同一张完整地图上比较 BFS/DFS，S 保存 BMP，Esc 退出。
 
-阅读 [迷宫算法教程](docs/maze.md)，学习显式栈、FIFO 队列、前驱链和最短路。核心测试 `make test-maze` 与 `make sanitize-maze` 无需 SDL；VS Code 选择 `C: 迷宫生成与寻路` 按 F5。
+阅读 [迷宫算法教程](docs/14_maze.md)，学习显式栈、FIFO 队列、前驱链和最短路。核心测试 `make test-maze` 与 `make sanitize-maze` 无需 SDL；VS Code 选择 `C: 迷宫生成与寻路` 按 F5。
 
 ## 寻路算法学习
 
-运行 `make pathfinding`，在可编辑网格上逐步比较 BFS、Dijkstra 和 A*。1/2/3 切换算法，Space 暂停/继续，N 单步，左键切换墙，右键切换普通/高代价地形，R 重置，S 保存 BMP。阅读 [寻路算法教程](docs/pathfinding.md)，理解步数最短与总代价最低的区别。`make test-pathfinding`、`make sanitize-pathfinding` 不依赖 SDL；`make test-pathfinding-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 寻路算法演示` 按 F5。
+运行 `make pathfinding`，在可编辑网格上逐步比较 BFS、Dijkstra 和 A*。1/2/3 切换算法，Space 暂停/继续，N 单步，左键切换墙，右键切换普通/高代价地形，R 重置，S 保存 BMP。阅读 [寻路算法教程](docs/15_pathfinding.md)，理解步数最短与总代价最低的区别。`make test-pathfinding`、`make sanitize-pathfinding` 不依赖 SDL；`make test-pathfinding-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 寻路算法演示` 按 F5。
 
 ## 排序算法学习
 
-运行 `make sorting`，以柱状图逐步观察冒泡、插入、选择和快速排序。主键盘或数字小键盘的 1/2/3/4 切换算法，画布左上角会显示当前算法名称；所有算法使用相同的确定性数据。Space 暂停/继续，N 单步，R 换数据，S 保存 BMP。界面用颜色标记比较元素、快速排序枢轴、数组写入和已排定位置。阅读 [排序算法教程](docs/sorting.md)，比较复杂度、移动方式与稳定性。`make test-sorting`、`make sanitize-sorting` 不依赖 SDL；`make test-sorting-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 排序算法演示` 按 F5。
+运行 `make sorting`，以柱状图逐步观察冒泡、插入、选择和快速排序。主键盘或数字小键盘的 1/2/3/4 切换算法，画布左上角会显示当前算法名称；所有算法使用相同的确定性数据。Space 暂停/继续，N 单步，R 换数据，S 保存 BMP。界面用颜色标记比较元素、快速排序枢轴、数组写入和已排定位置。阅读 [排序算法教程](docs/12_sorting.md)，比较复杂度、移动方式与稳定性。`make test-sorting`、`make sanitize-sorting` 不依赖 SDL；`make test-sorting-window` 使用 SDL dummy 验证交互。VS Code 选择 `C: 排序算法演示` 按 F5。
 
 ## BMP 图片导出
 
 运行 `make bmp`，无需 SDL 即可绘制并保存 24 位 BMP 到 `exports/`。二维图形、粒子喷泉、三维粒子玫瑰、生命游戏、迷宫、分形、贝塞尔曲线、波纹和落沙窗口均支持按 S 保存当前绘制帧，文件自动命名且不覆盖旧图片。
 
-阅读 [BMP 导出教程](docs/bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
+阅读 [BMP 导出教程](docs/11_bmp_export.md)，学习小端文件头、BGR 通道、上下行顺序和四字节行填充。`make test-bmp`、`make sanitize-bmp` 验证格式；VS Code 选择 `C: BMP 图片导出` 按 F5。
 
 ## 康威生命游戏
 
 使用纯 C 二维数组和双缓冲实现 B3/S23 细胞演化，提供滑翔机、闪烁器、可重复随机图案及暂停鼠标编辑。运行 `make life`；Space 暂停，N 单步，1/2/3 切换预设，R 重置，C 清空，Esc 退出。
 
-阅读 [生命游戏教程](docs/life.md)。默认绘制目标 60 FPS、每秒演化 10 代，采用固定死亡边界。`make test-life` 和 `make sanitize-life` 无需 SDL；VS Code 选择 `C: 康威生命游戏` 按 F5 调试。
+阅读 [生命游戏教程](docs/13_life.md)。默认绘制目标 60 FPS、每秒演化 10 代，采用固定死亡边界。`make test-life` 和 `make sanitize-life` 无需 SDL；VS Code 选择 `C: 康威生命游戏` 按 F5 调试。
 
 ## 粒子喷泉
 
 在二维引擎上用纯 C 实现固定粒子池、重力、寿命回收和颜色渐暗。运行 `make particles`；Space 暂停/继续，暂停时 N 单步，R 重置，Esc 退出。窗口标题显示存活粒子数。
 
-阅读 [粒子效果教程](docs/particles.md)。`make test-particles` 和 `make sanitize-particles` 无需 SDL；窗口与二维演示共用 SDL2 依赖。VS Code 选择 `C: 粒子喷泉演示` 按 F5 调试。
+阅读 [粒子效果教程](docs/17_particles.md)。`make test-particles` 和 `make sanitize-particles` 无需 SDL；窗口与二维演示共用 SDL2 依赖。VS Code 选择 `C: 粒子喷泉演示` 按 F5 调试。
 
 ## 三维粒子玫瑰
 
 运行 `make rose`，观察由 16,000 个粒子构成的粉白体积云团缓慢旋转、漂动并柔和发光，画面采用竖屏构图。左右/上下方向键调整观察角度，Space 暂停，暂停时 N 单步，R 重置，S 保存 170×240 BMP，Esc 退出。窗口需 SDL2 与 pkg-config；`make test-rose3d`、`make sanitize-rose3d` 验证纯 C 核心，`make test-rose3d-window` 验证窗口与截图。
 
-阅读 [三维粒子玫瑰教程](docs/rose3d.md)，学习体积粒子采样、三维旋转、透视投影和加色光晕；运行 `make rose-build` 只构建，`make rose-debug` 构建调试版。VS Code 选择 `C: 三维粒子玫瑰` 按 F5。
+阅读 [三维粒子玫瑰教程](docs/22_rose3d.md)，学习体积粒子采样、三维旋转、透视投影和加色光晕；运行 `make rose-build` 只构建，`make rose-debug` 构建调试版。VS Code 选择 `C: 三维粒子玫瑰` 按 F5。
 
 ## 最小二维图形引擎
 
 `src/graphics/` 提供纯 C 软件绘制核心和可选的 SDL2 实时窗口，演示像素、直线、矩形、圆、二维变换和动画循环。运行 `make graphics`，Space 暂停，暂停时 N 单步，R 重置，Esc 退出。
 
-阅读 [二维图形原理教程](docs/graphics_2d.md)。窗口需 SDL2 与 pkg-config，普通构建及 `make test-graphics` 无需这些依赖。VS Code 选择 `C: 二维图形演示`，设置断点后按 F5。
+阅读 [二维图形原理教程](docs/10_graphics_2d.md)。窗口需 SDL2 与 pkg-config，普通构建及 `make test-graphics` 无需这些依赖。VS Code 选择 `C: 二维图形演示`，设置断点后按 F5。
 
 ## 基础语法学习目录
 
-先阅读 [C 语言基础学习手册](docs/c_basics.md)，再按下表学习。手册包含概念说明、易错点、练习及尚未提供独立示例的深入主题。
+先阅读 [C 语言基础学习手册](docs/01_c_basics.md)，再按下表学习。手册包含概念说明、易错点、练习及尚未提供独立示例的深入主题。
 
 | 示例路径（相对于 `src/`） | 内容 |
 | --- | --- |
@@ -149,7 +153,7 @@ make build/basics/01_types
 
 ## 深入示例
 
-阅读 [深入 C 语言学习说明](docs/c_advanced.md)，了解接口契约、边界测试与扩展练习。
+阅读 [深入 C 语言学习说明](docs/04_c_advanced.md)，了解接口契约、边界测试与扩展练习。
 
 | 文件（位于 `src/advanced/`） | 核心问题 |
 | --- | --- |
@@ -161,13 +165,13 @@ make build/basics/01_types
 | `06_memory_pool.c` | 固定块内存池、对齐、空闲链表、生命周期与失败安全 |
 | `07_word_frequency.c` | 开放寻址哈希表、字符串所有权、流式分词与词频排序 |
 
-运行 `make memory-pool` 观察小对象分配与地址复用，配合 [内存池教程](docs/memory_pool.md) 学习。`make test-memory-pool` 和 `make sanitize-memory-pool` 验证边界；VS Code 选择 `C: 固定块内存池` 按 F5 调试。
+运行 `make memory-pool` 观察小对象分配与地址复用，配合 [内存池教程](docs/06_memory_pool.md) 学习。`make test-memory-pool` 和 `make sanitize-memory-pool` 验证边界；VS Code 选择 `C: 固定块内存池` 按 F5 调试。
 
 线程示例采用 POSIX API，需要 macOS/Linux 等支持环境；其他深入示例使用 ISO C 接口。消毒器命令要求编译器支持 `-fsanitize=address,undefined`，生成物放在 `build/sanitize/`。
 
 ## 机器学习入门案例
 
-`src/ml/` 提供二十二个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/machine_learning.md) 阅读算法步骤和练习。
+`src/ml/` 提供二十二个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/30_machine_learning.md) 阅读算法步骤和练习。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -194,29 +198,29 @@ make build/basics/01_types
 | `21_regularization.c` | 阶段 10.2：小样本过拟合、L2 目标与验证集选参 |
 | `22_resnet.c` | 阶段 11.1：恒等捷径、残差块与 CNN 对比 |
 
-运行 `make vae` 导出重建对照、二维潜在网格、插值与先验随机样本四张 BMP；阅读 [VAE 教程](docs/vae.md)。`make test-vae` 和 `make sanitize-vae` 验证全部参数及重参数化导数；`--log` 追加日志至 `logs/ml/13_vae_shapes.log`。
+运行 `make vae` 导出重建对照、二维潜在网格、插值与先验随机样本四张 BMP；阅读 [VAE 教程](docs/59_vae.md)。`make test-vae` 和 `make sanitize-vae` 验证全部参数及重参数化导数；`--log` 追加日志至 `logs/ml/13_vae_shapes.log`。
 
-运行 `make gan` 导出训练前后散点、判别器热图与潜在网格四张 BMP；阅读 [GAN 教程](docs/gan_2d.md)。`make test-gan` 和 `make sanitize-gan` 验证 D→G 梯度链及交替冻结；`--log` 追加至 `logs/ml/14_gan_2d.log`。
+运行 `make gan` 导出训练前后散点、判别器热图与潜在网格四张 BMP；阅读 [GAN 教程](docs/60_gan_2d.md)。`make test-gan` 和 `make sanitize-gan` 验证 D→G 梯度链及交替冻结；`--log` 追加至 `logs/ml/14_gan_2d.log`。
 
-运行 `make naive-bayes` 观察普通消息与促销消息的分类、对数分数及多数类基线；阅读 [朴素贝叶斯教程](docs/naive_bayes.md)。`make test-naive-bayes` 和 `make sanitize-naive-bayes` 验证概率计算与边界。
+运行 `make naive-bayes` 观察普通消息与促销消息的分类、对数分数及多数类基线；阅读 [朴素贝叶斯教程](docs/36_naive_bayes.md)。`make test-naive-bayes` 和 `make sanitize-naive-bayes` 验证概率计算与边界。
 
-运行 `make decision-tree` 比较树桩与深度 2 决策树并导出左右对照 BMP；阅读 [决策树教程](docs/decision_tree.md)。`make test-decision-tree` 和 `make sanitize-decision-tree` 验证分裂与边界；直接运行 `./build/ml/16_decision_tree` 不写图片。
+运行 `make decision-tree` 比较树桩与深度 2 决策树并导出左右对照 BMP；阅读 [决策树教程](docs/37_decision_tree.md)。`make test-decision-tree` 和 `make sanitize-decision-tree` 验证分裂与边界；直接运行 `./build/ml/16_decision_tree` 不写图片。
 
-运行 `make random-forest` 比较单树与 31 棵树的森林，观察三个种子的测试错误和袋外评估；阅读 [随机森林教程](docs/random_forest.md)。`make sanitize-random-forest` 使用地址与未定义行为消毒器运行案例。
+运行 `make random-forest` 比较单树与 31 棵树的森林，观察三个种子的测试错误和袋外评估；阅读 [随机森林教程](docs/38_random_forest.md)。`make sanitize-random-forest` 使用地址与未定义行为消毒器运行案例。
 
-运行 `make pca` 用训练集拟合两个主成分，并将训练/测试样本的二维投影图导出到 `exports/`；直接运行 `./build/ml/18_pca` 只显示数值，不写图片。阅读 [PCA 教程](docs/pca.md)，学习训练集中心化、协方差、幂迭代及独立测试集重建误差；`make sanitize-pca` 可运行消毒器版本。
+运行 `make pca` 用训练集拟合两个主成分，并将训练/测试样本的二维投影图导出到 `exports/`；直接运行 `./build/ml/18_pca` 只显示数值，不写图片。阅读 [PCA 教程](docs/39_pca.md)，学习训练集中心化、协方差、幂迭代及独立测试集重建误差；`make sanitize-pca` 可运行消毒器版本。
 
-运行 `make linear-svm` 训练带 L2 正则的线性 SVM，并与逻辑回归比较训练/测试错误和分类边界；图片保存到 `exports/`。直接运行 `./build/ml/19_linear_svm` 只显示数值；阅读 [线性 SVM 教程](docs/linear_svm.md)，学习 hinge 损失、次梯度和几何间隔。`make sanitize-linear-svm` 可运行消毒器版本。
+运行 `make linear-svm` 训练带 L2 正则的线性 SVM，并与逻辑回归比较训练/测试错误和分类边界；图片保存到 `exports/`。直接运行 `./build/ml/19_linear_svm` 只显示数值；阅读 [线性 SVM 教程](docs/40_linear_svm.md)，学习 hinge 损失、次梯度和几何间隔。`make sanitize-linear-svm` 可运行消毒器版本。
 
-运行 `make cross-validation` 在训练开发集上做 4 折分层交叉验证，按平均 log-loss 选择逻辑回归的 L2 系数；每折只用折内训练部分拟合标准化参数，选参后再用完整开发集重训并评估封存的最终测试集。阅读 [交叉验证教程](docs/cross_validation.md)，学习折分、预处理和测试集隔离；`make sanitize-cross-validation` 可运行消毒器版本。
+运行 `make cross-validation` 在训练开发集上做 4 折分层交叉验证，按平均 log-loss 选择逻辑回归的 L2 系数；每折只用折内训练部分拟合标准化参数，选参后再用完整开发集重训并评估封存的最终测试集。阅读 [交叉验证教程](docs/41_cross_validation.md)，学习折分、预处理和测试集隔离；`make sanitize-cross-validation` 可运行消毒器版本。
 
-运行 `make regularization` 比较 24 条含噪样本训练出的 MLP 在不同 L2 强度下的训练/验证损失、权重范数和多种子独立测试结果；系数只按验证集选择。阅读 [正则化教程](docs/regularization.md)，学习目标函数、权重梯度与过拟合；`make test-regularization` 检查全部参数梯度，`make sanitize-regularization` 检查内存和未定义行为。
+运行 `make regularization` 比较 24 条含噪样本训练出的 MLP 在不同 L2 强度下的训练/验证损失、权重范数和多种子独立测试结果；系数只按验证集选择。阅读 [正则化教程](docs/42_regularization.md)，学习目标函数、权重梯度与过拟合；`make test-regularization` 检查全部参数梯度，`make sanitize-regularization` 检查内存和未定义行为。
 
-运行 `make resnet` 对照相同参数量和训练预算下的普通 CNN 与 ResNet；阅读 [残差网络教程](docs/resnet.md)，理解恒等捷径及其反向梯度。`make test-resnet` 检查两种结构全部参数和输入梯度，并手算恒等路径；`make sanitize-resnet` 检查内存和未定义行为。
+运行 `make resnet` 对照相同参数量和训练预算下的普通 CNN 与 ResNet；阅读 [残差网络教程](docs/61_resnet.md)，理解恒等捷径及其反向梯度。`make test-resnet` 检查两种结构全部参数和输入梯度，并手算恒等路径；`make sanitize-resnet` 检查内存和未定义行为。
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 
-后续按 [纯 C 深度学习学习计划](docs/deep_learning_plan.md) 逐项学习。阶段 0～7 已实现：运行 `make numeric-foundations` 配合 [数值基础教程](docs/numeric_foundations.md)，运行 `make xor-mlp` 配合 [XOR 网络教程](docs/xor_mlp.md)，运行 `make mlp-2d` 配合 [二维分类教程](docs/mlp_2d.md)，运行 `make cnn-shapes` 配合 [CNN 图形教程](docs/cnn_shapes.md)，运行 `make autoencoder` 配合 [去噪自编码器教程](docs/denoising_autoencoder.md)。图像案例显式运行时将图片导出至 `exports/`；默认运行不生成图片。运行 `make char-rnn` 配合 [字符 RNN 教程](docs/char_rnn.md)，观察周期预测与独立语料评估；`./build/ml/10_char_rnn --log` 追加双输出日志至 `logs/ml/10_char_rnn.log`。运行 `make gru-memory` 配合 [GRU 记忆比特教程](docs/gru_memory.md)，比较两种网络在不同间隔和种子下的记忆表现。运行 `make tiny-transformer` 配合 [小型 Transformer 教程](docs/tiny_transformer.md)，观察字符预测和注意力矩阵；可用 `--log` 追加至 `logs/ml/12_tiny_transformer.log`。之后回看已有 DQN（LSTM 选做）；阶段 9.1～9.5 的经典机器学习案例、阶段 10.1～10.2 的交叉验证与正则化，以及阶段 11.1 的 ResNet 均已实现，其余计划仍待完成。模型计算不依赖外部框架。
+后续按 [纯 C 深度学习学习计划](docs/50_deep_learning_plan.md) 逐项学习。阶段 0～7 已实现：运行 `make numeric-foundations` 配合 [数值基础教程](docs/51_numeric_foundations.md)，运行 `make xor-mlp` 配合 [XOR 网络教程](docs/52_xor_mlp.md)，运行 `make mlp-2d` 配合 [二维分类教程](docs/53_mlp_2d.md)，运行 `make cnn-shapes` 配合 [CNN 图形教程](docs/54_cnn_shapes.md)，运行 `make autoencoder` 配合 [去噪自编码器教程](docs/55_denoising_autoencoder.md)。图像案例显式运行时将图片导出至 `exports/`；默认运行不生成图片。运行 `make char-rnn` 配合 [字符 RNN 教程](docs/56_char_rnn.md)，观察周期预测与独立语料评估；`./build/ml/10_char_rnn --log` 追加双输出日志至 `logs/ml/10_char_rnn.log`。运行 `make gru-memory` 配合 [GRU 记忆比特教程](docs/57_gru_memory.md)，比较两种网络在不同间隔和种子下的记忆表现。运行 `make tiny-transformer` 配合 [小型 Transformer 教程](docs/58_tiny_transformer.md)，观察字符预测和注意力矩阵；可用 `--log` 追加至 `logs/ml/12_tiny_transformer.log`。之后回看已有 DQN（LSTM 选做）；阶段 9.1～9.5 的经典机器学习案例、阶段 10.1～10.2 的交叉验证与正则化，以及阶段 11.1 的 ResNet 均已实现，其余计划仍待完成。模型计算不依赖外部框架。
 
 线性回归的详细日志同时输出到屏幕和 `logs/linear_regression.log`，每行包含毫秒时间戳和调用源码位置，多次运行会追加。用 `less logs/linear_regression.log` 分页查看，或运行 `./build/ml/01_linear_regression logs/training.log` 指定日志文件，父目录自动创建。
 
@@ -232,7 +236,7 @@ make build/basics/01_types
 
 ## 深度强化学习自动玩贪吃蛇
 
-纯 C 手写的 `11 → 64 → 64 → 3` 神经网络使用 DQN、经验回放和 Adam，训练时复用人工游戏规则。详见 [实现讲解与运行步骤](docs/snake_ai.md)。
+纯 C 手写的 `11 → 64 → 64 → 3` 神经网络使用 DQN、经验回放和 Adam，训练时复用人工游戏规则。详见 [实现讲解与运行步骤](docs/62_snake_ai.md)。
 
 ```sh
 make snake-ai
@@ -246,7 +250,7 @@ make snake-ai
 
 ## 终端小游戏
 
-运行 `make snake` 玩实时贪吃蛇：方向键或 WASD 转向，无需回车，蛇持续自动移动；撞墙或撞到自身后一秒自动重开。界面显示当前分数、历史最高及最近五局，历史追加保存至 `snake_scores.log`。Q 或 Ctrl+C 退出。源码位于 `src/games/snake.c`，详见 [游戏说明](docs/snake.md)。适用于 macOS/Linux 交互终端，普通 `make run` 不启动游戏；`make test` 验证规则，`make test-snake-terminal` 执行伪终端集成测试（需要 Python 3）。
+运行 `make snake` 玩实时贪吃蛇：方向键或 WASD 转向，无需回车，蛇持续自动移动；撞墙或撞到自身后一秒自动重开。界面显示当前分数、历史最高及最近五局，历史追加保存至 `snake_scores.log`。Q 或 Ctrl+C 退出。源码位于 `src/games/snake.c`，详见 [游戏说明](docs/08_snake.md)。适用于 macOS/Linux 交互终端，普通 `make run` 不启动游戏；`make test` 验证规则，`make test-snake-terminal` 执行伪终端集成测试（需要 Python 3）。
 
 ## 后续学习路线
 

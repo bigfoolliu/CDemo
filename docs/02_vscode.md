@@ -20,7 +20,7 @@
 
 ## 断点与运行
 
-标准库专区提供十个 `C: stdlib/对应文件.c` 入口，与普通示例一样使用调试版本；学习步骤和接口速查见 [常用标准库学习指南](c_standard_library.md)。
+标准库专区提供十个 `C: stdlib/对应文件.c` 入口，与普通示例一样使用调试版本；学习步骤和接口速查见 [常用标准库学习指南](03_c_standard_library.md)。
 
 在“运行和调试”下拉列表中选择与 C 文件对应的入口，然后按 F5。配置已覆盖 `src/` 根目录、`basics/`、`advanced/` 和 `ml/` 的全部独立示例，以及多文件模块、人工贪吃蛇、AI 短训练和 AI 单元测试。启动前自动构建调试版本，`stopOnEntry` 默认为 `false`，仅在设置的断点或运行异常处暂停。短小示例可能立即结束，请先设置断点；需要启动后立即暂停时可临时改为 `true`。
 
@@ -46,39 +46,39 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 
 “运行和调试”选择 `C: 粒子喷泉演示`，按 F5。启动前自动执行图形编译数据库任务和 `make particles-debug`，使用 SDL 头文件路径与 `-O0 -g3`，便于逐行观察粒子结构体；生成物位于 `build/debug/graphics/particles_demo`。
 
-在 `src/graphics/particles.c` 的 `particles_step` 内设断点检查速度、位置和寿命。在窗口中用 Space 暂停，N 前进一步，R 重置。调试器断点暂停整个进程；窗口暂停只停止模拟，仍处理输入。任务 `C: 测试粒子核心` 无需窗口或 SDL。完整说明见 [粒子教程](particles.md)。
+在 `src/graphics/particles.c` 的 `particles_step` 内设断点检查速度、位置和寿命。在窗口中用 Space 暂停，N 前进一步，R 重置。调试器断点暂停整个进程；窗口暂停只停止模拟，仍处理输入。任务 `C: 测试粒子核心` 无需窗口或 SDL。完整说明见 [粒子教程](17_particles.md)。
 
 ## 康威生命游戏调试
 
-选择 `C: 康威生命游戏` 按 F5，启动任务先更新包含 SDL 参数的编译数据库，再运行 `make life-debug`，程序位于 `build/debug/graphics/life_demo`。在 `life_step` 中观察邻居数量、两张数组与 current 索引；Space 暂停演化，N 推进一代，暂停时左键编辑。任务 `C: 测试生命游戏核心` 不依赖 SDL。规则及操作见 [生命游戏教程](life.md)。
+选择 `C: 康威生命游戏` 按 F5，启动任务先更新包含 SDL 参数的编译数据库，再运行 `make life-debug`，程序位于 `build/debug/graphics/life_demo`。在 `life_step` 中观察邻居数量、两张数组与 current 索引；Space 暂停演化，N 推进一代，暂停时左键编辑。任务 `C: 测试生命游戏核心` 不依赖 SDL。规则及操作见 [生命游戏教程](13_life.md)。
 
 ## BMP 导出调试
 
-选择 `C: BMP 图片导出` 按 F5，任务先生成普通编译数据库，再构建 `build/debug/graphics/bmp_demo`，无需 SDL。可在 `gfx_bmp_write` 中检查文件头、BGR 字节和行填充。已有三个窗口调试入口均支持按 S 保存；导出路径位于 `exports/`，详细说明见 [BMP 教程](bmp_export.md)。
+选择 `C: BMP 图片导出` 按 F5，任务先生成普通编译数据库，再构建 `build/debug/graphics/bmp_demo`，无需 SDL。可在 `gfx_bmp_write` 中检查文件头、BGR 字节和行填充。已有三个窗口调试入口均支持按 S 保存；导出路径位于 `exports/`，详细说明见 [BMP 教程](11_bmp_export.md)。
 
 ## 固定块内存池调试
 
-选择 `C: 固定块内存池` 按 F5，沿用普通编译数据库与 `make debug`，程序位于 `build/debug/advanced/06_memory_pool`。在头文件的分配和归还函数中设断点，观察 free_head、in_use、allocated 数组与块地址；通过实例跟踪 LIFO 地址复用。任务 `C: 测试内存池` 运行专门断言。原理和生命周期约束见 [内存池教程](memory_pool.md)。
+选择 `C: 固定块内存池` 按 F5，沿用普通编译数据库与 `make debug`，程序位于 `build/debug/advanced/06_memory_pool`。在头文件的分配和归还函数中设断点，观察 free_head、in_use、allocated 数组与块地址；通过实例跟踪 LIFO 地址复用。任务 `C: 测试内存池` 运行专门断言。原理和生命周期约束见 [内存池教程](06_memory_pool.md)。
 
 ## 迷宫生成与寻路调试
 
-选择 `C: 迷宫生成与寻路` 按 F5，启动任务更新图形编译数据库并构建 `build/debug/graphics/maze_demo`。在 generate_step、前沿取出和 mark_path 处设断点，观察 depth、head/tail、discovered 和 parent。Space 暂停，N 单步，生成完成后 1/2 重启不同搜索。任务 `C: 测试迷宫核心` 无需 SDL，完整说明见 [迷宫教程](maze.md)。
+选择 `C: 迷宫生成与寻路` 按 F5，启动任务更新图形编译数据库并构建 `build/debug/graphics/maze_demo`。在 generate_step、前沿取出和 mark_path 处设断点，观察 depth、head/tail、discovered 和 parent。Space 暂停，N 单步，生成完成后 1/2 重启不同搜索。任务 `C: 测试迷宫核心` 无需 SDL，完整说明见 [迷宫教程](14_maze.md)。
 
 ## 曼德勃罗分形调试
 
-选择 `C: 曼德勃罗分形` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/mandelbrot_demo`。在 escape_unchecked 中观察旧实部、虚部和新实部，在 mandelbrot_zoom 中比较缩放前后鼠标锚点。图像只在 dirty 标记为真时重新计算。任务 `C: 测试曼德勃罗核心` 无需 SDL；数值与操作说明见 [分形教程](mandelbrot.md)。
+选择 `C: 曼德勃罗分形` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/mandelbrot_demo`。在 escape_unchecked 中观察旧实部、虚部和新实部，在 mandelbrot_zoom 中比较缩放前后鼠标锚点。图像只在 dirty 标记为真时重新计算。任务 `C: 测试曼德勃罗核心` 无需 SDL；数值与操作说明见 [分形教程](21_mandelbrot.md)。
 
 ## 贝塞尔曲线编辑器调试
 
-选择 `C: 贝塞尔曲线编辑器` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/bezier_demo`。在 `evaluate_unchecked` 的逐层插值循环设置断点，观察 `work` 如何从四点减少为一点；在 `handle_event` 中观察窗口坐标、`offset` 和控制点坐标。断点期间窗口暂停响应是正常现象，继续执行后恢复。任务 `C: 测试贝塞尔曲线核心` 无需 SDL；操作与原理见 [曲线教程](bezier.md)。
+选择 `C: 贝塞尔曲线编辑器` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/bezier_demo`。在 `evaluate_unchecked` 的逐层插值循环设置断点，观察 `work` 如何从四点减少为一点；在 `handle_event` 中观察窗口坐标、`offset` 和控制点坐标。断点期间窗口暂停响应是正常现象，继续执行后恢复。任务 `C: 测试贝塞尔曲线核心` 无需 SDL；操作与原理见 [曲线教程](16_bezier.md)。
 
 ## 波纹模拟调试
 
-选择 `C: 波纹模拟` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/ripple_demo`。Space 暂停后，在 `ripple_step` 的 `laplacian` 或 `next` 处设置条件断点（例如 `x == 80 && y == 60`），按 N 单步，观察中心与邻居高度、旧层覆写和 `current` 交换。任务 `C: 测试波纹核心` 无需 SDL；数值原理与使用方法见 [波纹教程](ripple.md)。
+选择 `C: 波纹模拟` 按 F5，自动更新图形编译数据库并构建 `build/debug/graphics/ripple_demo`。Space 暂停后，在 `ripple_step` 的 `laplacian` 或 `next` 处设置条件断点（例如 `x == 80 && y == 60`），按 N 单步，观察中心与邻居高度、旧层覆写和 `current` 交换。任务 `C: 测试波纹核心` 无需 SDL；数值原理与使用方法见 [波纹教程](18_ripple.md)。
 
 ## 落沙模拟调试
 
-选择 `C: 落沙模拟` 按 F5，自动生成图形编译数据库并构建 `build/debug/graphics/sand_demo`。Space 暂停后按 N 单步，在 `try_move` 中观察 `source`、`target` 和 `moved`；可设置 `x == 60` 等条件断点，减少逐格停顿。`sand_step` 原地交换物质，不采用生命游戏的同步双缓冲规则。任务 `C: 测试落沙核心` 无需 SDL；规则与操作见 [落沙教程](sand.md)。
+选择 `C: 落沙模拟` 按 F5，自动生成图形编译数据库并构建 `build/debug/graphics/sand_demo`。Space 暂停后按 N 单步，在 `try_move` 中观察 `source`、`target` 和 `moved`；可设置 `x == 60` 等条件断点，减少逐格停顿。`sand_step` 原地交换物质，不采用生命游戏的同步双缓冲规则。任务 `C: 测试落沙核心` 无需 SDL；规则与操作见 [落沙教程](19_sand.md)。
 
 ## 教学 CPU 调试
 
@@ -90,25 +90,25 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 
 运行 `make compile-commands` 后选择 `C: ml/10_char_rnn.c`，按 F5 构建并启动调试版。默认不写日志，`args` 加入 `--log` 后双输出至 `logs/ml/10_char_rnn.log`。
 
-先在 main 的 `train` 调用处设置断点，跳过数值差分循环；前向观察 `forward->h[t]` 与概率，反向观察 `future` 沿时间传递及 W_h 梯度累加。每条独立序列重置初始状态，参数只在全部反向计算与裁剪完成后更新。详细步骤见 [字符 RNN 教程](char_rnn.md)。
+先在 main 的 `train` 调用处设置断点，跳过数值差分循环；前向观察 `forward->h[t]` 与概率，反向观察 `future` 沿时间传递及 W_h 梯度累加。每条独立序列重置初始状态，参数只在全部反向计算与裁剪完成后更新。详细步骤见 [字符 RNN 教程](56_char_rnn.md)。
 
 ## GRU 记忆比特调试
 
 运行 `make compile-commands` 后选择 `C: ml/11_gru_memory.c`，按 F5 启动。默认不写文件，`args` 可设为 `["--log"]`，同时追加到 `logs/ml/11_gru_memory.log`。先在 main 的 `train` 调用处断住，再进入前向和反向函数，观察 `z/r/n`、`future` 和共享参数梯度。
 
-模型只在终点计算损失，每条序列重置隐藏状态；GRU 的 z 表示保留旧状态比例。完整公式和对照实验见 [GRU 记忆比特教程](gru_memory.md)。
+模型只在终点计算损失，每条序列重置隐藏状态；GRU 的 z 表示保留旧状态比例。完整公式和对照实验见 [GRU 记忆比特教程](57_gru_memory.md)。
 
 ## 小型 Transformer 调试
 
 运行 `make compile-commands` 后选择 `C: ml/12_tiny_transformer.c`，按 F5 启动独立调试版。在 main 的 `train` 调用处设置断点可跳过数值差分循环，再观察 `network_forward` 的Q/K/V、注意力和LayerNorm缓存；在反向观察残差分支及Q/K/V导数的累加。
 
-默认不写文件，`args` 设为 `["--log"]` 后追加至 `logs/ml/12_tiny_transformer.log`。教程与矩阵读法见 [小型 Transformer 教程](tiny_transformer.md)。
+默认不写文件，`args` 设为 `["--log"]` 后追加至 `logs/ml/12_tiny_transformer.log`。教程与矩阵读法见 [小型 Transformer 教程](58_tiny_transformer.md)。
 
 ## VAE 图形生成调试
 
 运行 `make compile-commands` 后选择 `C: ml/13_vae_shapes.c`，按 F5 启动并导出BMP。默认 `args` 为 `["--export"]`，可加 `--log` 双输出到 `logs/ml/13_vae_shapes.log`。先在 main 的 `train` 调用处断住，再观察前向缓存的mu/logvar/sigma/epsilon/z，以及反向的dmu/dlv/draw。
 
-梯度差分时必须保持同一epsilon；零epsilon表示解码分布均值，图形先验生成则跳过编码器。详细公式与图片布局见 [VAE 教程](vae.md)。
+梯度差分时必须保持同一epsilon；零epsilon表示解码分布均值，图形先验生成则跳过编码器。详细公式与图片布局见 [VAE 教程](59_vae.md)。
 
 ## GAN 示例调试
 

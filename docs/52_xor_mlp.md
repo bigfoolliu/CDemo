@@ -1,6 +1,6 @@
 # 阶段 1：从单个神经元到 XOR 小网络
 
-本教程逐步拆解 [`src/ml/06_xor_mlp.c`](../src/ml/06_xor_mlp.c)：从一个手算的 sigmoid 神经元，走到含隐藏层的 XOR 网络，再核对真实初始化、前向传播、反向传播、一次参数更新和训练结果。建议先读[阶段 0：数值基础](numeric_foundations.md)。
+本教程逐步拆解 [`src/ml/06_xor_mlp.c`](../src/ml/06_xor_mlp.c)：从一个手算的 sigmoid 神经元，走到含隐藏层的 XOR 网络，再核对真实初始化、前向传播、反向传播、一次参数更新和训练结果。建议先读[阶段 0：数值基础](51_numeric_foundations.md)。
 
 ## 运行与源码地图
 

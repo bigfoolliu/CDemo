@@ -4,7 +4,7 @@
 
 ## 运行与操作
 
-沿用 [二维引擎](graphics_2d.md) 的 SDL2 与 pkg-config 环境，在仓库根目录运行：
+沿用 [二维引擎](10_graphics_2d.md) 的 SDL2 与 pkg-config 环境，在仓库根目录运行：
 
 ```sh
 make sand                    # 构建并启动

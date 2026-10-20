@@ -1,6 +1,6 @@
 # K-means 聚类：从分配到中心更新
 
-本文从基础分析 [`src/ml/04_kmeans.c`](../src/ml/04_kmeans.c)，用固定的六个二维点完整演算 K-means 的分组、中心更新和停止过程，再对应到源码函数。机器学习专区的案例索引见[机器学习学习手册](machine_learning.md)。
+本文从基础分析 [`src/ml/04_kmeans.c`](../src/ml/04_kmeans.c)，用固定的六个二维点完整演算 K-means 的分组、中心更新和停止过程，再对应到源码函数。机器学习专区的案例索引见[机器学习学习手册](30_machine_learning.md)。
 
 ## 1. K-means 要解决什么问题
 

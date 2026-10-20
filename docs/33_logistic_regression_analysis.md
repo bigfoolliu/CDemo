@@ -1,6 +1,6 @@
 # 逻辑回归：从概率到 C 实现
 
-本文分析 [`src/ml/02_logistic_regression.c`](../src/ml/02_logistic_regression.c)，从二分类的直觉开始，推导 sigmoid、交叉熵和梯度下降，并用第一轮训练数据手算参数更新。项目中的简要说明见[机器学习学习手册](machine_learning.md#2-逻辑回归输出二分类概率)。
+本文分析 [`src/ml/02_logistic_regression.c`](../src/ml/02_logistic_regression.c)，从二分类的直觉开始，推导 sigmoid、交叉熵和梯度下降，并用第一轮训练数据手算参数更新。项目中的简要说明见[机器学习学习手册](30_machine_learning.md#2-逻辑回归输出二分类概率)。
 
 ## 1. 逻辑回归要解决什么问题
 

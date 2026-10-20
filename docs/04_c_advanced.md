@@ -76,7 +76,7 @@
 
 ## 6. 固定块内存池：对齐与存储复用
 
-源码：`src/advanced/06_memory_pool.c`，可复用接口：`src/common/memory_pool.h`。详细讲解见 [内存池教程](memory_pool.md)。
+源码：`src/advanced/06_memory_pool.c`，可复用接口：`src/common/memory_pool.h`。详细讲解见 [内存池教程](06_memory_pool.md)。
 
 初始化一次申请固定数量的块，以槽位索引构成空闲链表；分配弹出头节点，归还压入头节点。所有块保持 max_align_t 对齐，用户载荷和占用状态分离。载荷不清零，不提供 realloc 语义。
 
@@ -86,6 +86,6 @@
 
 ## 7. 哈希表与词频统计：槽位不是键身份
 
-源码：`src/advanced/07_word_frequency.c`，可复用表：`src/common/word_map.h`；完整教程见 [词频统计器](word_frequency.md)。表使用FNV-1a、线性探测与75%负载扩容；碰撞时必须比较词的长度和内容。新键复制到表内，调用者可复用读入缓冲；扩容只移动键指针。
+源码：`src/advanced/07_word_frequency.c`，可复用表：`src/common/word_map.h`；完整教程见 [词频统计器](05_word_frequency.md)。表使用FNV-1a、线性探测与75%负载扩容；碰撞时必须比较词的长度和内容。新键复制到表内，调用者可复用读入缓冲；扩容只移动键指针。
 
 默认 `make word-frequency` 统计内置文本；`--file` 或 `--stdin` 才读取外部输入。测试验证碰撞、扩容、两处内存分配失败、词频排序和跨块长词；`make test-word-frequency`、`make sanitize-word-frequency` 均不写日志。练习：实现删除及墓碑，验证删除后同探测链上的其他键仍可查询。

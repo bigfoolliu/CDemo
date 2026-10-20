@@ -1,6 +1,6 @@
 # 朴素贝叶斯文本分类：原理与源码走读
 
-本案例对应[学习计划阶段 9.1](deep_learning_plan.md)，使用多项式朴素贝叶斯把短英文消息分成普通消息（类别 $0$）和促销消息（类别 $1$）。程序从带标签文本中统计词频，再对新句子计算两类分数并选择较大者。实现位于 [`src/ml/15_naive_bayes.c`](../src/ml/15_naive_bayes.c)，词频表复用 [`src/common/word_map.h`](../src/common/word_map.h)。
+本案例对应[学习计划阶段 9.1](50_deep_learning_plan.md)，使用多项式朴素贝叶斯把短英文消息分成普通消息（类别 $0$）和促销消息（类别 $1$）。程序从带标签文本中统计词频，再对新句子计算两类分数并选择较大者。实现位于 [`src/ml/15_naive_bayes.c`](../src/ml/15_naive_bayes.c)，词频表复用 [`src/common/word_map.h`](../src/common/word_map.h)。
 
 ```sh
 make naive-bayes

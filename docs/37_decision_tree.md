@@ -1,6 +1,6 @@
 # 二维决策树：基尼增益与源码走读
 
-本案例对应[学习计划阶段 9.2](deep_learning_plan.md)。程序用纯 C 实现一个二维二分类 CART 风格决策树：从坐标样本中学习若干 `x[feature] <= threshold` 判断，最后沿树走到叶节点并输出类别。核心实现是 [`src/ml/16_decision_tree.c`](../src/ml/16_decision_tree.c)，不依赖 SDL 或机器学习框架。
+本案例对应[学习计划阶段 9.2](50_deep_learning_plan.md)。程序用纯 C 实现一个二维二分类 CART 风格决策树：从坐标样本中学习若干 `x[feature] <= threshold` 判断，最后沿树走到叶节点并输出类别。核心实现是 [`src/ml/16_decision_tree.c`](../src/ml/16_decision_tree.c)，不依赖 SDL 或机器学习框架。
 
 ```sh
 make decision-tree           # 训练、打印树并导出决策边界 BMP

@@ -1,6 +1,6 @@
 # 神经网络正则化：从过拟合到 L2 梯度
 
-本案例对应[学习计划阶段 10.2](deep_learning_plan.md)，源码为 [`src/ml/21_regularization.c`](../src/ml/21_regularization.c)。它用纯 C 实现一个 $2\to24\to1$ 的 tanh MLP：仅用 $24$ 条带标签噪声的训练样本拟合圆形分类，再用验证集选择 L2 系数，最后评估独立测试集。案例同时展示正则项怎样进入目标函数、反向传播梯度和每次参数更新。
+本案例对应[学习计划阶段 10.2](50_deep_learning_plan.md)，源码为 [`src/ml/21_regularization.c`](../src/ml/21_regularization.c)。它用纯 C 实现一个 $2\to24\to1$ 的 tanh MLP：仅用 $24$ 条带标签噪声的训练样本拟合圆形分类，再用验证集选择 L2 系数，最后评估独立测试集。案例同时展示正则项怎样进入目标函数、反向传播梯度和每次参数更新。
 
 运行 `make regularization` 查看各候选系数的训练损失、验证损失、权重范数及三组种子的测试结果。运行 `make test-regularization` 检查全部参数的梯度和输入边界；`make sanitize-regularization` 用 ASan、UBSan 执行相同测试。构建规则在 [Makefile](../Makefile#L1196)。
 

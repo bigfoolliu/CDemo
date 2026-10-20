@@ -18,7 +18,7 @@
 - `src/games/snake_ai_network.h`：针对贪吃蛇的全连接网络、反向传播和 Adam。
 - `src/games/snake_ai.c`：DQN 训练、经验回放、评估与自动游戏。
 
-先读 [机器学习入门说明](machine_learning.md)，运行 `make ml`。DQN 可以先观察行为，完成全连接网络阶段后再深入阅读 [贪吃蛇 AI 教程](snake_ai.md)。
+先读 [机器学习入门说明](30_machine_learning.md)，运行 `make ml`。DQN 可以先观察行为，完成全连接网络阶段后再深入阅读 [贪吃蛇 AI 教程](62_snake_ai.md)。
 
 推荐主线：**数值基础 → XOR → 二维 MLP → CNN → 自编码器 → RNN → GRU → 小型 Transformer → 回看 DQN → 经典机器学习 → 评估方法 → 新网络结构 → 表示学习 → 生成模型 → 策略梯度**。VAE、GAN 已有独立案例，可在自编码器和 MLP 阶段之后穿插学习。
 
@@ -33,7 +33,7 @@
 
 ## 阶段 0：补齐数学和数值计算基础
 
-**实现状态**：已提供 `src/ml/05_numeric_foundations.c`，运行 `make numeric-foundations`；阅读 [数值基础与梯度教程](numeric_foundations.md)，逐项完成下方学习检查。
+**实现状态**：已提供 `src/ml/05_numeric_foundations.c`，运行 `make numeric-foundations`；阅读 [数值基础与梯度教程](51_numeric_foundations.md)，逐项完成下方学习检查。
 
 - [ ] 理解向量、矩阵、点积、转置、偏导数与链式法则。
 - [ ] 手写矩阵乘法和逐元素运算，统一采用行优先存储。
@@ -47,7 +47,7 @@
 
 ## 阶段 1：从单个神经元到 XOR 网络
 
-**实现状态**：已提供 `src/ml/06_xor_mlp.c`，运行 `make xor-mlp`；阅读 [XOR 小网络教程](xor_mlp.md)。固定种子 42、学习率 0.1、5000 轮 SGD，验证四组预测和全部参数梯度。
+**实现状态**：已提供 `src/ml/06_xor_mlp.c`，运行 `make xor-mlp`；阅读 [XOR 小网络教程](52_xor_mlp.md)。固定种子 42、学习率 0.1、5000 轮 SGD，验证四组预测和全部参数梯度。
 
 - [ ] 实现单个神经元：`z = w·x + b`、激活函数、损失和梯度。
 - [ ] 实现 `2 → 4 → 1` 的小型 MLP，隐藏层使用 tanh，输出使用 sigmoid。
@@ -61,7 +61,7 @@
 
 ## 阶段 2：二维分类与多层感知机
 
-**实现状态**：已提供 `src/ml/07_mlp_2d.c`，运行 `make mlp-2d` 导出 BMP，`make test-mlp-2d` 进行无文件输出的验证；阅读 [二维 MLP 教程](mlp_2d.md)。使用独立训练/验证/测试数据，比较小批量 SGD 与 Adam。
+**实现状态**：已提供 `src/ml/07_mlp_2d.c`，运行 `make mlp-2d` 导出 BMP，`make test-mlp-2d` 进行无文件输出的验证；阅读 [二维 MLP 教程](53_mlp_2d.md)。使用独立训练/验证/测试数据，比较小批量 SGD 与 Adam。
 
 - [ ] 实现 `2 → 16 → 16 → 1` 网络，加入 ReLU、小批量训练和数据打乱。
 - [ ] 生成圆环或双月形数据，明确训练、验证、测试集的用途。
@@ -75,7 +75,7 @@
 
 ## 阶段 3：卷积神经网络 CNN
 
-**实现状态**：已提供 `src/ml/08_cnn_shapes.c`，运行 `make cnn-shapes` 导出样本与特征图，`make test-cnn-shapes` 进行无文件输出的验证；阅读 [CNN 图形教程](cnn_shapes.md)。已检查卷积核、分类参数及输入像素梯度，并明确池化平局规则。
+**实现状态**：已提供 `src/ml/08_cnn_shapes.c`，运行 `make cnn-shapes` 导出样本与特征图，`make test-cnn-shapes` 进行无文件输出的验证；阅读 [CNN 图形教程](54_cnn_shapes.md)。已检查卷积核、分类参数及输入像素梯度，并明确池化平局规则。
 
 - [ ] 先用固定卷积核理解局部感受野、权重共享、步长和填充。
 - [ ] 实现卷积、ReLU、最大池化、展平和分类层的前向与反向计算。
@@ -89,7 +89,7 @@
 
 ## 阶段 4：自编码器与去噪
 
-**实现状态**：已提供 `src/ml/09_denoising_autoencoder.c`，运行 `make autoencoder` 导出重建对照图，`make test-autoencoder` 进行无文件输出的验证；阅读 [自编码器与去噪教程](denoising_autoencoder.md)。包括完整梯度检查、三图拟合、独立评估与两种基线。
+**实现状态**：已提供 `src/ml/09_denoising_autoencoder.c`，运行 `make autoencoder` 导出重建对照图，`make test-autoencoder` 进行无文件输出的验证；阅读 [自编码器与去噪教程](55_denoising_autoencoder.md)。包括完整梯度检查、三图拟合、独立评估与两种基线。
 
 - [ ] 理解编码器、瓶颈表示、解码器和重建损失。
 - [ ] 实现 `256 → 32 → 8 → 32 → 256` 的全连接自编码器。
@@ -103,7 +103,7 @@
 
 ## 阶段 5：循环神经网络 RNN
 
-**实现状态**：已提供 `src/ml/10_char_rnn.c`，运行 `make char-rnn`；阅读 [字符 RNN 与 BPTT 教程](char_rnn.md)。已实现 16 维状态、完整 BPTT、全局梯度裁剪、全部参数/初始状态梯度检查，以及周期拟合和独立微型语料评估。截断 BPTT 保留为练习。
+**实现状态**：已提供 `src/ml/10_char_rnn.c`，运行 `make char-rnn`；阅读 [字符 RNN 与 BPTT 教程](56_char_rnn.md)。已实现 16 维状态、完整 BPTT、全局梯度裁剪、全部参数/初始状态梯度检查，以及周期拟合和独立微型语料评估。截断 BPTT 保留为练习。
 
 - [ ] 实现 `h_t = tanh(W_x x_t + W_h h_(t-1) + b)` 和输出分类层。
 - [ ] 理解时间步之间共享参数，以及沿时间反向传播（BPTT）。
@@ -117,7 +117,7 @@
 
 ## 阶段 6：门控网络 GRU / LSTM
 
-**实现状态**：已提供 `src/ml/11_gru_memory.c`，运行 `make gru-memory`；阅读 [GRU 记忆比特教程](gru_memory.md)。已实现 reset-before GRU、全部参数及初始状态梯度检查，并在三种间隔、两个初始化种子下以相同数据预算对照 RNN；不预设 GRU 胜出。LSTM 保留为选做。
+**实现状态**：已提供 `src/ml/11_gru_memory.c`，运行 `make gru-memory`；阅读 [GRU 记忆比特教程](57_gru_memory.md)。已实现 reset-before GRU、全部参数及初始状态梯度检查，并在三种间隔、两个初始化种子下以相同数据预算对照 RNN；不预设 GRU 胜出。LSTM 保留为选做。
 
 - [ ] 优先实现 GRU 的更新门、重置门与候选状态。
 - [ ] 再选做 LSTM，区分细胞状态、隐藏状态和各个门。
@@ -131,7 +131,7 @@
 
 ## 阶段 7：小型 Transformer
 
-**实现状态**：已提供 `src/ml/12_tiny_transformer.c`，运行 `make tiny-transformer`；阅读 [小型 Transformer 教程](tiny_transformer.md)。已实现16维、双头、16步上下文的单层decoder，包含学习位置、因果注意力、残差、LayerNorm和GELU；全部2644个参数及注意力/归一化局部梯度、因果性和独立语料评估已验证。
+**实现状态**：已提供 `src/ml/12_tiny_transformer.c`，运行 `make tiny-transformer`；阅读 [小型 Transformer 教程](58_tiny_transformer.md)。已实现16维、双头、16步上下文的单层decoder，包含学习位置、因果注意力、残差、LayerNorm和GELU；全部2644个参数及注意力/归一化局部梯度、因果性和独立语料评估已验证。
 
 - [ ] 先实现单头注意力：`softmax(QK^T / sqrt(d_k))V`，显示注意力矩阵。
 - [ ] 加入因果掩码、多头注意力、位置表示、残差连接与 LayerNorm。
@@ -157,8 +157,8 @@
 
 ## 已实现的生成模型扩展
 
-- **VAE**：完成阶段 4 后运行 `make vae`，阅读 [二维潜在空间教程](vae.md)。先手算重参数化与 KL 项，再改变潜在维度，观察重建和先验采样；用 `make test-vae` 检查导数。
-- **GAN**：完成阶段 2 后运行 `make gan`，阅读 [八簇点教程](gan_2d.md)。先区分生成器与判别器的目标，再观察交替更新和八簇覆盖；用 `make test-gan` 检查梯度链。
+- **VAE**：完成阶段 4 后运行 `make vae`，阅读 [二维潜在空间教程](59_vae.md)。先手算重参数化与 KL 项，再改变潜在维度，观察重建和先验采样；用 `make test-vae` 检查导数。
+- **GAN**：完成阶段 2 后运行 `make gan`，阅读 [八簇点教程](60_gan_2d.md)。先区分生成器与判别器的目标，再观察交替更新和八簇覆盖；用 `make test-gan` 检查梯度链。
 
 以下阶段 9～14 中，9.1～9.5、10.1、10.2 和 11.1 已有实现，其余为**待实现学习计划**。案例从小型内置数据开始；待实现条目列出的训练、测试和可视化步骤是实施目标，不表示仓库已有相应命令。每项先完成步骤，再按完成标准检查。阶段 9、10 侧重非神经网络方法和可信评估，为后面的结构实验提供对照。
 
@@ -166,7 +166,7 @@
 
 ### 9.1 朴素贝叶斯文本分类
 
-**实现状态**：已提供 `src/ml/15_naive_bayes.c`，运行 `make naive-bayes`；阅读 [朴素贝叶斯教程](naive_bayes.md)，用 `make test-naive-bayes` 验证手算概率与边界。
+**实现状态**：已提供 `src/ml/15_naive_bayes.c`，运行 `make naive-bayes`；阅读 [朴素贝叶斯教程](36_naive_bayes.md)，用 `make test-naive-bayes` 验证手算概率与边界。
 
 **前置**：概率、对数及 `src/advanced/07_word_frequency.c` 的词频统计。
 
@@ -178,7 +178,7 @@
 
 ### 9.2 决策树
 
-**实现状态**：已提供 `src/ml/16_decision_tree.c`，运行 `make decision-tree` 导出左右对照 BMP；阅读 [决策树教程](decision_tree.md)，用 `make test-decision-tree` 验证手算增益与停止条件。
+**实现状态**：已提供 `src/ml/16_decision_tree.c`，运行 `make decision-tree` 导出左右对照 BMP；阅读 [决策树教程](37_decision_tree.md)，用 `make test-decision-tree` 验证手算增益与停止条件。
 
 **前置**：二维分类、熵或基尼不纯度。
 
@@ -190,7 +190,7 @@
 
 ### 9.3 随机森林
 
-**实现状态**：已提供 `src/ml/17_random_forest.c`，运行 `make random-forest` 比较单棵 CART 与多个种子的森林；阅读 [随机森林教程](random_forest.md)，观察袋外覆盖和测试结果。
+**实现状态**：已提供 `src/ml/17_random_forest.c`，运行 `make random-forest` 比较单棵 CART 与多个种子的森林；阅读 [随机森林教程](38_random_forest.md)，观察袋外覆盖和测试结果。
 
 **前置**：完成决策树。
 
@@ -202,7 +202,7 @@
 
 ### 9.4 主成分分析 PCA
 
-**实现状态**：已提供 `src/ml/18_pca.c`，运行 `make pca` 导出二维投影图；阅读 [PCA 教程](pca.md)，比较训练集与独立测试集的重建误差。
+**实现状态**：已提供 `src/ml/18_pca.c`，运行 `make pca` 导出二维投影图；阅读 [PCA 教程](39_pca.md)，比较训练集与独立测试集的重建误差。
 
 **前置**：矩阵乘法、特征向量与方差。
 
@@ -214,7 +214,7 @@
 
 ### 9.5 线性支持向量机 SVM
 
-**实现状态**：已提供 `src/ml/19_linear_svm.c`，运行 `make linear-svm` 对比线性 SVM 与逻辑回归的测试错误和分类边界；阅读 [线性 SVM 教程](linear_svm.md)，观察间隔与软间隔损失。
+**实现状态**：已提供 `src/ml/19_linear_svm.c`，运行 `make linear-svm` 对比线性 SVM 与逻辑回归的测试错误和分类边界；阅读 [线性 SVM 教程](40_linear_svm.md)，观察间隔与软间隔损失。
 
 **前置**：线性分类、梯度下降与正则化。
 
@@ -230,7 +230,7 @@
 
 ### 10.1 交叉验证
 
-**实现状态**：已提供 `src/ml/20_cross_validation.c`，运行 `make cross-validation` 比较正则强度并在独立测试集上评估；阅读 [交叉验证教程](cross_validation.md)，观察分层折分和每折独立标准化。
+**实现状态**：已提供 `src/ml/20_cross_validation.c`，运行 `make cross-validation` 比较正则强度并在独立测试集上评估；阅读 [交叉验证教程](41_cross_validation.md)，观察分层折分和每折独立标准化。
 
 1. 将训练开发数据划为固定种子的 K 折，分类任务尽量按类别分层。
 2. 每折只用该折训练部分拟合标准化等预处理，再评估留出折。
@@ -240,7 +240,7 @@
 
 ### 10.2 正则化
 
-**实现状态**：已提供 `src/ml/21_regularization.c`，运行 `make regularization` 比较多个 L2 系数和三个随机种子；阅读 [正则化教程](regularization.md)，用 `make test-regularization` 和 `make sanitize-regularization` 验证梯度及边界。
+**实现状态**：已提供 `src/ml/21_regularization.c`，运行 `make regularization` 比较多个 L2 系数和三个随机种子；阅读 [正则化教程](42_regularization.md)，用 `make test-regularization` 和 `make sanitize-regularization` 验证梯度及边界。
 
 1. 先检查平均二元交叉熵，再加入 `lambda/2 * sum(W²)`；对比解析梯度和中心差分，并确认偏置不参与惩罚。
 2. 用 24 条训练样本训练 `2→24→1` MLP，每条标签以 20% 概率翻转；在干净验证集比较数据损失、总目标与权重范数。
@@ -269,7 +269,7 @@
 ### 11.1 残差网络 ResNet
 
 **实现状态**：已提供 `src/ml/22_resnet.c`，运行 `make resnet` 对比普通 CNN 与 ResNet；阅读
-[ResNet 教程](resnet.md)，使用 `make test-resnet` 检查梯度，使用 `make sanitize-resnet`
+[ResNet 教程](61_resnet.md)，使用 `make test-resnet` 检查梯度，使用 `make sanitize-resnet`
 验证内存与未定义行为。
 
 1. 在同尺寸特征图上实现 `y = ReLU(x + F(x))`；主分支为两层卷积，捷径为恒等映射。
@@ -314,7 +314,7 @@
 
 ## 阶段 13：二维点扩散模型
 
-**前置**：阶段 2 的 MLP、概率基础和已有的 [八簇点 GAN](gan_2d.md)。
+**前置**：阶段 2 的 MLP、概率基础和已有的 [八簇点 GAN](60_gan_2d.md)。
 
 1. 在八簇点数据上定义短时噪声日程，手算前向加噪分布和每一步张量形状。
 2. 训练带时间输入的小型 MLP 预测噪声，检查损失、梯度和有限数。

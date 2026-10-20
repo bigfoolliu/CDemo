@@ -4,7 +4,7 @@
 
 ## 运行和操作
 
-窗口使用 [二维图形教程](graphics_2d.md) 中的 SDL2 与 pkg-config 环境。在仓库根目录运行：
+窗口使用 [二维图形教程](10_graphics_2d.md) 中的 SDL2 与 pkg-config 环境。在仓库根目录运行：
 
 ```sh
 make ripple                    # 构建并启动

@@ -1,6 +1,6 @@
 # 随机森林：自助采样、随机特征与袋外评估
 
-本案例对应[学习计划阶段 9.3](deep_learning_plan.md)。[`src/ml/17_random_forest.c`](../src/ml/17_random_forest.c) 用固定容量数组实现一个二维二分类随机森林，并与单棵 CART 风格决策树比较。每棵森林树会对训练集有放回抽样，再在每个非纯节点随机挑一个特征寻找基尼切分；预测时由所有树投票。
+本案例对应[学习计划阶段 9.3](50_deep_learning_plan.md)。[`src/ml/17_random_forest.c`](../src/ml/17_random_forest.c) 用固定容量数组实现一个二维二分类随机森林，并与单棵 CART 风格决策树比较。每棵森林树会对训练集有放回抽样，再在每个非纯节点随机挑一个特征寻找基尼切分；预测时由所有树投票。
 
 ```sh
 make random-forest

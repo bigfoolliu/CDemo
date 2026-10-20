@@ -1,6 +1,6 @@
 # 用纯 C 理解残差网络 ResNet
 
-本教程跟读 [`src/ml/22_resnet.c`](../src/ml/22_resnet.c)，从 $8\times8$ 合成线条图像开始，走过卷积、残差相加、分类、反向传播和参数更新。程序不依赖机器学习框架。运行 `make resnet` 可比较普通 CNN 与 ResNet；运行 `make test-resnet` 检查梯度与边界，运行 `make sanitize-resnet` 检查内存和未定义行为。阶段说明见[深度学习计划](deep_learning_plan.md#L269)，构建规则见 [Makefile](../Makefile#L1215)。
+本教程跟读 [`src/ml/22_resnet.c`](../src/ml/22_resnet.c)，从 $8\times8$ 合成线条图像开始，走过卷积、残差相加、分类、反向传播和参数更新。程序不依赖机器学习框架。运行 `make resnet` 可比较普通 CNN 与 ResNet；运行 `make test-resnet` 检查梯度与边界，运行 `make sanitize-resnet` 检查内存和未定义行为。阶段说明见[深度学习计划](50_deep_learning_plan.md#L269)，构建规则见 [Makefile](../Makefile#L1215)。
 
 ## 1. 案例输入与源码地图
 

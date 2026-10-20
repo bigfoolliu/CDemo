@@ -4,7 +4,7 @@
 
 ## 运行与操作
 
-窗口沿用 [二维图形教程](graphics_2d.md) 的 SDL2、pkg-config 环境。在仓库根目录执行：
+窗口沿用 [二维图形教程](10_graphics_2d.md) 的 SDL2、pkg-config 环境。在仓库根目录执行：
 
 ```sh
 make bezier                  # 构建并启动窗口

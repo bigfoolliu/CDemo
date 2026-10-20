@@ -240,6 +240,6 @@ $$
 
 以下专题页包含完整推导、变量定义和数值例子。读法参考用于认符号，具体算法仍应以对应页面和 C 实现为准。
 
-- 经典机器学习：[线性回归](linear_regression_analysis.md)、[逻辑回归](logistic_regression_analysis.md)、[K 近邻](knn_analysis.md)、[K-means](kmeans_analysis.md)、[朴素贝叶斯](naive_bayes.md)、[决策树](decision_tree.md)、[随机森林](random_forest.md)、[PCA](pca.md)、[线性 SVM](linear_svm.md)、[交叉验证](cross_validation.md)、[正则化](regularization.md)。
-- 神经网络与深度学习：[数值基础](numeric_foundations.md)、[XOR MLP](xor_mlp.md)、[二维 MLP](mlp_2d.md)、[CNN](cnn_shapes.md)、[去噪自编码器](denoising_autoencoder.md)、[字符 RNN](char_rnn.md)、[GRU](gru_memory.md)、[Transformer](tiny_transformer.md)、[VAE](vae.md)、[GAN](gan_2d.md)、[ResNet](resnet.md)。
-- 强化学习：[Snake DQN](snake_ai.md)。机器学习案例总览见[机器学习学习指南](machine_learning.md)，阶段路线见[深度学习学习计划](deep_learning_plan.md)。
+- 经典机器学习：[线性回归](32_linear_regression_analysis.md)、[逻辑回归](33_logistic_regression_analysis.md)、[K 近邻](34_knn_analysis.md)、[K-means](35_kmeans_analysis.md)、[朴素贝叶斯](36_naive_bayes.md)、[决策树](37_decision_tree.md)、[随机森林](38_random_forest.md)、[PCA](39_pca.md)、[线性 SVM](40_linear_svm.md)、[交叉验证](41_cross_validation.md)、[正则化](42_regularization.md)。
+- 神经网络与深度学习：[数值基础](51_numeric_foundations.md)、[XOR MLP](52_xor_mlp.md)、[二维 MLP](53_mlp_2d.md)、[CNN](54_cnn_shapes.md)、[去噪自编码器](55_denoising_autoencoder.md)、[字符 RNN](56_char_rnn.md)、[GRU](57_gru_memory.md)、[Transformer](58_tiny_transformer.md)、[VAE](59_vae.md)、[GAN](60_gan_2d.md)、[ResNet](61_resnet.md)。
+- 强化学习：[Snake DQN](62_snake_ai.md)。机器学习案例总览见[机器学习学习指南](30_machine_learning.md)，阶段路线见[深度学习学习计划](50_deep_learning_plan.md)。

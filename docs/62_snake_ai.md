@@ -1286,7 +1286,7 @@ less logs/snake-ai/run-XXXXXX/train.log
 4. **核对梯度而非猜测。** 阅读 `tests/snake_ai_test.c` 的 `test_gradient`：它给某个权重加上、减去微小扰动，比较损失变化算出的数值梯度与链式法则的解析梯度。再看 `test_replay` 如何检查终止目标、截断后继续估值、经验池覆盖和第 500 次更新时的目标网络同步。
 5. **比较策略。** 用 `eval` 测试同一模型，查看 `report.txt` 中随机策略、未训练网络、最佳模型在相同测试种子列表上的平均分。改变 `--seed` 再评估，观察最高分和平均分怎样变化；不要根据这次新的测试结果回头挑模型，否则测试集就不再独立。
 
-源码分工可作为阅读地图：[`snake_env.h`](../src/games/snake_env.h) 负责规则和特征，[`snake_ai_network.h`](../src/games/snake_ai_network.h) 负责网络、梯度、Adam 和模型读写，[`snake_ai.c`](../src/games/snake_ai.c) 负责经验池、训练、验证与演示，[`snake_terminal.h`](../src/games/snake_terminal.h) 只处理终端显示和得分。遇到不熟悉的 C 语法，可先查 [`c_basics.md`](c_basics.md)，再回来追数据流。
+源码分工可作为阅读地图：[`snake_env.h`](../src/games/snake_env.h) 负责规则和特征，[`snake_ai_network.h`](../src/games/snake_ai_network.h) 负责网络、梯度、Adam 和模型读写，[`snake_ai.c`](../src/games/snake_ai.c) 负责经验池、训练、验证与演示，[`snake_terminal.h`](../src/games/snake_terminal.h) 只处理终端显示和得分。遇到不熟悉的 C 语法，可先查 [`01_c_basics.md`](01_c_basics.md)，再回来追数据流。
 
 ### 本机实测结果
 
