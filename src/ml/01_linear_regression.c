@@ -9,8 +9,8 @@
 #include "../common/logger.h"
 
 typedef struct {
-    double weight;
-    double bias;
+    double weight;  // 权重
+    double bias;    // 偏置
 } Model;
 
 /**
