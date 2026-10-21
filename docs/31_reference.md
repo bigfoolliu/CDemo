@@ -94,7 +94,7 @@ $t$ 是位置，$i$ 是特征编号；$\mu_t$、$\sigma_t^2$ 是该位置所有�
 
 | 符号 | 中文近似读法 | 常见含义 |
 | --- | --- | --- |
-| $\alpha$ | 阿尔法 | 学习率、朴素贝叶斯平滑强度、初始化尺度。 |
+| $\alpha$ | 阿尔法 | 学习率、朴素贝叶斯平滑强度、初始化尺度；类别不平衡案例中表示类别权重。 |
 | $\beta$ | 贝塔 | Adam 的移动平均系数；LayerNorm 中也用作可学习平移量。 |
 | $\gamma$ | 伽马 | DQN 的未来奖励折扣率；归一化层中也可表示可学习缩放量。 |
 | $\delta$、$\Delta$ | 小写/大写德尔塔 | $\delta$ 常表示误差或梯度；$\Delta$ 常表示变化量。 |
@@ -104,7 +104,7 @@ $t$ 是位置，$i$ 是特征编号；$\mu_t$、$\sigma_t^2$ 是该位置所有�
 | $\kappa$ | 卡帕 | 参数或类别的编号，依公式定义。 |
 | $\lambda$ | 兰姆达 | L2 正则化强度；PCA 中也可表示特征值。 |
 | $\mu$ | 缪 | 均值或聚类中心。 |
-| $\pi$ | 派 | 圆周率。 |
+| $\pi$ | 派 | 圆周率；类别不平衡案例中也表示正类比例，由上下文区分。 |
 | $\rho$ | 柔 | 半径、密度或残差量，依主题而异。 |
 | $\sigma$ | 西格玛 | 标准差，也可作为 sigmoid 函数的名称；$\sigma^2$ 通常表示方差。 |
 | $\tau$ | 陶 | 阈值、裁剪上限或某些教程中的索引。 |
@@ -187,8 +187,93 @@ $$
 | PCA | $C\mathbf{u}=\lambda\mathbf{u}$ | 协方差矩阵 $C$ 乘方向 $\mathbf{u}$，等于特征值 $\lambda$ 乘该方向；特征值表示沿该方向的方差。 |
 | 线性 SVM | $\ell_i=\max(0,1-y_i f(\mathbf{x}_i))$ | $y_i\in\{-1,+1\}$ 是类别，$f(\mathbf{x}_i)$ 是分类分数；正确且间隔足够大时损失为零。 |
 | 交叉验证 | $\bar{J}=\frac{1}{K}\sum_{k=1}^{K}J_k$ | 将 $K$ 折的验证分数 $J_k$ 求平均，再用平均表现选择配置。 |
+| 多分类 Softmax | $p_{i,c}=\frac{e^{z_{i,c}-m_i}}{\sum_k e^{z_{i,k}-m_i}}$ | $i$ 是样本，$c,k$ 是类别，$z$ 是类别分数，$m_i=\max_c z_{i,c}$ 用于数值稳定。 |
+| DBSCAN | $N_{\varepsilon}(i)=\{j\mid\lVert\mathbf{x}_i-\mathbf{x}_j\rVert_2\leq\varepsilon\}$ | $\varepsilon$ 是邻域半径；邻域计数含样本自身，至少 $M$ 个邻居时为核心点。 |
+| 梯度提升 | $r_{i,m}=y_i-F_{m-1}(x_i)$，$F_m=F_{m-1}+\eta h_m$ | $r$ 是当前残差，$h_m$ 是拟合残差的第 $m$ 棵弱树，$\eta$ 缩小新增贡献。 |
+
+Softmax 的 $\mathbb{1}[y_i=c]$ 是指示函数：条件成立取 $1$，否则取 $0$。对交叉熵，$p_{i,c}-\mathbb{1}[y_i=c]$ 是类别 $c$ 的 logit 梯度；乘特征 $x_{i,f}$ 后得到权重梯度。DBSCAN 的 $N_{\varepsilon}(i)$ 是点 $i$ 的邻域集合，$|N_{\varepsilon}(i)|\geq M$ 是核心点条件，$M$ 对应代码参数 `min_points`。梯度提升中的 $F_0$ 是训练目标均值，树桩叶值是相应残差的均值，训练样本编号 $i$ 与提升轮数 $m$ 是不同维度。
+
+相关源码推导与数值走读见[Softmax 多分类分析](45_softmax_regression_analysis.md)、[DBSCAN 分析](46_dbscan_analysis.md)和[梯度提升分析](47_gradient_boosting_analysis.md)。
 
 损失名称也可以当成公式的“标题”：MSE 是均方误差，BCE 是二元交叉熵，CE 是多类交叉熵，KL 是概率分布之间的散度，hinge 是间隔损失，ELBO 是 VAE 常用的证据下界目标。具体正负号、平均方式和正则项以相应教程的定义为准。
+
+### 类别不平衡与概率校准
+
+可靠性评估案例中，$TP$、$FP$、$FN$、$TN$ 依次读作“真正例、假正例、假负例、真负例”。它们分别表示真实正类且预测正类、真实负类却预测正类、真实正类却预测负类、真实负类且预测负类。精确率回答“预测正类里有多少正确”，召回率回答“真实正类里找回多少”：
+
+$$
+\mathrm{Precision}=\frac{TP}{TP+FP},
+\qquad
+\mathrm{Recall}=\frac{TP}{TP+FN},
+\qquad
+\mathrm{F1}=\frac{2\,\mathrm{Precision}\,\mathrm{Recall}}
+{\mathrm{Precision}+\mathrm{Recall}}.
+$$
+
+平衡准确率是正类召回率与负类召回率的平均，避免负类很多时仅看准确率造成误解：
+
+$$
+\mathrm{BalancedAccuracy}=\frac{1}{2}
+\left(\frac{TP}{TP+FN}+\frac{TN}{TN+FP}\right).
+$$
+
+$\tau$（陶）是把概率变成类别的阈值，$\hat{y}_i$ 是预测类别，$p_i$ 是正类概率：
+
+$$
+\hat{y}_i=\begin{cases}
+1,&p_i\geq\tau,\\
+0,&p_i<\tau.
+\end{cases}
+$$
+
+$\tau$ 增大通常会减少预测正类的数量。
+
+类别加权公式可以读作“某一类的权重，等于训练样本总数除以类别数乘该类样本数”：
+
+$$
+\alpha_c=\frac{N_{\mathrm{train}}}{2N_c},
+\qquad
+L=\frac{1}{N_{\mathrm{train}}}
+\sum_{i\in\mathcal{I}_{\mathrm{train}}}\alpha_{y_i}\ell_i.
+$$
+
+$c$ 是类别编号，$N_c$ 是训练集里类别 $c$ 的样本数，$N_{\mathrm{train}}$ 是训练样本总数，$\alpha_c$ 是类别权重，$\mathcal{I}_{\mathrm{train}}$ 是训练样本下标集合，$y_i$ 是第 $i$ 个真实标签，$\ell_i$ 是该样本损失。分母中的 $2$ 是类别数；多类别案例通常需重新定义权重。
+
+令 $z_i$ 为分类器 logit，$p_i=\sigma(z_i)$ 为正类概率。加权 BCE 对 logit 的梯度包含类别权重；$\tilde{x}_{ij}$ 是第 $i$ 个样本的第 $j$ 个训练标准化特征：
+
+$$
+\frac{\partial L}{\partial z_i}
+=\frac{\alpha_{y_i}}{N_{\mathrm{train}}}(p_i-y_i),
+\qquad
+\frac{\partial L}{\partial w_j}
+=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}
+\alpha_{y_i}(p_i-y_i)\tilde{x}_{ij}.
+$$
+
+稳定的 logit BCE 可读作“取 logit 与零的较大值，减去标签乘 logit，再加上指数项的对数”：
+
+$$
+\ell_i=\max(z_i,0)-y_i z_i+\log\left(1+e^{-|z_i|}\right).
+$$
+
+Platt 校准把原始 logit 做一次仿射变换，再经 sigmoid 变为校准概率：
+
+$$
+q_i=\sigma(a z_i+c).
+$$
+
+$z_i$ 是原分类器的 logit，$a$ 是校准斜率，$c$ 是截距，$q_i$ 是校准后概率。这里的 $c$ 是映射偏置，不是类别编号；若 $a>0$，映射保持概率排序。校准调整概率刻度，不等于重新训练分类器。
+
+Brier 分数读作“概率与真实标签之差的平方，再对样本取平均”；ECE 读作“期望校准误差”，将每个概率箱的预测概率与实际正例比例之差按箱大小加权：
+
+$$
+\mathrm{Brier}=\frac{1}{N}\sum_{i=1}^{N}(p_i-y_i)^2,
+\qquad
+\mathrm{ECE}=\sum_{b=1}^{B}\frac{n_b}{N}
+\left|\bar{p}_b-o_b\right|.
+$$
+
+$N$ 是评估样本数，$p_i$ 是预测概率，$y_i\in\{0,1\}$ 是标签；$B$ 是概率箱数，$b$ 是箱编号，$n_b$ 是第 $b$ 箱样本数，$\bar{p}_b$ 是该箱平均预测概率，$o_b$ 是该箱实际正例比例。ECE 会随箱数和边界变化，少样本时尤其不稳定。
 
 ### 循环网络与生成模型
 
@@ -240,6 +325,6 @@ $$
 
 以下专题页包含完整推导、变量定义和数值例子。读法参考用于认符号，具体算法仍应以对应页面和 C 实现为准。
 
-- 经典机器学习：[线性回归](32_linear_regression_analysis.md)、[逻辑回归](33_logistic_regression_analysis.md)、[K 近邻](34_knn_analysis.md)、[K-means](35_kmeans_analysis.md)、[朴素贝叶斯](36_naive_bayes.md)、[决策树](37_decision_tree.md)、[随机森林](38_random_forest.md)、[PCA](39_pca.md)、[线性 SVM](40_linear_svm.md)、[交叉验证](41_cross_validation.md)、[正则化](42_regularization.md)。
+- 经典机器学习：[线性回归](32_linear_regression_analysis.md)、[逻辑回归](33_logistic_regression_analysis.md)、[K 近邻](34_knn_analysis.md)、[K-means](35_kmeans_analysis.md)、[朴素贝叶斯](36_naive_bayes.md)、[决策树](37_decision_tree.md)、[随机森林](38_random_forest.md)、[PCA](39_pca.md)、[线性 SVM](40_linear_svm.md)、[交叉验证](41_cross_validation.md)、[正则化](42_regularization.md)、[CSV 与标准化](43_csv_standardization_analysis.md)、[可靠性评估](44_reliability_assessment_analysis.md)、[Softmax 多分类](45_softmax_regression_analysis.md)、[DBSCAN](46_dbscan_analysis.md)、[梯度提升](47_gradient_boosting_analysis.md)。
 - 神经网络与深度学习：[数值基础](51_numeric_foundations.md)、[XOR MLP](52_xor_mlp.md)、[二维 MLP](53_mlp_2d.md)、[CNN](54_cnn_shapes.md)、[去噪自编码器](55_denoising_autoencoder.md)、[字符 RNN](56_char_rnn.md)、[GRU](57_gru_memory.md)、[Transformer](58_tiny_transformer.md)、[VAE](59_vae.md)、[GAN](60_gan_2d.md)、[ResNet](61_resnet.md)。
 - 强化学习：[Snake DQN](62_snake_ai.md)。机器学习案例总览见[机器学习学习指南](30_machine_learning.md)，阶段路线见[深度学习学习计划](50_deep_learning_plan.md)。

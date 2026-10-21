@@ -180,4 +180,22 @@ d_bias = sum(error) / count
 
 前几个案例主要验证算法实现与已知小数据上的行为；二维分类、CNN 和自编码器案例已拆分训练、验证和测试集，但一次固定种子的合成任务评估仍不足以证明真实数据上的表现。调参使用验证集，最终评价使用未参与调参的测试集；需要进一步比较多个种子和真实数据。标准化参数只从训练集计算，避免数据泄漏。
 
-回归可报告测试集 MSE，分类可报告准确率与混淆矩阵。聚类可比较目标值、不同初始化和数据分布。后续可逐步添加 CSV 读取、特征缩放和模型保存。
+回归可报告测试集 MSE，分类可报告准确率与混淆矩阵。聚类可比较目标值、不同初始化和数据分布。CSV、可靠性评估和经典算法扩展已有独立案例；下一步按[深度学习计划中的补充路线](50_deep_learning_plan.md)继续补模型持久化与公平的多模型比较。
+
+## CSV、标准化与独立测试评估
+
+`src/ml/23_csv_standardization.c` 从 `data/ml/study_outcomes.csv` 读取两个数值特征、二分类标签和明确的数据划分。运行 `make csv-standardization` 查看训练集拟合的均值/标准差、验证集选择的训练轮次，以及只在训练结束后计算的测试集 BCE、准确率和混淆矩阵。`make test-csv-standardization` 检查 CSV 错误处理、训练集统计量隔离与测试集计数；`make sanitize-csv-standardization` 检查内存和未定义行为。
+
+示例只接受固定表头、四个未加引号字段的教学用 CSV 子集，不是完整 RFC 4180 解析器。数据是手工构造的小型示例，不代表真实考试或任何真实人群的表现。逐函数源码地图、标准化和梯度推导、首条测试样本计算见 [CSV 标准化技术分析](43_csv_standardization_analysis.md)。
+
+## 类别不平衡与概率校准
+
+`src/ml/24_reliability_assessment.c` 用固定种子的合成数据演示正类稀少时准确率为何会误导，并比较多数类基线、普通损失和类别加权损失。运行 `make reliability-assessment` 查看混淆矩阵、精确率、召回率、F1、平衡准确率、验证集选择阈值、Brier 分数、交叉熵、ECE 和 ASCII 可靠性图。阈值及 Platt 映射只使用验证集，测试集只在最后评估。运行 `make test-reliability-assessment` 检查指标边界、确定性与数据隔离；`make sanitize-reliability-assessment` 运行地址和未定义行为消毒器。
+
+可靠性图使用 $10$ 个等宽概率区间，比较每箱平均预测概率与实际正例率。数据集刻意保持正类占比为 $10\%$，每个划分中的正例数较少，因此分箱指标会有明显波动；这是固定教学实验，不是效果保证。完整源码地图、权重/指标/校准推导及测试集实例见 [可靠性评估技术分析](44_reliability_assessment_analysis.md)。
+
+## 扩展经典算法
+
+补充路线第 3 步增加了三种互补算法，均使用固定小数据和纯 C 实现。`make softmax-regression` 运行三分类线性模型，观察稳定 Softmax 与多类交叉熵；`make dbscan` 运行密度聚类，观察核心点扩展、边界点和噪声；`make gradient-boosting` 运行平方误差回归，观察树桩逐轮拟合残差，并用验证集选择轮数。
+
+分别运行 `make test-softmax-regression`、`make test-dbscan` 和 `make test-gradient-boosting` 核对手算结果与边界；对应消毒器目标为 `make sanitize-softmax-regression`、`make sanitize-dbscan` 和 `make sanitize-gradient-boosting`。源码走读见 [Softmax 多分类分析](45_softmax_regression_analysis.md)、[DBSCAN 分析](46_dbscan_analysis.md)和[梯度提升分析](47_gradient_boosting_analysis.md)。这些固定样本上的结果用于验证实现和理解步骤，不作为现实数据上的效果保证。

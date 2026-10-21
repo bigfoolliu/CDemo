@@ -56,6 +56,11 @@
 | 40 | [线性支持向量机](40_linear_svm.md) | 间隔、hinge 损失和正则化。 |
 | 41 | [交叉验证](41_cross_validation.md) | 分层折分、选参和测试集隔离。 |
 | 42 | [神经网络正则化](42_regularization.md) | 过拟合、L2 惩罚和验证集选参。 |
+| 43 | [CSV、标准化与独立测试评估](43_csv_standardization_analysis.md) | CSV 解析、训练集统计量、验证选轮次与独立测试。 |
+| 44 | [类别不平衡与概率校准](44_reliability_assessment_analysis.md) | 混淆矩阵、阈值、Brier 分数与可靠性图。 |
+| 45 | [Softmax 多分类](45_softmax_regression_analysis.md) | 稳定 Softmax、多类交叉熵和梯度下降。 |
+| 46 | [DBSCAN 密度聚类](46_dbscan_analysis.md) | 邻域半径、核心点、边界点和噪声扩展。 |
+| 47 | [梯度提升树](47_gradient_boosting_analysis.md) | 平方损失、残差树桩、学习率和验证选轮次。 |
 
 ## 深度学习与强化学习
 

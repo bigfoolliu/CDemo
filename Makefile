@@ -1212,6 +1212,125 @@ sanitize-regularization:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/regularization_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/regularization_test
 	./build/sanitize/ml/regularization_test
 
+# 补充路线第 1 步：读取 CSV，使用训练集标准化并只在最后评估测试集。
+.PHONY: csv-standardization test-csv-standardization sanitize-csv-standardization
+csv-standardization: build/ml/23_csv_standardization
+	./build/ml/23_csv_standardization
+
+build/ml/23_csv_standardization: src/ml/23_csv_standardization.c data/ml/study_outcomes.csv Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/23_csv_standardization: src/ml/23_csv_standardization.c data/ml/study_outcomes.csv Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/tests/csv_standardization_test: tests/csv_standardization_test.c src/ml/23_csv_standardization.c data/ml/study_outcomes.csv Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-csv-standardization: build/tests/csv_standardization_test
+	./build/tests/csv_standardization_test
+
+sanitize-csv-standardization:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/csv_standardization_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/csv_standardization_test
+	./build/sanitize/ml/csv_standardization_test
+
+# 阶段 10.3/10.4：类别不平衡指标、验证集阈值选择与概率校准。
+.PHONY: reliability-assessment test-reliability-assessment sanitize-reliability-assessment
+reliability-assessment: build/ml/24_reliability_assessment
+	./build/ml/24_reliability_assessment
+
+build/ml/24_reliability_assessment build/debug/ml/24_reliability_assessment: src/ml/24_reliability_assessment.c Makefile
+
+build/tests/reliability_assessment_test: tests/reliability_assessment_test.c src/ml/24_reliability_assessment.c Makefile
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-reliability-assessment: build/tests/reliability_assessment_test
+	./build/tests/reliability_assessment_test
+
+sanitize-reliability-assessment:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/reliability_assessment_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/reliability_assessment_test
+	./build/sanitize/ml/reliability_assessment_test
+
+# 补充路线第 3 步之一：三分类 Softmax 回归；测试覆盖概率稳定性和手算梯度。
+.PHONY: softmax-regression test-softmax-regression sanitize-softmax-regression
+softmax-regression: build/ml/25_softmax_regression
+	./build/ml/25_softmax_regression
+
+build/ml/25_softmax_regression: src/ml/25_softmax_regression.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/25_softmax_regression: src/ml/25_softmax_regression.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/tests/softmax_regression_test: tests/softmax_regression_test.c src/ml/25_softmax_regression.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-softmax-regression: build/tests/softmax_regression_test
+	./build/tests/softmax_regression_test
+
+sanitize-softmax-regression:
+	@mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/softmax_regression_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/softmax_regression_test
+	./build/sanitize/ml/softmax_regression_test
+
+# 补充路线第 3 步之二：DBSCAN；测试核心点扩展、边界重分类和半径边界。
+.PHONY: dbscan test-dbscan sanitize-dbscan
+dbscan: build/ml/26_dbscan
+	./build/ml/26_dbscan
+
+build/ml/26_dbscan: src/ml/26_dbscan.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/26_dbscan: src/ml/26_dbscan.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/tests/dbscan_test: tests/dbscan_test.c src/ml/26_dbscan.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-dbscan: build/tests/dbscan_test
+	./build/tests/dbscan_test
+
+sanitize-dbscan:
+	@mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/dbscan_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/dbscan_test
+	./build/sanitize/ml/dbscan_test
+
+# 补充路线第 3 步之三：平方损失梯度提升；使用单层回归树桩逐轮拟合残差。
+.PHONY: gradient-boosting test-gradient-boosting sanitize-gradient-boosting
+gradient-boosting: build/ml/27_gradient_boosting
+	./build/ml/27_gradient_boosting
+
+build/ml/27_gradient_boosting: src/ml/27_gradient_boosting.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/debug/ml/27_gradient_boosting: src/ml/27_gradient_boosting.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
+
+build/tests/gradient_boosting_test: tests/gradient_boosting_test.c src/ml/27_gradient_boosting.c Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+
+test-gradient-boosting: build/tests/gradient_boosting_test
+	./build/tests/gradient_boosting_test
+
+sanitize-gradient-boosting:
+	@mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer tests/gradient_boosting_test.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/gradient_boosting_test
+	./build/sanitize/ml/gradient_boosting_test
+
 # 阶段 11.1：同参数量对比普通 CNN 与带恒等捷径的 ResNet。
 .PHONY: resnet test-resnet sanitize-resnet
 resnet: build/ml/22_resnet
@@ -1219,11 +1338,11 @@ resnet: build/ml/22_resnet
 
 build/ml/22_resnet: src/ml/22_resnet.c Makefile
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
 
 build/debug/ml/22_resnet: src/ml/22_resnet.c Makefile
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -lm -o $@
+	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
 
 build/tests/resnet_test: tests/resnet_test.c src/ml/22_resnet.c Makefile
 	mkdir -p $(dir $@)
@@ -1308,10 +1427,15 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
 # 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
+	./build/tests/csv_standardization_test
+	./build/tests/reliability_assessment_test
+	./build/tests/softmax_regression_test
+	./build/tests/dbscan_test
+	./build/tests/gradient_boosting_test
 	./build/tests/resnet_test
 	$(GAME_PROGRAM) --test
 	./build/tests/snake_ai_test
@@ -1337,6 +1461,9 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 # 覆盖普通示例、纯 C 图形核心及核心测试，无需 SDL；窗口编译由专用目标验证。
 lint:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/21_regularization.c tests/regularization_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/csv_standardization_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/reliability_assessment_test.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/softmax_regression_test.c tests/dbscan_test.c tests/gradient_boosting_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/22_resnet.c tests/resnet_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only $(DECISION_TREE_SOURCES) tests/decision_tree_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/naive_bayes_test.c
@@ -1368,6 +1495,11 @@ lint:
 # 自定义预览文件及这里未列出的生成物会保留。
 clean:
 	rm -f build/tests/regularization_test build/sanitize/ml/regularization_test build/sanitize/ml/21_regularization
+	rm -f build/tests/softmax_regression_test build/sanitize/ml/softmax_regression_test build/sanitize/ml/25_softmax_regression
+	rm -f build/tests/dbscan_test build/sanitize/ml/dbscan_test build/sanitize/ml/26_dbscan
+	rm -f build/tests/gradient_boosting_test build/sanitize/ml/gradient_boosting_test build/sanitize/ml/27_gradient_boosting
+	rm -f build/tests/csv_standardization_test build/sanitize/ml/csv_standardization_test
+	rm -f build/tests/reliability_assessment_test build/sanitize/ml/reliability_assessment_test build/sanitize/ml/24_reliability_assessment
 	rm -f build/tests/resnet_test build/sanitize/ml/resnet_test build/sanitize/ml/22_resnet
 	rm -f build/sanitize/ml/20_cross_validation
 	rm -f build/sanitize/ml/19_linear_svm

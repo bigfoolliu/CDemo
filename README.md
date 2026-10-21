@@ -171,7 +171,7 @@ make build/basics/01_types
 
 ## 机器学习入门案例
 
-`src/ml/` 提供二十二个纯 C 案例，使用内置数据，无第三方依赖；数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/30_machine_learning.md) 阅读算法步骤和练习。
+`src/ml/` 提供二十七个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/30_machine_learning.md) 阅读算法步骤和练习。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -197,6 +197,11 @@ make build/basics/01_types
 | `20_cross_validation.c` | 阶段 10.1：分层 K 折、折内标准化、正则选参与独立测试集 |
 | `21_regularization.c` | 阶段 10.2：小样本过拟合、L2 目标与验证集选参 |
 | `22_resnet.c` | 阶段 11.1：恒等捷径、残差块与 CNN 对比 |
+| `23_csv_standardization.c` | CSV 读取、训练集标准化、验证集选轮次与独立测试评估 |
+| `24_reliability_assessment.c` | 阶段 10.3/10.4：类别不平衡指标、阈值选择、Platt 概率校准 |
+| `25_softmax_regression.c` | 多分类 Softmax、交叉熵梯度与训练/验证/测试评估 |
+| `26_dbscan.c` | DBSCAN 核心点、边界点、密度扩展与噪声识别 |
+| `27_gradient_boosting.c` | 平方损失梯度提升、回归树桩、残差和验证集选轮次 |
 
 运行 `make vae` 导出重建对照、二维潜在网格、插值与先验随机样本四张 BMP；阅读 [VAE 教程](docs/59_vae.md)。`make test-vae` 和 `make sanitize-vae` 验证全部参数及重参数化导数；`--log` 追加日志至 `logs/ml/13_vae_shapes.log`。
 
@@ -214,13 +219,23 @@ make build/basics/01_types
 
 运行 `make cross-validation` 在训练开发集上做 4 折分层交叉验证，按平均 log-loss 选择逻辑回归的 L2 系数；每折只用折内训练部分拟合标准化参数，选参后再用完整开发集重训并评估封存的最终测试集。阅读 [交叉验证教程](docs/41_cross_validation.md)，学习折分、预处理和测试集隔离；`make sanitize-cross-validation` 可运行消毒器版本。
 
+运行 `make csv-standardization` 从 `data/ml/study_outcomes.csv` 加载小型二分类数据，以训练集拟合均值和标准差，用验证集选择训练轮次，再独立评估测试集。阅读 [CSV 标准化技术分析](docs/43_csv_standardization_analysis.md)；`make test-csv-standardization` 验证解析失败安全、训练统计量隔离和测试集评估，`make sanitize-csv-standardization` 运行消毒器版本。
+
+运行 `make reliability-assessment` 学习不平衡分类的准确率陷阱、类别加权、验证集阈值选择，以及验证集拟合的 Platt 概率校准。终端会输出混淆矩阵、精确率、召回率、F1、平衡准确率、Brier、BCE、ECE 和 ASCII 可靠性图。阅读 [可靠性评估技术分析](docs/44_reliability_assessment_analysis.md)；运行 `make test-reliability-assessment` 和 `make sanitize-reliability-assessment` 验证实现。
+
+运行 `make softmax-regression` 学习多分类概率和交叉熵梯度，阅读 [Softmax 分析](docs/45_softmax_regression_analysis.md)；运行 `make test-softmax-regression` 与 `make sanitize-softmax-regression` 验证稳定 Softmax 和手算更新。
+
+运行 `make dbscan` 观察密度聚类如何扩展核心点、重新归类边界点并保留噪声，阅读 [DBSCAN 分析](docs/46_dbscan_analysis.md)；使用 `make test-dbscan` 和 `make sanitize-dbscan` 验证半径边界与失败路径。
+
+运行 `make gradient-boosting` 观察回归树桩逐轮拟合残差，并由验证集选择轮数；阅读 [梯度提升分析](docs/47_gradient_boosting_analysis.md)。`make test-gradient-boosting` 检查手算切分、测试集隔离，`make sanitize-gradient-boosting` 检查内存与未定义行为。
+
 运行 `make regularization` 比较 24 条含噪样本训练出的 MLP 在不同 L2 强度下的训练/验证损失、权重范数和多种子独立测试结果；系数只按验证集选择。阅读 [正则化教程](docs/42_regularization.md)，学习目标函数、权重梯度与过拟合；`make test-regularization` 检查全部参数梯度，`make sanitize-regularization` 检查内存和未定义行为。
 
 运行 `make resnet` 对照相同参数量和训练预算下的普通 CNN 与 ResNet；阅读 [残差网络教程](docs/61_resnet.md)，理解恒等捷径及其反向梯度。`make test-resnet` 检查两种结构全部参数和输入梯度，并手算恒等路径；`make sanitize-resnet` 检查内存和未定义行为。
 
 这些案例验证合成数据上的算法行为；真实模型评估需要另外划分训练、验证和测试数据。
 
-后续按 [纯 C 深度学习学习计划](docs/50_deep_learning_plan.md) 逐项学习。阶段 0～7 已实现：运行 `make numeric-foundations` 配合 [数值基础教程](docs/51_numeric_foundations.md)，运行 `make xor-mlp` 配合 [XOR 网络教程](docs/52_xor_mlp.md)，运行 `make mlp-2d` 配合 [二维分类教程](docs/53_mlp_2d.md)，运行 `make cnn-shapes` 配合 [CNN 图形教程](docs/54_cnn_shapes.md)，运行 `make autoencoder` 配合 [去噪自编码器教程](docs/55_denoising_autoencoder.md)。图像案例显式运行时将图片导出至 `exports/`；默认运行不生成图片。运行 `make char-rnn` 配合 [字符 RNN 教程](docs/56_char_rnn.md)，观察周期预测与独立语料评估；`./build/ml/10_char_rnn --log` 追加双输出日志至 `logs/ml/10_char_rnn.log`。运行 `make gru-memory` 配合 [GRU 记忆比特教程](docs/57_gru_memory.md)，比较两种网络在不同间隔和种子下的记忆表现。运行 `make tiny-transformer` 配合 [小型 Transformer 教程](docs/58_tiny_transformer.md)，观察字符预测和注意力矩阵；可用 `--log` 追加至 `logs/ml/12_tiny_transformer.log`。之后回看已有 DQN（LSTM 选做）；阶段 9.1～9.5 的经典机器学习案例、阶段 10.1～10.2 的交叉验证与正则化，以及阶段 11.1 的 ResNet 均已实现，其余计划仍待完成。模型计算不依赖外部框架。
+后续按 [纯 C 深度学习学习计划](docs/50_deep_learning_plan.md) 逐项学习。阶段 0～7 已实现：运行 `make numeric-foundations` 配合 [数值基础教程](docs/51_numeric_foundations.md)，运行 `make xor-mlp` 配合 [XOR 网络教程](docs/52_xor_mlp.md)，运行 `make mlp-2d` 配合 [二维分类教程](docs/53_mlp_2d.md)，运行 `make cnn-shapes` 配合 [CNN 图形教程](docs/54_cnn_shapes.md)，运行 `make autoencoder` 配合 [去噪自编码器教程](docs/55_denoising_autoencoder.md)。图像案例显式运行时将图片导出至 `exports/`；默认运行不生成图片。运行 `make char-rnn` 配合 [字符 RNN 教程](docs/56_char_rnn.md)，观察周期预测与独立语料评估；`./build/ml/10_char_rnn --log` 追加双输出日志至 `logs/ml/10_char_rnn.log`。运行 `make gru-memory` 配合 [GRU 记忆比特教程](docs/57_gru_memory.md)，比较两种网络在不同间隔和种子下的记忆表现。运行 `make tiny-transformer` 配合 [小型 Transformer 教程](docs/58_tiny_transformer.md)，观察字符预测和注意力矩阵；可用 `--log` 追加至 `logs/ml/12_tiny_transformer.log`。之后回看已有 DQN（LSTM 选做）；阶段 9.1～9.5、阶段 10.1～10.4、阶段 11.1 和经典算法扩展均已实现，其余计划仍待完成。模型计算不依赖外部框架。
 
 线性回归的详细日志同时输出到屏幕和 `logs/linear_regression.log`，每行包含毫秒时间戳和调用源码位置，多次运行会追加。用 `less logs/linear_regression.log` 分页查看，或运行 `./build/ml/01_linear_regression logs/training.log` 指定日志文件，父目录自动创建。
 
