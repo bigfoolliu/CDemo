@@ -20,7 +20,7 @@ make stdlib    # 构建并运行常用标准库示例
 
 ## 文档阅读顺序
 
-`docs/` 中的文档已按学习路线添加数字前缀。零基础建议从 [文档阅读顺序](docs/00_reading_order.md) 开始，再按兴趣进入图形模拟、经典机器学习或深度学习路线。
+`docs/` 中的文档已按学习路线添加数字前缀。零基础建议从 [文档阅读顺序](docs/00_reading_order.md) 开始；希望系统学习机器学习、深度学习、大模型与 Agent，可按[分阶段学习路线](docs/70_ml_to_agent_roadmap.md)同步完成数学手算、纯 C 案例和验证。
 
 `src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
 
