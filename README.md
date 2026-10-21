@@ -136,7 +136,7 @@ Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接�
 | `basics/04_functions.c` | 函数原型、按值传参、递归、回调 |
 | `basics/05_arrays_strings.c` | 数组、多维数组、字符串及缓冲区 |
 | `basics/06_pointers.c` | 指针与数组、生命周期、const、空指针、二级指针及函数指针 |
-| `basics/07_aggregate_types.c` | struct、union、enum、typedef |
+| `basics/07_aggregate_types.c` | struct、union、enum、typedef、布局与复合字面量 |
 | `basics/08_scope_storage.c` | 作用域、生命周期与 static |
 | `basics/09_dynamic_memory.c` | 分配、扩容、释放及失败处理 |
 | `basics/10_preprocessor.c` | 宏、条件编译与 inline 函数 |
