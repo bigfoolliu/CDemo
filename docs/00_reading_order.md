@@ -61,6 +61,7 @@
 | 45 | [Softmax 多分类](45_softmax_regression_analysis.md) | 稳定 Softmax、多类交叉熵和梯度下降。 |
 | 46 | [DBSCAN 密度聚类](46_dbscan_analysis.md) | 邻域半径、核心点、边界点和噪声扩展。 |
 | 47 | [梯度提升树](47_gradient_boosting_analysis.md) | 平方损失、残差树桩、学习率和验证选轮次。 |
+| 48 | [公平模型比较](48_model_comparison_analysis.md) | 固定测试集、共同预处理、验证选参和多种子结果。 |
 
 ## 深度学习与强化学习
 

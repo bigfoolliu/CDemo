@@ -180,7 +180,7 @@ d_bias = sum(error) / count
 
 前几个案例主要验证算法实现与已知小数据上的行为；二维分类、CNN 和自编码器案例已拆分训练、验证和测试集，但一次固定种子的合成任务评估仍不足以证明真实数据上的表现。调参使用验证集，最终评价使用未参与调参的测试集；需要进一步比较多个种子和真实数据。标准化参数只从训练集计算，避免数据泄漏。
 
-回归可报告测试集 MSE，分类可报告准确率与混淆矩阵。聚类可比较目标值、不同初始化和数据分布。CSV、可靠性评估和经典算法扩展已有独立案例；下一步按[深度学习计划中的补充路线](50_deep_learning_plan.md)继续补模型持久化与公平的多模型比较。
+回归可报告测试集 MSE，分类可报告准确率与混淆矩阵。聚类可比较目标值、不同初始化和数据分布。CSV、可靠性评估、经典算法扩展和公平模型比较已有独立案例；下一步按[深度学习计划中的补充路线](50_deep_learning_plan.md)补模型与预处理参数持久化。
 
 ## CSV、标准化与独立测试评估
 
@@ -199,3 +199,9 @@ d_bias = sum(error) / count
 补充路线第 3 步增加了三种互补算法，均使用固定小数据和纯 C 实现。`make softmax-regression` 运行三分类线性模型，观察稳定 Softmax 与多类交叉熵；`make dbscan` 运行密度聚类，观察核心点扩展、边界点和噪声；`make gradient-boosting` 运行平方误差回归，观察树桩逐轮拟合残差，并用验证集选择轮数。
 
 分别运行 `make test-softmax-regression`、`make test-dbscan` 和 `make test-gradient-boosting` 核对手算结果与边界；对应消毒器目标为 `make sanitize-softmax-regression`、`make sanitize-dbscan` 和 `make sanitize-gradient-boosting`。源码走读见 [Softmax 多分类分析](45_softmax_regression_analysis.md)、[DBSCAN 分析](46_dbscan_analysis.md)和[梯度提升分析](47_gradient_boosting_analysis.md)。这些固定样本上的结果用于验证实现和理解步骤，不作为现实数据上的效果保证。
+
+## 公平模型比较
+
+`src/ml/28_model_comparison.c` 使用同一 CSV 比较多数类基线、逻辑回归、K 近邻和决策树桩。每个固定种子将原训练与验证行合并为开发集，再按类别分层拆分训练/验证；测试行固定不变。每轮只用训练子集拟合标准化参数，所有模型复用同一组统计量和拆分。逻辑回归学习率及 KNN 的邻居数只按验证平衡准确率选择，树桩阈值仅从训练数据学习。
+
+运行 `make model-comparison` 查看五个种子的单轮预测指标和测试集均值 ± 总体标准差；`make test-model-comparison` 验证共同划分、手算指标、树桩切分与测试集隔离，`make sanitize-model-comparison` 检查内存和未定义行为。逐函数源码地图、公式推导和真实样本计算见 [公平模型比较技术分析](48_model_comparison_analysis.md)。测试集只有 $8$ 条且五轮重复使用同一测试行，因此波动反映开发集划分变化，不是置信区间，也不证明真实泛化效果。

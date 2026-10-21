@@ -183,17 +183,22 @@ $$
 | --- | --- | --- |
 | K 近邻 / K-means | $d(\mathbf{x},\mathbf{z})=\sqrt{\sum_j(x_j-z_j)^2}$ | 对每个特征求差、平方、相加再开方；K-means 再将样本分给距离最近的中心 $\boldsymbol{\mu}_k$。 |
 | 朴素贝叶斯 | $P(c\mid\mathbf{x})\propto P(c)\prod_jP(x_j\mid c)$ | 后验分数正比于类别先验乘以每个特征的条件概率；朴素假设是给定类别后特征条件独立。 |
-| 决策树 | $G=1-\sum_k p_k^2$ | $p_k$ 是节点内第 $k$ 类的比例；$G$ 越小，节点越纯。随机森林会对树的预测再投票或平均。 |
+| 决策树 | $G=1-\sum_k p_k^2$，$G_{\mathrm{split}}=\frac{N_L}{N}G_L+\frac{N_R}{N}G_R$ | $p_k$ 是节点内第 $k$ 类的比例；$N_L,N_R$ 是左右叶样本数，$N=N_L+N_R$。随机森林会对树的预测再投票或平均。 |
 | PCA | $C\mathbf{u}=\lambda\mathbf{u}$ | 协方差矩阵 $C$ 乘方向 $\mathbf{u}$，等于特征值 $\lambda$ 乘该方向；特征值表示沿该方向的方差。 |
 | 线性 SVM | $\ell_i=\max(0,1-y_i f(\mathbf{x}_i))$ | $y_i\in\{-1,+1\}$ 是类别，$f(\mathbf{x}_i)$ 是分类分数；正确且间隔足够大时损失为零。 |
 | 交叉验证 | $\bar{J}=\frac{1}{K}\sum_{k=1}^{K}J_k$ | 将 $K$ 折的验证分数 $J_k$ 求平均，再用平均表现选择配置。 |
+| 逻辑回归梯度 | $\frac{\partial J}{\partial w_j}=\frac{1}{N_{\mathrm{train}}}\sum_i(p_i-y_i)z_{i,j}$ | $i$ 遍历训练样本，$j$ 是特征编号，$p_i$ 是预测概率，$y_i$ 是标签，$z_{i,j}$ 是标准化特征。 |
+| 验证集选参 | $c^*=\operatorname*{arg\,max}_{c\in\mathcal{C}}\mathrm{BA}_{\mathrm{validation}}(c)$ | $c$ 是候选配置，$\mathcal{C}$ 是候选集合，按验证集平衡准确率选取。 |
 | 多分类 Softmax | $p_{i,c}=\frac{e^{z_{i,c}-m_i}}{\sum_k e^{z_{i,k}-m_i}}$ | $i$ 是样本，$c,k$ 是类别，$z$ 是类别分数，$m_i=\max_c z_{i,c}$ 用于数值稳定。 |
 | DBSCAN | $N_{\varepsilon}(i)=\{j\mid\lVert\mathbf{x}_i-\mathbf{x}_j\rVert_2\leq\varepsilon\}$ | $\varepsilon$ 是邻域半径；邻域计数含样本自身，至少 $M$ 个邻居时为核心点。 |
 | 梯度提升 | $r_{i,m}=y_i-F_{m-1}(x_i)$，$F_m=F_{m-1}+\eta h_m$ | $r$ 是当前残差，$h_m$ 是拟合残差的第 $m$ 棵弱树，$\eta$ 缩小新增贡献。 |
+| 标准化 | $z_{i,j}=(x_{i,j}-\mu_j)/s_j$ | $i$ 是样本编号、$j$ 是特征编号；$\mu_j$ 与 $s_j$ 只由训练样本计算。 |
+| 平衡准确率 | $\mathrm{BA}=\frac{1}{2}(\frac{TN}{TN+FP}+\frac{TP}{TP+FN})$ | 分别算负类和正类召回率，再取平均；用于验证集选参。 |
+| 多种子汇总 | $\bar m=\frac{1}{R}\sum_r m_r$，$\operatorname{SD}(m)=\sqrt{\frac{1}{R}\sum_r(m_r-\bar m)^2}$ | $R$ 是重复次数，$m_r$ 是第 $r$ 次指标；总体标准差描述重复划分波动，不是置信区间。 |
 
-Softmax 的 $\mathbb{1}[y_i=c]$ 是指示函数：条件成立取 $1$，否则取 $0$。对交叉熵，$p_{i,c}-\mathbb{1}[y_i=c]$ 是类别 $c$ 的 logit 梯度；乘特征 $x_{i,f}$ 后得到权重梯度。DBSCAN 的 $N_{\varepsilon}(i)$ 是点 $i$ 的邻域集合，$|N_{\varepsilon}(i)|\geq M$ 是核心点条件，$M$ 对应代码参数 `min_points`。梯度提升中的 $F_0$ 是训练目标均值，树桩叶值是相应残差的均值，训练样本编号 $i$ 与提升轮数 $m$ 是不同维度。
+Softmax 的 $\mathbb{1}[y_i=c]$ 是指示函数：条件成立取 $1$，否则取 $0$。对交叉熵，$p_{i,c}-\mathbb{1}[y_i=c]$ 是类别 $c$ 的 logit 梯度；乘特征 $x_{i,f}$ 后得到权重梯度。DBSCAN 的 $N_{\varepsilon}(i)$ 是点 $i$ 的邻域集合，$|N_{\varepsilon}(i)|\geq M$ 是核心点条件，$M$ 对应代码参数 `min_points`。梯度提升中的 $F_0$ 是训练目标均值，树桩叶值是相应残差的均值，训练样本编号 $i$ 与提升轮数 $m$ 是不同维度。标准化中的 $x_{i,j}$ 是原始特征值，$z_{i,j}$ 是变换后特征，$\mu_j$ 是训练集均值，$s_j$ 是训练集总体标准差。公平比较里的 $TN$、$FP$、$FN$、$TP$ 分别是真负例、假正例、假负例和真正例；$m_r$ 表示同一固定测试集在第 $r$ 个开发划分上的某项指标。多种子标准差只描述重复划分产生的波动。
 
-相关源码推导与数值走读见[Softmax 多分类分析](45_softmax_regression_analysis.md)、[DBSCAN 分析](46_dbscan_analysis.md)和[梯度提升分析](47_gradient_boosting_analysis.md)。
+相关源码推导与数值走读见[Softmax 多分类分析](45_softmax_regression_analysis.md)、[DBSCAN 分析](46_dbscan_analysis.md)、[梯度提升分析](47_gradient_boosting_analysis.md)和[公平模型比较分析](48_model_comparison_analysis.md)。
 
 损失名称也可以当成公式的“标题”：MSE 是均方误差，BCE 是二元交叉熵，CE 是多类交叉熵，KL 是概率分布之间的散度，hinge 是间隔损失，ELBO 是 VAE 常用的证据下界目标。具体正负号、平均方式和正则项以相应教程的定义为准。
 
@@ -325,6 +330,6 @@ $$
 
 以下专题页包含完整推导、变量定义和数值例子。读法参考用于认符号，具体算法仍应以对应页面和 C 实现为准。
 
-- 经典机器学习：[线性回归](32_linear_regression_analysis.md)、[逻辑回归](33_logistic_regression_analysis.md)、[K 近邻](34_knn_analysis.md)、[K-means](35_kmeans_analysis.md)、[朴素贝叶斯](36_naive_bayes.md)、[决策树](37_decision_tree.md)、[随机森林](38_random_forest.md)、[PCA](39_pca.md)、[线性 SVM](40_linear_svm.md)、[交叉验证](41_cross_validation.md)、[正则化](42_regularization.md)、[CSV 与标准化](43_csv_standardization_analysis.md)、[可靠性评估](44_reliability_assessment_analysis.md)、[Softmax 多分类](45_softmax_regression_analysis.md)、[DBSCAN](46_dbscan_analysis.md)、[梯度提升](47_gradient_boosting_analysis.md)。
+- 经典机器学习：[线性回归](32_linear_regression_analysis.md)、[逻辑回归](33_logistic_regression_analysis.md)、[K 近邻](34_knn_analysis.md)、[K-means](35_kmeans_analysis.md)、[朴素贝叶斯](36_naive_bayes.md)、[决策树](37_decision_tree.md)、[随机森林](38_random_forest.md)、[PCA](39_pca.md)、[线性 SVM](40_linear_svm.md)、[交叉验证](41_cross_validation.md)、[正则化](42_regularization.md)、[CSV 与标准化](43_csv_standardization_analysis.md)、[可靠性评估](44_reliability_assessment_analysis.md)、[Softmax 多分类](45_softmax_regression_analysis.md)、[DBSCAN](46_dbscan_analysis.md)、[梯度提升](47_gradient_boosting_analysis.md)、[公平模型比较](48_model_comparison_analysis.md)。
 - 神经网络与深度学习：[数值基础](51_numeric_foundations.md)、[XOR MLP](52_xor_mlp.md)、[二维 MLP](53_mlp_2d.md)、[CNN](54_cnn_shapes.md)、[去噪自编码器](55_denoising_autoencoder.md)、[字符 RNN](56_char_rnn.md)、[GRU](57_gru_memory.md)、[Transformer](58_tiny_transformer.md)、[VAE](59_vae.md)、[GAN](60_gan_2d.md)、[ResNet](61_resnet.md)。
 - 强化学习：[Snake DQN](62_snake_ai.md)。机器学习案例总览见[机器学习学习指南](30_machine_learning.md)，阶段路线见[深度学习学习计划](50_deep_learning_plan.md)。
