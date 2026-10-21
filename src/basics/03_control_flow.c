@@ -20,13 +20,16 @@ int main(void)
         sum += i;
     }
     assert(sum == 8);
+
     int remaining = 2;
     while (remaining > 0) {
         --remaining;
     }
+
     do {
         ++remaining; /* do/while 至少执行一次。 */
     } while (remaining < 1);
+
     switch (remaining) {
     case 1:
         sum += 1;
@@ -37,5 +40,6 @@ int main(void)
     }
     assert(sum == 9);
     puts("控制流：if、for、while、do/while、switch 验证通过");
+
     return 0;
 }

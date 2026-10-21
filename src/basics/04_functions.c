@@ -52,9 +52,13 @@ int main(void)
 {
     int original = 7;
     change_copy(original);
+
     int (*operation)(int, int) = add; /* 函数指针可用于回调。 */
     assert(original == 7 && operation(3, 4) == 7);
+
     assert(factorial(0) == 1 && factorial(5) == 120);
+
     puts("函数：原型、按值传参、递归、函数指针验证通过");
+
     return 0;
 }
