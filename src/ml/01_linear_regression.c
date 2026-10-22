@@ -93,8 +93,10 @@ int main(int argc, char *argv[])
             double error = prediction - y[i];
             double weight_contribution = 2 * error * x[i];
             double bias_contribution = 2 * error;
+
             weight_gradient += weight_contribution;
             bias_gradient += bias_contribution;
+
             logger_write(
                 &logger,
                 "  样本 %zu：x=% .1f，目标=% .1f，预测=% .10f，误差=% .10e，误差平方=%.10e\n",
@@ -103,10 +105,13 @@ int main(int argc, char *argv[])
                          weight_contribution, bias_contribution);
         }
         logger_write(&logger, "  梯度求和：w=% .10e，b=% .10e\n", weight_gradient, bias_gradient);
+
         weight_gradient /= (double)count;
         bias_gradient /= (double)count;
+
         logger_write(&logger, "  平均梯度：dMSE/dw=% .10e，dMSE/db=% .10e\n", weight_gradient,
                      bias_gradient);
+
         /* 梯度下降：参数沿损失函数梯度的反方向更新。 */
         double weight_step = learning_rate * weight_gradient;
         double bias_step = learning_rate * bias_gradient;
