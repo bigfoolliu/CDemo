@@ -52,6 +52,7 @@ int main(void)
     double weight = 0;
     double bias = 0;
     double initial_loss = loss(weight, bias, x, y, count);
+
     for (int epoch = 0; epoch < 1000; ++epoch) {
         double weight_gradient = 0;
         double bias_gradient = 0;
@@ -63,12 +64,15 @@ int main(void)
         weight -= 0.1 * weight_gradient / (double)count;
         bias -= 0.1 * bias_gradient / (double)count;
     }
+
     double final_loss = loss(weight, bias, x, y, count);
+
     assert(isfinite(final_loss) && final_loss < initial_loss && final_loss < 0.05);
     assert(sigmoid(weight * -0.5 + bias) < 0.5);
     assert(sigmoid(weight * 0.5 + bias) > 0.5);
     assert(sigmoid(-1000) == 0 && sigmoid(1000) == 1);
     printf("逻辑回归：交叉熵 %.4f → %.4f，x=-0.5 概率=%.4f，x=0.5 概率=%.4f\n", initial_loss,
            final_loss, sigmoid(weight * -0.5 + bias), sigmoid(weight * 0.5 + bias));
+
     return 0;
 }
