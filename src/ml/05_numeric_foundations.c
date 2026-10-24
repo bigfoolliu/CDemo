@@ -15,22 +15,22 @@ typedef struct {
     size_t columns;
     size_t capacity; /* data 可访问的 double 元素数，不是字节数。 */
     double *data;    /* 独占拥有；禁止复制结构体后分别释放。 */
-} Matrix;
+} Matrix;  // 行优先矩阵描述符，元素按行存储。
 
 /* 生产运行传 calloc；测试传失败分配器，确定性地验证分配失败。 */
-typedef void *(*Allocate)(size_t count, size_t size);
+typedef void *(*Allocate)(size_t count, size_t size);  // 分配器函数指针类型，返回可 free 释放的内存或 nullptr。
 
 typedef struct {
     double weights[2];
     double bias;
-} LinearModel;
+} LinearModel;  // 线性模型，预测值 = w0 * x0 + w1 * x1 + b。
 
 typedef struct {
     double prediction;
     double error;
     double loss;
     double gradients[3]; /* 顺序为 w0、w1、b，均来自同一次前向。 */
-} LinearStep;
+} LinearStep;  // 单样本前向计算结果与梯度，梯度来自同一次前向。
 
 /**
  * @brief 检查非零矩阵形状及其存储容量，不读取元素。
@@ -75,6 +75,7 @@ static bool matrix_create(Matrix *matrix, size_t rows, size_t columns, Allocate 
         data[i] = 0.0;
     }
     *matrix = (Matrix){rows, columns, count, data};
+
     return true;
 }
 
@@ -186,11 +187,13 @@ static LinearStep linear_step(const LinearModel *model, const double x[2], doubl
     step.prediction = model->weights[0] * x[0] + model->weights[1] * x[1] + model->bias;
     step.error = step.prediction - target;
     step.loss = step.error * step.error;
+
     /* dL/dprediction = 2*error；dprediction/dwi = xi；dprediction/db = 1。 */
     double upstream = 2 * step.error;
     step.gradients[0] = upstream * x[0];
     step.gradients[1] = upstream * x[1];
     step.gradients[2] = upstream;
+
     return step;
 }
 
@@ -233,6 +236,7 @@ static void test_matrix_boundaries(void)
     assert(!matrix_create(&empty, 2, 2, nullptr));
     assert(!matrix_create(nullptr, 2, 2, calloc));
     assert(empty.data == nullptr && empty.rows == 0 && empty.capacity == 0);
+
     matrix_destroy(&empty);
     matrix_destroy(&empty);
     matrix_destroy(nullptr);
@@ -245,18 +249,22 @@ static void test_matrix_boundaries(void)
     Matrix output = {1, 1, 1, sentinel};
     assert(matrix_multiply(&a, &b, &output));
     assert(sentinel[0] == 23); /* 一行乘一列，就是向量点积。 */
+
     sentinel[0] = 99;
     b.rows = 1;
     assert(!matrix_multiply(&a, &b, &output));
+
     b.rows = 2;
     output.capacity = 0;
     assert(!matrix_multiply(&a, &b, &output));
+
     output.capacity = 1;
     assert(!matrix_multiply(nullptr, &b, &output));
     assert(!matrix_add(&a, &b, &output));
     assert(!matrix_transpose(&a, &output));
     assert(sentinel[0] == 99);
     assert(!matrix_multiply(&a, &b, &a));
+
     Matrix alias = {2, 1, 2, input};
     assert(!matrix_transpose(&a, &alias));
     assert(input[0] == 2 && input[1] == 3);
@@ -276,6 +284,7 @@ static void test_linear_gradients(void)
     const double expected[] = {-1.8, -3.6, -1.8};
     assert(fabs(step.prediction - 0.1) < 1e-12);
     assert(fabs(step.loss - 0.81) < 1e-12);
+
     for (size_t i = 0; i < 3; ++i) {
         LinearModel plus = model;
         LinearModel minus = model;
@@ -296,6 +305,7 @@ static void test_linear_gradients(void)
     assert(fabs(model.weights[0] - 0.59) < 1e-12);
     assert(fabs(model.weights[1] + 0.07) < 1e-12);
     assert(fabs(model.bias - 0.19) < 1e-12);
+
     LinearStep updated = linear_step(&model, x, 1);
     assert(fabs(updated.prediction - 0.64) < 1e-12);
     assert(fabs(updated.loss - 0.1296) < 1e-12);
@@ -303,6 +313,7 @@ static void test_linear_gradients(void)
     const double zero[] = {0, 0};
     LinearStep bias_only = linear_step(&model, zero, 1);
     assert(bias_only.gradients[0] == 0 && bias_only.gradients[1] == 0);
+
     LinearStep perfect = linear_step(&model, x, updated.prediction);
     assert(perfect.loss == 0 && perfect.gradients[2] == 0);
 }

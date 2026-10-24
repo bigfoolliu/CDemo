@@ -9,30 +9,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define INPUTS 2
-#define HIDDEN 4
-#define SAMPLES 4
-#define EPOCHS 5000
-#define LEARNING_RATE 0.1
+#define INPUTS 2  // 输入特征数
+#define HIDDEN 4  // 隐藏神经元数
+#define SAMPLES 4  // 样本数
+#define EPOCHS 5000  // 训练迭代次数
+#define LEARNING_RATE 0.1  // 学习率
 
 /* 扁平参数便于逐个检查梯度；W1 按隐藏神经元逐行存放。 */
 enum {
-    W1 = 0,
-    B1 = W1 + HIDDEN * INPUTS,
-    W2 = B1 + HIDDEN,
-    B2 = W2 + HIDDEN,
-    PARAMETERS = B2 + 1
+    W1 = 0,  // 2×4 权重矩阵，按行优先存储
+    B1 = W1 + HIDDEN * INPUTS,  // 4 个隐藏神经元的偏置
+    W2 = B1 + HIDDEN,  // 4×1 权重向量
+    B2 = W2 + HIDDEN,  // 1 个输出神经元的偏置
+    PARAMETERS = B2 + 1  // 总参数数目
 };
 
 typedef struct {
     double parameters[PARAMETERS];
-} Network;
+} Network;  // 神经网络结构体，包含所有可训练参数。
 
 typedef struct {
     double hidden[HIDDEN]; /* 保存 tanh 输出，反向时使用 1-h²。 */
     double logit;          /* sigmoid 前的实数分数。 */
     double probability;
-} Forward;
+} Forward;  // 前向传播缓存，保存中间结果以便反向传播。
 
 static const double xor_inputs[SAMPLES][INPUTS] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
 static const double xor_targets[SAMPLES] = {0, 1, 1, 0};

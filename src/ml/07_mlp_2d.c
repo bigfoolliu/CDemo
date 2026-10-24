@@ -11,11 +11,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INPUTS 2
-#define WIDTH 16
-#define CAPACITY 256
-#define BATCH_SIZE 16
-#define EPOCHS 200
+#define INPUTS 2  // 输入特征数
+#define WIDTH 16  // 隐藏神经元数
+#define CAPACITY 256  // 数据集容量
+#define BATCH_SIZE 16  // 小批量大小
+#define EPOCHS 200  // 训练迭代次数
 
 enum {
     W1 = 0,
@@ -30,16 +30,16 @@ enum {
 typedef struct {
     double x[INPUTS];
     double target;
-} Sample;
+} Sample;  // 样本结构体，二维特征与 0/1 标签
 
 typedef struct {
     size_t count;
     Sample samples[CAPACITY];
-} Dataset;
+} Dataset;  // 数据集结构体，包含样本数和样本数组
 
 typedef struct {
     double parameters[PARAMETERS];
-} Network;
+} Network;  // 神经网络结构体，包含所有可训练参数
 
 typedef struct {
     double z1[WIDTH];
@@ -48,24 +48,24 @@ typedef struct {
     double h2[WIDTH];
     double logit;
     double probability;
-} Forward;
+} Forward;  // 前向传播缓存，保存中间结果以便反向传播
 
 typedef struct {
     double first[PARAMETERS];
     double second[PARAMETERS];
     double beta1_power;
     double beta2_power;
-} Adam;
+} Adam;  // Adam 优化器状态，包含一阶、二阶矩估计和指数衰减累积
 
 typedef struct {
     double loss;
     double accuracy;
-} Metrics;
+} Metrics;  // 训练或验证指标，包含平均损失和准确率
 
 typedef enum {
     OPTIMIZER_SGD,
     OPTIMIZER_ADAM
-} Optimizer;
+} Optimizer;  // 优化器类型，支持 SGD 和 Adam
 
 /**
  * @brief 产生可重复的 [0,1) 伪随机数，数据、初始化、打乱各自使用独立状态。
@@ -426,6 +426,7 @@ static void test_numerics(const Network *initialized)
         }
     }
     assert(checked == PARAMETERS); /* 此固定夹具没有跨零点，确保没有漏检参数。 */
+
     batch_gradients(initialized, &small, order, 2, 1, gradients);
     Forward tail = network_forward(initialized, small.samples[2].x);
     double single[PARAMETERS] = {0};
@@ -590,6 +591,7 @@ int main(int argc, char **argv)
     Network initial = {0};
     network_initialize(&initial, 42);
     test_numerics(&initial);
+
     if (!quiet) {
         puts("=== 二维 MLP：2→16(ReLU)→16(ReLU)→1，337 个参数 ===\n"
              "数据：内盘为 1、外环为 0；训练/验证/测试 = 256/128/256；批量 16。\n"
@@ -617,6 +619,7 @@ int main(int argc, char **argv)
     assert(evaluate(&adam_best, &training).loss < evaluate(&initial, &training).loss);
     assert(sgd_valid.accuracy >= 0.9 && adam_valid.accuracy >= 0.9);
     assert(final_test.accuracy >= 0.9 && final_test.loss < 0.2);
+
     printf("验证集选择 %s：训练准确率 %.1f%%；独立测试准确率 %.1f%%，交叉熵 %.4f\n", name,
            100 * final_train.accuracy, 100 * final_test.accuracy, final_test.loss);
     puts("阶段 2 验证通过：337 个参数梯度、尾批、打乱、SGD/Adam 与独立评估。");

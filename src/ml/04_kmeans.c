@@ -6,13 +6,14 @@
 #include <stdio.h>
 
 enum {
-    POINT_COUNT = 6,
-    CLUSTER_COUNT = 2
+    POINT_COUNT = 6,  // 样本数，教学接口固定为六个点、二簇
+    CLUSTER_COUNT = 2  // 簇数，教学接口固定为二簇
 };
+
 typedef struct {
     double x;
     double y;
-} Point;
+} Point;  // 二维坐标点结构体
 
 /**
  * @brief 计算两点的欧氏距离平方。
@@ -106,6 +107,7 @@ int main(void)
     assert(iterations < 100 && objective(points, centers) < initial);
     assert(fabs(centers[0].x - 1.0 / 3) < 1e-9);
     assert(fabs(centers[1].x - 25.0 / 3) < 1e-9);
+
     for (size_t i = 0; i < POINT_COUNT; ++i) {
         assert(nearest(points[i], centers) == (i < 3 ? 0u : 1u));
     }
@@ -115,5 +117,6 @@ int main(void)
     assert(empty_test[1].x == 100 && isfinite(objective(identical, empty_test)));
     printf("K-means：%zu 次迭代，中心0=(%.3f,%.3f)，中心1=(%.3f,%.3f)\n", iterations, centers[0].x,
            centers[0].y, centers[1].x, centers[1].y);
+
     return 0;
 }

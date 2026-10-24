@@ -12,22 +12,24 @@
 #include <string.h>
 
 /* 输入为 16×16 单通道灰度图；3×3 不填充卷积输出 14×14。 */
-#define SIDE 16
-#define PIXELS (SIDE * SIDE)
-#define KERNEL 3
-#define CHANNELS 4
-#define CONV_SIDE (SIDE - KERNEL + 1)
-#define CONV_PIXELS (CONV_SIDE * CONV_SIDE)
-#define POOL_SIDE (CONV_SIDE / 2)
+#define SIDE 16  // 输入图像边长
+#define PIXELS (SIDE * SIDE)  // 输入图像像素总数
+#define KERNEL 3  // 卷积核边长
+#define CHANNELS 4  // 卷积输出通道数
+#define CONV_SIDE (SIDE - KERNEL + 1)  // 卷积输出边长
+#define CONV_PIXELS (CONV_SIDE * CONV_SIDE)  // 卷积输出像素总数
+#define POOL_SIDE (CONV_SIDE / 2)  // 池化输出边长
+
 /* 每个通道池化为 7×7，展平后四个通道共 196 个特征。 */
-#define FEATURES (CHANNELS * POOL_SIDE * POOL_SIDE)
-#define CLASSES 3
+#define FEATURES (CHANNELS * POOL_SIDE * POOL_SIDE)  // 全连接层输入特征数
+#define CLASSES 3  // 输出类别数
+
 /* 张量形状依次为 1×16×16 → 4×14×14 → 4×7×7 → 196 → 3。 */
 
 /* 固定容量、批量大小与训练轮数，让示例可重复且便于观察。 */
-#define CAPACITY 180
-#define BATCH_SIZE 12
-#define EPOCHS 80
+#define CAPACITY 180  // 数据集容量，必须为 CLASSES 的倍数
+#define BATCH_SIZE 12  // 小批量大小，必须为 CLASSES 的倍数
+#define EPOCHS 80  // 训练迭代次数，过少可能无法收敛，过多可能过拟合
 
 /* 参数展平到一个数组；枚举标出各参数段起始偏移和总长度。 */
 enum {
@@ -42,18 +44,18 @@ enum {
 typedef struct {
     double image[PIXELS];
     size_t target; /* 0、1、2 分别表示圆形、方形和三角形。 */
-} Sample;
+} Sample;  // 样本结构体，包含图像数据和目标类别
 
 /** 固定容量的数据集；count 表示 samples 中已生成的样本数。 */
 typedef struct {
     size_t count;
     Sample samples[CAPACITY];
-} Dataset;
+} Dataset;  // 数据集结构体，包含样本数和样本数组
 
 /** 按上方偏移枚举顺序存放全部卷积层和分类层参数。 */
 typedef struct {
     double parameters[PARAMETERS];
-} Network;
+} Network;  // 神经网络结构体，包含所有可训练参数
 
 /** 一次前向传播的缓存；反向传播会用到池化窗口的获胜位置。 */
 typedef struct {
@@ -208,8 +210,10 @@ static void network_initialize(Network *network, uint32_t seed)
     for (size_t p = CONV_W; p < CONV_B; ++p) {
         network->parameters[p] = (2 * random_unit(&seed) - 1) * sqrt(6.0 / (KERNEL * KERNEL));
     }
+    /* 池化尺寸按整数计算；仅在权重初始化公式中转换最终特征数。 */
+    const size_t feature_count = FEATURES;
     for (size_t p = FC_W; p < FC_B; ++p) {
-        network->parameters[p] = (2 * random_unit(&seed) - 1) * sqrt(3.0 / FEATURES);
+        network->parameters[p] = (2 * random_unit(&seed) - 1) * sqrt(3.0 / (double)feature_count);
     }
 }
 

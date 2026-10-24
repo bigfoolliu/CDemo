@@ -6,20 +6,20 @@
 #include <stdlib.h>
 
 enum {
-    SAMPLE_COUNT = 6
+    SAMPLE_COUNT = 6  // 样本数，教学接口固定为六个样本、二分类
 };
 
 typedef struct {
     double x;
     double y;
     int label;
-} Sample;
+} Sample;  // 样本结构体，标签为 0/1
 
 typedef struct {
     double distance;
     size_t index;
     int label;
-} Neighbor;
+} Neighbor;  // 邻居结构体
 
 /**
  * @brief 按距离和原始索引比较邻居，供 qsort 使用。
@@ -80,13 +80,17 @@ int main(void)
     int label = -1;
     bool success = classify(samples, 0.2, 0.3, 3, &label);
     assert(success && label == 0);
+
     success = classify(samples, 4.2, 4.3, 3, &label);
     assert(success && label == 1);
+
     success = classify(samples, 2, 2, 6, &label);
     assert(success && label == 0); /* 3 比 3 平局。 */
+
     label = -1;
     success = classify(samples, 0, 0, 0, &label);
     assert(!success && label == -1);
+
     success = classify(samples, 0, 0, 7, &label);
     assert(!success && label == -1);
     puts("K 近邻：k=3，(0.2,0.3) → 类别0，(4.2,4.3) → 类别1");

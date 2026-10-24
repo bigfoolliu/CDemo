@@ -172,6 +172,50 @@ ptrdiff_t length = end - begin; /* 同一数组内相减，结果类型是 ptrdi
 
 不要返回自动局部变量的地址：函数返回后局部对象生命周期结束，地址立即失效。需要把结果交给调用者时，使用输出参数，或分配由调用者负责释放的动态对象。把一个指针变量设为 `nullptr` 只清空这个变量，其他复制过地址的别名仍然悬空。
 
+### C23 `nullptr`、`NULL` 与整数 `0`
+
+先区分两个概念：**空指针常量**是源码中用来表示“空”的表达式；它转换成某种指针类型后，得到该类型的**空指针值**。例如 `nullptr` 是空指针常量，赋给 `int *` 后，变量中保存的是 `int *` 类型的空指针值。空指针不指向任何对象或函数，不能解引用，但可以与其他空指针比较；它的底层位表示不要求全为零。
+
+| 写法 | 是什么 | 要注意什么 |
+| --- | --- | --- |
+| `nullptr` | C23 关键字，类型为 `nullptr_t`，无需包含头文件 | 可初始化对象指针和函数指针；它本身不是指针，也不是整数，不能参与整数运算。 |
+| `nullptr_t` | `<stddef.h>` 提供的类型，只有 `nullptr` 这一个值 | 适合需要明确保存或区分空指针常量类型的场合；普通指针变量通常不需要它。 |
+| `NULL` | 标准库宏，如需使用可包含 `<stddef.h>` | 展开为哪种空指针常量由实现决定，不能假定它一定是 `0`、`(void *)0` 或 `nullptr`。 |
+| `0` | 整数常量表达式，也可作为空指针常量 | `int zero = 0;` 中的 `zero` 是普通整数变量，不能直接当作空指针常量。 |
+| `(void *)0` | C 中的空指针常量，表达式类型为 `void *` | 它与 `nullptr` 的类型不同；别把 C 的规则直接套用到 C++。 |
+
+下面的例子展示赋值、比较和布尔判断。`if (pointer)` 为真表示指针非空；先确认非空，再解引用。
+
+```c
+#include <assert.h>
+#include <stddef.h>
+
+int main(void)
+{
+    int number = 7;
+    int *pointer = nullptr;
+    assert(pointer == nullptr);
+
+    pointer = &number;
+    if (pointer != nullptr) {
+        assert(*pointer == 7);
+    }
+
+    nullptr_t empty = nullptr;
+    int *another = empty;
+    assert(empty == nullptr && another == nullptr);
+
+    int *legacy = NULL;
+    int *zero_literal = 0;
+    assert(legacy == nullptr && zero_literal == nullptr);
+    return 0;
+}
+```
+
+`nullptr` 转为 `bool` 得到 `false`。不要写 `int value = nullptr;`：`nullptr_t` 不能转换为普通整数。也不要写 `int zero = 0; int *p = zero;`：**数值等于零**不代表表达式属于**整数常量表达式**。字符串终止符 `\0` 是另一概念；在 C 中字符常量 `'\0'` 恰好是值为零的整数常量，但不应用它表达指针为空。
+
+`nullptr` 不会分配或释放内存；`pointer = nullptr` 只修改一个指针变量，其他别名仍保留原地址。若因此丢失动态分配对象的唯一地址，还会造成内存泄漏。输出指针时仍需按格式要求使用 `%p` 和 `(void *)pointer`，不能把 `nullptr` 直接传给期望 `void *` 的可变参数格式项。标准依据见 [WG14 C23 公开工作草案 N3220 的指针转换、`nullptr_t` 和 `<stddef.h>` 条款](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf)。
+
 ### 指针参数、二级指针和所有权
 
 C 按值传参。传入对象的地址，函数才能通过解引用修改调用者的对象；传入指针本身仍是按值复制。若函数要修改调用者保存的指针，需要传入指针的地址，即二级指针 `T **`：`*pointer_to_pointer` 是一级指针，`**pointer_to_pointer` 才是最终对象。
