@@ -49,6 +49,7 @@ int main(void)
     const double x[] = {-3, -2, -1, 1, 2, 3};
     const double y[] = {0, 0, 0, 1, 1, 1};
     const size_t count = sizeof(x) / sizeof(x[0]);
+
     double weight = 0;
     double bias = 0;
     double initial_loss = loss(weight, bias, x, y, count);
@@ -71,6 +72,7 @@ int main(void)
     assert(sigmoid(weight * -0.5 + bias) < 0.5);
     assert(sigmoid(weight * 0.5 + bias) > 0.5);
     assert(sigmoid(-1000) == 0 && sigmoid(1000) == 1);
+
     printf("逻辑回归：交叉熵 %.4f → %.4f，x=-0.5 概率=%.4f，x=0.5 概率=%.4f\n", initial_loss,
            final_loss, sigmoid(weight * -0.5 + bias), sigmoid(weight * 0.5 + bias));
 

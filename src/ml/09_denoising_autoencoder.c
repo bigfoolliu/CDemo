@@ -11,15 +11,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* 输入和输出都是 16×16 灰度图；中间层先压缩，再还原空间信息。 */
 #define SIDE 16
 #define PIXELS (SIDE * SIDE)
 #define WIDTH 32
 #define LATENT 8
 #define LAYERS 4
+
+/* 数据集容量、每批样本数和训练轮数共同限定本例的计算规模。 */
 #define CAPACITY 96
 #define BATCH_SIZE 8
 #define EPOCHS 400
 
+/* 所有层的权重和偏置平铺在 Network.parameters 中，以下偏移量互不重叠。 */
 enum {
     W1 = 0,
     B1 = W1 + WIDTH * PIXELS,
@@ -32,6 +36,7 @@ enum {
     PARAMETERS = B4 + PIXELS
 };
 
+/* 一层的矩阵尺寸及权重、偏置在扁平参数数组中的起始偏移。 */
 typedef struct {
     size_t inputs;
     size_t outputs;
@@ -39,31 +44,36 @@ typedef struct {
     size_t biases;
 } Layer;
 
-/* 仅描述这个固定网络；行优先权重 W[输出神经元][输入特征]。 */
+/* 描述固定网络；权重按 W[输出神经元][输入特征] 的行优先顺序存储。 */
 static const Layer layers[LAYERS] = {{PIXELS, WIDTH, W1, B1},
                                      {WIDTH, LATENT, W2, B2},
                                      {LATENT, WIDTH, W3, B3},
                                      {WIDTH, PIXELS, W4, B4}};
 
+/* clean 是监督目标，noisy 是送入网络的输入；两者都是展平的灰度图。 */
 typedef struct {
     double clean[PIXELS];
     double noisy[PIXELS];
 } Sample;
 
+/* count 只描述 samples 中有效的前 count 项，容量由 CAPACITY 固定。 */
 typedef struct {
     size_t count;
     Sample samples[CAPACITY];
 } Dataset;
 
+/* 用一个连续数组保存所有层的权重和偏置，便于统一计算梯度与更新。 */
 typedef struct {
     double parameters[PARAMETERS];
 } Network;
 
+/* 前向传播缓存；每行容量相同，但仅前一层实际宽度的元素有效。 */
 typedef struct {
     /* 各行只使用层宽对应的元素；第 0 行为输入，第 2 行为瓶颈表示。 */
     double activations[LAYERS + 1][PIXELS];
 } Forward;
 
+/* Adam 的一阶矩、二阶矩及 beta 幂，用于逐参数更新和偏差修正。 */
 typedef struct {
     double first[PARAMETERS];
     double second[PARAMETERS];
@@ -73,8 +83,9 @@ typedef struct {
 
 /**
  * @brief 产生可重复的 [0,1) 伪随机数。
- * @param state 有效可写状态，不转移所有权；数据、噪声、初始化、打乱分别使用。
+ * @param state 可写状态，不转移所有权；调用者为不同用途分别维护状态。
  * @return 状态高 24 位映射的实数，不用于安全用途。
+ * @note uint32_t 的无符号溢出按模 2^32 回绕，因此固定种子可复现序列。
  */
 static double random_unit(uint32_t *state)
 {
@@ -89,6 +100,7 @@ static double random_unit(uint32_t *state)
  */
 static void corrupt_sample(Sample *sample, uint32_t *state)
 {
+    /* 以 20% 概率翻转像素，再加 [-0.16, 0.16) 扰动并裁剪到 [0,1]。 */
     for (size_t i = 0; i < PIXELS; ++i) {
         double value = sample->clean[i];
         if (random_unit(state) < 0.2) {
@@ -106,12 +118,14 @@ static void corrupt_sample(Sample *sample, uint32_t *state)
  * @param shape_seed 图形生成种子，位置与尺寸变化对各类使用相同范围。
  * @param noise_seed 初始噪声种子，独立于图形状态。
  */
-static void dataset_generate(Dataset *data, size_t count, uint32_t shape_seed, uint32_t noise_seed)
+static void dataset_generate(Dataset *data, size_t count, uint32_t shape_seed,
+                             uint32_t noise_seed)
 {
     assert(count >= 3 && count <= CAPACITY && count % 3 == 0);
     data->count = count;
     for (size_t i = 0; i < count; ++i) {
         Sample *sample = &data->samples[i];
+        /* 三类样本按圆、方、三角轮换，位置和尺寸由独立种子决定。 */
         double center_x = 6.75 + 1.5 * random_unit(&shape_seed);
         double center_y = 6.75 + 1.5 * random_unit(&shape_seed);
         double radius = 3 + random_unit(&shape_seed);
@@ -171,6 +185,8 @@ static void network_initialize(Network *network, uint32_t seed)
  */
 static void network_forward(const Network *network, const double *input, Forward *f)
 {
+    /* 缓存各层激活供反向传播复用。
+     * 每个神经元先求加权和，再应用激活函数。 */
     memcpy(f->activations[0], input, PIXELS * sizeof(double));
     for (size_t layer = 0; layer < LAYERS; ++layer) {
         const Layer *spec = &layers[layer];
@@ -216,6 +232,7 @@ static double image_mse(const double *a, const double *b)
 static void network_backward(const Network *network, const double *target, const Forward *f,
                              double gradients[PARAMETERS], double input_gradient[PIXELS])
 {
+    /* delta 是损失对当前层加权输入的导数；计算方向为输出层到输入层。 */
     double delta[PIXELS] = {0};
     for (size_t i = 0; i < PIXELS; ++i) {
         double output = f->activations[LAYERS][i];
@@ -225,7 +242,9 @@ static void network_backward(const Network *network, const double *target, const
     for (size_t remaining = LAYERS; remaining > 0; --remaining) {
         size_t layer = remaining - 1;
         const Layer *spec = &layers[layer];
+        /* upstream 累加本层所有输出对上一层激活的梯度贡献。 */
         double upstream[PIXELS] = {0};
+        /* dL/db=delta，dL/dW=delta×上一层激活；同时累加传回前层的梯度。 */
         for (size_t out = 0; out < spec->outputs; ++out) {
             gradients[spec->biases + out] = delta[out];
             for (size_t in = 0; in < spec->inputs; ++in) {
@@ -236,8 +255,10 @@ static void network_backward(const Network *network, const double *target, const
         }
         for (size_t in = 0; in < spec->inputs; ++in) {
             if (layer == 0) {
+                /* 第一层之前是输入像素，没有激活函数导数需要再乘。 */
                 input_gradient[in] = upstream[in];
             } else {
+                /* 前三层使用 tanh，导数可由已缓存激活 a 写成 1 - a^2。 */
                 double activation = f->activations[layer][in];
                 delta[in] = upstream[in] * (1 - activation * activation);
             }
@@ -254,11 +275,14 @@ static void network_backward(const Network *network, const double *target, const
  */
 static void network_update(Network *network, const double *gradients, Adam *adam, double rate)
 {
+    /* 幂次递推实现 Adam 的偏差修正；矩状态跨批次持续保留。 */
     adam->beta1_power *= 0.9;
     adam->beta2_power *= 0.999;
     for (size_t p = 0; p < PARAMETERS; ++p) {
         adam->first[p] = 0.9 * adam->first[p] + 0.1 * gradients[p];
         adam->second[p] = 0.999 * adam->second[p] + 0.001 * gradients[p] * gradients[p];
+        /* 一阶矩平滑梯度，二阶矩平滑梯度平方。 */
+        /* 除以 1-beta^t 可修正一阶、二阶矩在零初始化后的早期偏差。 */
         double first = adam->first[p] / (1 - adam->beta1_power);
         double second = adam->second[p] / (1 - adam->beta2_power);
         network->parameters[p] -= rate * first / (sqrt(second) + 1e-8);
@@ -298,6 +322,7 @@ static void batch_gradients(const Network *network, const Dataset *data, const s
                             size_t start, size_t count, double *average)
 {
     assert(count > 0 && start <= data->count && count <= data->count - start);
+    /* 先清零，再按实际批次大小求平均，最后一批可以小于 BATCH_SIZE。 */
     for (size_t p = 0; p < PARAMETERS; ++p) {
         average[p] = 0;
     }
@@ -334,6 +359,7 @@ static void test_gradients(void)
     double input_gradient[PIXELS];
     network_backward(&network, sample.clean, &f, gradients, input_gradient);
     const double epsilon = 1e-5;
+    /* 中心差分近似解析梯度；逐个扰动参数，检查手写反向传播。 */
     for (size_t p = 0; p < PARAMETERS; ++p) {
         double original = network.parameters[p];
         Forward plus;
@@ -348,6 +374,7 @@ static void test_gradients(void)
                            (2 * epsilon);
         assert(fabs(numerical - gradients[p]) < 1e-9 + 1e-5 * fabs(numerical));
     }
+    /* 同样扰动输入像素，验证反向传播额外返回的输入梯度。 */
     for (size_t i = 0; i < PIXELS; ++i) {
         double original = sample.noisy[i];
         Forward plus;
@@ -402,6 +429,7 @@ static void test_data_and_batch(const Network *initial)
     static Dataset repeated;
     dataset_generate(&first, 3, 61, 62);
     dataset_generate(&repeated, 3, 61, 62);
+    /* 相同的图形与噪声种子必须生成逐字节相同的数据。 */
     assert(memcmp(first.samples, repeated.samples, 3 * sizeof(Sample)) == 0);
     uint32_t seed = 63;
     corrupt_sample(&first.samples[0], &seed);
@@ -409,6 +437,7 @@ static void test_data_and_batch(const Network *initial)
                   sizeof(first.samples[0].clean)) == 0);
     assert(memcmp(first.samples[0].noisy, repeated.samples[0].noisy,
                   sizeof(first.samples[0].noisy)) != 0);
+    /* 只有一个样本的尾批，平均梯度应与该样本的梯度完全相同。 */
     size_t order[] = {0, 1, 2};
     double average[PARAMETERS];
     batch_gradients(initial, &first, order, 2, 1, average);
@@ -441,16 +470,19 @@ static void train(const Network *initial, Dataset *training, const Dataset *vali
     uint32_t shuffle_seed = 2028;
     for (size_t epoch = 1; epoch <= EPOCHS; ++epoch) {
         size_t order[CAPACITY];
+        /* 每轮重新采样训练噪声；固定验证集不进入此循环。 */
         for (size_t i = 0; i < training->count; ++i) {
             corrupt_sample(&training->samples[i], &noise_seed);
             order[i] = i;
         }
+        /* Fisher–Yates 原地洗牌，让每轮小批次看到不同的样本顺序。 */
         for (size_t remaining = training->count; remaining > 1; --remaining) {
             size_t selected = (size_t)(random_unit(&shuffle_seed) * (double)remaining);
             size_t temporary = order[remaining - 1];
             order[remaining - 1] = order[selected];
             order[selected] = temporary;
         }
+        /* 洗牌后按小批次更新；尾批使用剩余样本数，不丢弃数据。 */
         for (size_t start = 0; start < training->count; start += BATCH_SIZE) {
             size_t count = training->count - start;
             if (count > BATCH_SIZE) {
@@ -460,6 +492,7 @@ static void train(const Network *initial, Dataset *training, const Dataset *vali
             batch_gradients(&current, training, order, start, count, average);
             network_update(&current, average, &adam, 0.003);
         }
+        /* 只用验证损失挑选参数；测试集留给训练结束后的独立评估。 */
         double valid = evaluate(&current, validation);
         if (valid < best_loss) {
             best_loss = valid;
@@ -501,6 +534,7 @@ static bool export_reconstruction(const Network *network, const Dataset *data, c
 {
     static GfxCanvas canvas;
     gfx_clear(&canvas, gfx_rgb(24, 30, 40));
+    /* 每行展示一张样本，三列依次为噪声输入、重建结果和干净目标。 */
     for (size_t i = 0; i < 3; ++i) {
         const Sample *sample = &data->samples[i];
         Forward f;
@@ -542,6 +576,8 @@ int main(int argc, char **argv)
     test_gradients();
     test_data_and_batch(&initial);
     test_small_fit(&initial);
+
+    /* 训练集每轮重采样噪声；验证集和测试集的初始噪声保持固定。 */
     static Dataset training;
     static Dataset validation;
     static Dataset testing;
@@ -557,8 +593,11 @@ int main(int argc, char **argv)
     }
     Network best;
     train(&initial, &training, &validation, quiet, &best);
+
+    /* 测试集只在选出最佳验证参数后使用，并与两个简单基线比较。 */
     double test_loss = evaluate(&best, &testing);
     double noisy_loss = 0;
+    /* 用训练集干净图的像素均值构造简单基线，再在同一测试集上评估。 */
     double mean_image[PIXELS] = {0};
     for (size_t i = 0; i < training.count; ++i) {
         for (size_t pixel = 0; pixel < PIXELS; ++pixel) {

@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
+/* 16×16 图像经 32 维隐藏层压缩到二维潜在空间。 */
 #define SIDE 16
 #define PIXELS (SIDE * SIDE)
 #define WIDTH 32
@@ -19,6 +20,7 @@
 #define BATCH_SIZE 8
 #define MC_SAMPLES 4
 
+/* 所有权重、偏置连续存储；枚举值给出各参数块的起始偏移。 */
 enum {
     EW = 0,
     EB = EW + WIDTH * PIXELS,
@@ -33,17 +35,21 @@ enum {
     PARAMETERS = OB + PIXELS
 };
 
+/* 只有前 count 张图有效，每张图按行优先顺序展成 PIXELS 个像素。 */
 typedef struct {
     size_t count;
     double images[CAPACITY][PIXELS];
 } Dataset;
 
+/* 权重矩阵按 [输出神经元][输入特征] 排列。 */
 typedef struct {
     double parameters[PARAMETERS];
 } Network;
 
+/* 一次前向所需的分布参数、随机样本、激活和两项损失。 */
 typedef struct {
     double encoder[WIDTH];
+    /* logvar 是后验方差的对数；sigma 才是标准差。 */
     double mu[LATENT];
     double logvar[LATENT];
     double sigma[LATENT];
@@ -55,12 +61,14 @@ typedef struct {
     double kl;
 } Forward;
 
+/* 重建 NLL 与 KL 按每张图统计；MSE 仅用于评估均值重建。 */
 typedef struct {
     double reconstruction;
     double kl;
     double mse;
 } Metrics;
 
+/* Adam 的逐参数一、二阶矩及用于偏差修正的 beta 幂。 */
 typedef struct {
     double first[PARAMETERS];
     double second[PARAMETERS];
@@ -68,6 +76,7 @@ typedef struct {
     double beta2_power;
 } Adam;
 
+/* 报告上下文借用 Logger，累计格式化和写入错误。 */
 typedef struct {
     Logger *logger;
     bool failed;
@@ -80,6 +89,7 @@ typedef struct {
  */
 static void report(Output *output, const char *format, ...)
 {
+    /* 超出固定缓冲区的消息按失败处理，不写入截断内容。 */
     char message[512];
     va_list arguments;
     va_start(arguments, format);
@@ -104,6 +114,7 @@ static void report(Output *output, const char *format, ...)
  */
 static double random_unit(uint32_t *state)
 {
+    /* 高 24 位加半个量化单位，保证结果严格处于 (0,1)。 */
     *state = *state * UINT32_C(1664525) + UINT32_C(1013904223);
     return ((double)(*state >> 8) + 0.5) / 16777216.0;
 }
@@ -115,6 +126,7 @@ static double random_unit(uint32_t *state)
  */
 static void sample_normal(uint32_t *state, double *epsilon)
 {
+    /* Box-Muller 用两次独立均匀抽样生成半径和角度。 */
     double radius = sqrt(-2 * log(random_unit(state)));
     double angle = 2 * acos(-1) * random_unit(state);
     epsilon[0] = radius * cos(angle);
@@ -122,7 +134,7 @@ static void sample_normal(uint32_t *state, double *epsilon)
 }
 
 /**
- * @brief 生成平衡的圆、方、三角形二值图，位置和尺寸变化范围沿用阶段4。
+ * @brief 生成数量均衡的圆、方、三角形二值图。
  * @param data 有效可写固定容量数据集。
  * @param count 3..CAPACITY，必须为3的倍数。
  * @param seed 本数据分组的独立图形随机种子。
@@ -132,6 +144,7 @@ static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
     assert(count >= 3 && count <= CAPACITY && count % 3 == 0);
     data->count = count;
     for (size_t s = 0; s < count; ++s) {
+        /* 依次轮换圆、方、三角形，三类共享位置与尺寸变化范围。 */
         double cx = 6.75 + 1.5 * random_unit(&seed);
         double cy = 6.75 + 1.5 * random_unit(&seed);
         double radius = 3 + random_unit(&seed);
@@ -158,6 +171,7 @@ static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
  */
 static void network_initialize(Network *network, uint32_t seed)
 {
+    /* 清零偏置，只对五块权重执行 Xavier 均匀初始化。 */
     *network = (Network){0};
     const size_t weights[] = {EW, MW, LW, DW, OW};
     const size_t inputs[] = {PIXELS, WIDTH, WIDTH, LATENT, WIDTH};
@@ -177,6 +191,7 @@ static void network_initialize(Network *network, uint32_t seed)
  */
 static double sigmoid(double value)
 {
+    /* 按符号分支，避免负输入的 exp(-value) 溢出。 */
     if (value >= 0) {
         return 1 / (1 + exp(-value));
     }
@@ -195,6 +210,7 @@ static void decode(const Network *network, const double *z, Forward *forward, co
 {
     const double *p = network->parameters;
     memcpy(forward->z, z, LATENT * sizeof(double));
+    /* 二维潜变量先经 tanh 隐藏层，再为每个像素输出一个 Bernoulli 概率。 */
     for (size_t i = 0; i < WIDTH; ++i) {
         double value = p[DB + i];
         for (size_t j = 0; j < LATENT; ++j) {
@@ -212,6 +228,7 @@ static void decode(const Network *network, const double *z, Forward *forward, co
         }
         forward->image[i] = sigmoid(value);
         if (target != nullptr) {
+            /* softplus(logit)-target×logit 是数值稳定的像素 BCE。 */
             forward->reconstruction +=
                 fmax(value, 0) - target[i] * value + log1p(exp(-fabs(value)));
         }
@@ -230,6 +247,7 @@ static void network_forward(const Network *network, const double *input, const d
 {
     *forward = (Forward){0};
     const double *p = network->parameters;
+    /* 编码器将展平的图像映射到共享的 tanh 隐藏层。 */
     for (size_t i = 0; i < WIDTH; ++i) {
         double value = p[EB + i];
         for (size_t j = 0; j < PIXELS; ++j) {
@@ -239,6 +257,7 @@ static void network_forward(const Network *network, const double *input, const d
     }
     double z[LATENT];
     for (size_t i = 0; i < LATENT; ++i) {
+        /* 两个独立输出头分别预测潜变量均值与原始 logvar 分数。 */
         double mu = p[MB + i];
         double raw = p[LB + i];
         for (size_t j = 0; j < WIDTH; ++j) {
@@ -251,7 +270,9 @@ static void network_forward(const Network *network, const double *input, const d
         forward->logvar[i] = logvar;
         forward->sigma[i] = exp(0.5 * logvar);
         forward->epsilon[i] = epsilon[i];
+        /* 固定 epsilon 后，采样成为可微的 z = mu + sigma×epsilon。 */
         z[i] = mu + forward->sigma[i] * epsilon[i];
+        /* 每个潜在维度对标准正态先验的 KL，expm1 在零附近更稳定。 */
         forward->kl += 0.5 * (mu * mu + expm1(logvar) - logvar);
     }
     decode(network, z, forward, input);
@@ -273,6 +294,7 @@ static void network_backward(const Network *network, const double *input, const 
     memset(gradient, 0, PARAMETERS * sizeof(double));
     const double *p = network->parameters;
     double decoder[WIDTH] = {0};
+    /* sigmoid 与 BCE 合并求导：logit 梯度为预测概率减目标值。 */
     for (size_t i = 0; i < PIXELS; ++i) {
         double delta = forward->image[i] - input[i];
         gradient[OB + i] = delta;
@@ -282,9 +304,11 @@ static void network_backward(const Network *network, const double *input, const 
             decoder[j] += p[OW + i * WIDTH + j] * delta;
             logit += p[OW + i * WIDTH + j] * forward->decoder[j];
         }
-        input_gradient[i] = -logit; /* 目标x本身也参与L(x,x)；不是固定目标的编码器导数。 */
+        /* 输入还充当 BCE 目标，因此其直接导数为 -logit。 */
+        input_gradient[i] = -logit;
     }
     double dz[LATENT] = {0};
+    /* 先穿过解码器的 tanh，再把重建梯度汇集到潜变量 z。 */
     for (size_t i = 0; i < WIDTH; ++i) {
         double delta = decoder[i] * (1 - forward->decoder[i] * forward->decoder[i]);
         gradient[DB + i] = delta;
@@ -294,10 +318,12 @@ static void network_backward(const Network *network, const double *input, const 
         }
     }
     double encoder[WIDTH] = {0};
+    /* z 的梯度经重参数化分给均值与 logvar；两支再加上各自的 KL 梯度。 */
     for (size_t i = 0; i < LATENT; ++i) {
         double dmu = dz[i] + forward->mu[i];
         double dlv =
             dz[i] * 0.5 * forward->sigma[i] * forward->epsilon[i] + 0.5 * expm1(forward->logvar[i]);
+        /* logvar = 6*tanh(raw/6)，链式求导还需乘其限幅导数。 */
         double scaled = forward->logvar[i] / 6;
         double draw = dlv * (1 - scaled * scaled);
         gradient[MB + i] = dmu;
@@ -309,6 +335,7 @@ static void network_backward(const Network *network, const double *input, const 
             encoder[j] += p[MW + i * WIDTH + j] * dmu + p[LW + i * WIDTH + j] * draw;
         }
     }
+    /* 两个输出头在共享编码器汇合；输入梯度再叠加编码路径的贡献。 */
     for (size_t i = 0; i < WIDTH; ++i) {
         double delta = encoder[i] * (1 - forward->encoder[i] * forward->encoder[i]);
         gradient[EB + i] = delta;
@@ -341,6 +368,7 @@ static bool clip_gradient(double *gradient, double limit, double *norm)
     if (!isfinite(value)) {
         return false;
     }
+    /* 所有分量乘相同系数，缩短梯度但不改变方向。 */
     if (value > limit) {
         double scale = limit / value;
         for (size_t i = 0; i < PARAMETERS; ++i) {
@@ -360,6 +388,7 @@ static bool clip_gradient(double *gradient, double limit, double *norm)
  */
 static bool adam_update(Network *network, Adam *adam, const double *gradient)
 {
+    /* 在副本上计算动量、偏差修正与新参数，任一非有限值都不提交。 */
     Network next = *network;
     Adam state = *adam;
     state.beta1_power *= 0.9;
@@ -407,10 +436,12 @@ static Metrics evaluate(const Network *network, const Dataset *data)
 {
     assert(data->count > 0);
     Metrics result = {0};
+    /* 每次评估重置随机种子，使不同时期的验证损失可以直接比较。 */
     uint32_t seed = 5025;
     const double zero[LATENT] = {0};
     for (size_t s = 0; s < data->count; ++s) {
         Forward forward;
+        /* 多次采样估计重建项；解析 KL 对同一图像不依赖采样噪声。 */
         for (size_t mc = 0; mc < MC_SAMPLES; ++mc) {
             double epsilon[LATENT];
             sample_normal(&seed, epsilon);
@@ -418,6 +449,7 @@ static Metrics evaluate(const Network *network, const Dataset *data)
             result.reconstruction += forward.reconstruction / MC_SAMPLES;
             result.kl += forward.kl / MC_SAMPLES;
         }
+        /* 令 epsilon=0 得到解码器在潜变量均值处的输出，只用于 MSE。 */
         network_forward(network, data->images[s], zero, &forward);
         result.mse += image_mse(data->images[s], forward.image);
     }
@@ -442,6 +474,7 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, O
     Metrics baseline = evaluate(network, valid);
     double best_loss = baseline.reconstruction + baseline.kl;
     size_t best_epoch = 0;
+    /* 训练随机流跨批次、跨轮次持续前进；验证使用独立固定随机流。 */
     uint32_t seed = 4025;
     for (size_t epoch = 0; epoch < EPOCHS; ++epoch) {
         for (size_t start = 0; start < data->count; start += BATCH_SIZE) {
@@ -449,6 +482,7 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, O
             if (count > BATCH_SIZE) {
                 count = BATCH_SIZE;
             }
+            /* 按实际批量大小平均梯度，最后一批不足八张时权重仍正确。 */
             double batch[PARAMETERS] = {0};
             for (size_t s = start; s < start + count; ++s) {
                 double epsilon[LATENT];
@@ -468,6 +502,7 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, O
                 return false;
             }
         }
+        /* 用验证集负 ELBO 选择检查点，不用测试集挑选参数。 */
         Metrics metrics = evaluate(network, valid);
         if (metrics.reconstruction + metrics.kl < best_loss) {
             best_loss = metrics.reconstruction + metrics.kl;
@@ -488,7 +523,7 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, O
 }
 
 /**
- * @brief 固定同一epsilon验证全部参数、输入及噪声导数，不能每次扰动重新采样。
+ * @brief 固定同一噪声，用中心差分验证参数、输入及噪声导数。
  */
 static void test_gradients(void)
 {
@@ -505,6 +540,7 @@ static void test_gradients(void)
     double de[LATENT];
     network_forward(&network, input, noise, &forward);
     network_backward(&network, input, &forward, gradient, dx, de);
+    /* 对参数、输入、噪声逐一作中心差分；正负扰动共用同一噪声。 */
     const double epsilon = 1e-5;
     for (size_t block = 0; block < 3; ++block) {
         double *values = network.parameters;
@@ -539,6 +575,7 @@ static void test_gradients(void)
  */
 static void test_boundaries(void)
 {
+    /* 零参数时后验等于先验，所有像素概率均为 1/2。 */
     Network network = {0};
     double input[PIXELS] = {0};
     double epsilon[LATENT] = {0.5, -1};
@@ -550,6 +587,7 @@ static void test_boundaries(void)
     network.parameters[MB] = 2;
     network_forward(&network, input, epsilon, &forward);
     assert(fabs(forward.kl - 2) < 1e-12 && forward.z[0] == 2.5);
+    /* 极端原始分数用于检查 logvar 限幅和 BCE 的有限性。 */
     network.parameters[LB] = 1000;
     network.parameters[OB] = 1000;
     network_forward(&network, input, epsilon, &forward);
@@ -565,6 +603,7 @@ static void test_boundaries(void)
     sample_normal(&a, first);
     sample_normal(&b, second);
     assert(first[0] == second[0] && first[1] == second[1] && isfinite(first[0]));
+    /* 非有限梯度不能让裁剪或 Adam 留下部分更新。 */
     double gradient[PARAMETERS] = {3, 4};
     double norm = 0;
     assert(clip_gradient(gradient, 1, &norm) && fabs(norm - 5) < 1e-12);
@@ -588,6 +627,7 @@ static void test_boundaries(void)
  */
 static void draw_tile(GfxCanvas *canvas, const double *image, int left, int top, int scale)
 {
+    /* 所有图像共用 [0,1] 到灰度的映射，便于直接比较亮度。 */
     for (size_t row = 0; row < SIDE; ++row) {
         for (size_t column = 0; column < SIDE; ++column) {
             uint8_t gray = (uint8_t)lround(255 * image[row * SIDE + column]);
@@ -625,6 +665,7 @@ static bool save_canvas(const GfxCanvas *canvas, const char *name, Output *outpu
 static bool export_images(const Network *network, const Dataset *data, Output *output)
 {
     static GfxCanvas canvas;
+    /* 每行依次为测试原图、epsilon=0 的均值重建、一次后验采样重建。 */
     gfx_clear(&canvas, gfx_rgb(24, 30, 40));
     const double zero[LATENT] = {0};
     uint32_t seed = 6025;
@@ -643,6 +684,7 @@ static bool export_images(const Network *network, const Dataset *data, Output *o
     if (!save_canvas(&canvas, "vae-reconstruction", output)) {
         return false;
     }
+    /* 在二维潜在空间的 [-2,2] 网格上直接解码，观察连续变化。 */
     gfx_clear(&canvas, gfx_rgb(24, 30, 40));
     for (size_t row = 0; row < 7; ++row) {
         for (size_t column = 0; column < 7; ++column) {
@@ -655,6 +697,7 @@ static bool export_images(const Network *network, const Dataset *data, Output *o
     if (!save_canvas(&canvas, "vae-latent-grid", output)) {
         return false;
     }
+    /* 在两张测试图的后验均值之间线性插值，不重新采样。 */
     Forward from;
     Forward to;
     network_forward(network, data->images[0], zero, &from);
@@ -673,6 +716,7 @@ static bool export_images(const Network *network, const Dataset *data, Output *o
     if (!save_canvas(&canvas, "vae-interpolation", output)) {
         return false;
     }
+    /* 从标准正态先验取样后直接解码，用于观察生成结果。 */
     gfx_clear(&canvas, gfx_rgb(24, 30, 40));
     for (size_t i = 0; i < 12; ++i) {
         double z[LATENT];
@@ -711,6 +755,7 @@ int main(int argc, char **argv)
         fputs("--test不能与文件输出选项合用\n", stderr);
         return EXIT_FAILURE;
     }
+    /* 日志只在显式指定 --log 时追加写入 logs/。 */
     Logger logger = {0};
     if (logging && !logger_open(&logger, "logs/ml/13_vae_shapes.log", stdout)) {
         fprintf(stderr, "VAE日志打开失败：%s\n", strerror(errno));
@@ -718,6 +763,7 @@ int main(int argc, char **argv)
     }
     Output output = {.logger = logging ? &logger : nullptr};
     bool success = true;
+    /* 数值梯度与边界验证先于训练执行。 */
     test_gradients();
     test_boundaries();
     static Dataset data;
@@ -730,16 +776,21 @@ int main(int argc, char **argv)
     network_initialize(&network, 42);
     Metrics initial = evaluate(&network, &valid);
     if (!quiet) {
-        report(&output, "=== VAE：256→32→mu/logvar各2维→32→256，%d个参数 ===", PARAMETERS);
-        report(&output, "BCE像素求和+KL(beta=1)；logvar=6*tanh(raw/6)；Adam0.003，裁剪5，批量8。");
         report(&output,
-               "图形2025/2026/2027，初始化42，训练epsilon4025，评估5025；每图4次评估采样。");
+               "=== VAE：256→32→mu/logvar各2维→32→256，%d个参数 ===", PARAMETERS);
+        report(&output,
+               "BCE像素求和+KL(beta=1)；logvar=6*tanh(raw/6)；"
+               "Adam0.003，裁剪5，批量8。");
+        report(&output,
+               "图形2025/2026/2027，初始化42，训练epsilon4025，"
+               "评估5025；每图4次评估采样。");
     }
     if (!train(&network, &data, &valid, quiet ? nullptr : &output)) {
         success = false;
         goto cleanup;
     }
     Metrics final = evaluate(&network, &test);
+    /* 训练图的逐像素均值作为基线，在独立测试集计算其 MSE。 */
     double mean_image[PIXELS] = {0};
     for (size_t s = 0; s < data.count; ++s) {
         for (size_t i = 0; i < PIXELS; ++i) {
@@ -753,12 +804,15 @@ int main(int argc, char **argv)
     assert(final.reconstruction + final.kl < initial.reconstruction + initial.kl);
     assert(final.mse < baseline && final.kl >= -1e-9);
     report(&output,
-           "独立测试：NLL=%.4f KL=%.4f negative_ELBO=%.4f；均值重建MSE=%.5f，平均图MSE=%.5f。",
+           "独立测试：NLL=%.4f KL=%.4f negative_ELBO=%.4f；"
+           "均值重建MSE=%.5f，平均图MSE=%.5f。",
            final.reconstruction, final.kl, final.reconstruction + final.kl, final.mse, baseline);
     if (images && !export_images(&network, &test, &output)) {
         success = false;
     }
-    report(&output, "VAE验证通过：16900参数、256输入和2噪声导数，重参数化/KL边界及独立重建评估。");
+    report(&output,
+           "VAE验证通过：16900参数、256输入和2噪声导数，"
+           "重参数化/KL边界及独立重建评估。");
 cleanup:
     if (!success) {
         fputs("VAE训练或导出失败\n", stderr);

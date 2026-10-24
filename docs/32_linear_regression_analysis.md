@@ -449,7 +449,7 @@ g_b=\frac{\partial L}{\partial b},
 \nabla L=(g_w,g_b).
 $$
 
-$\nabla L$ 读作“损失的梯度”，是由两个变化率组成的向量。$g_w$ 对应源码的 `weight_gradient`，$g_b$ 对应 `bias_gradient`，两者均指样本循环结束并除以 `count` 后的平均梯度。
+**$\nabla L$ 读作“损失的梯度”，是由两个变化率组成的向量**。$g_w$ 对应源码的 `weight_gradient`，$g_b$ 对应 `bias_gradient`，两者均指样本循环结束并除以 `count` 后的平均梯度。
 
 先只看一个参数：若 $g_w>0$，在当前位置略微增大 $w$ 会增大损失，因此应减小 $w$；若 $g_w<0$，略微增大 $w$ 会减小损失，因此应增大 $w$。偏置也遵循相同规则。这是局部变化趋势，不能保证任意幅度的参数调整都有效。
 

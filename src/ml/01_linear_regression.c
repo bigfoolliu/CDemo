@@ -115,15 +115,19 @@ int main(int argc, char *argv[])
         /* 梯度下降：参数沿损失函数梯度的反方向更新。 */
         double weight_step = learning_rate * weight_gradient;
         double bias_step = learning_rate * bias_gradient;
+
         logger_write(&logger, "  参数更新：w = %.10f - (% .10e)，b = %.10f - (% .10e)\n",
                      model.weight, weight_step, model.bias, bias_step);
+
         model.weight -= weight_step;
         model.bias -= bias_step;
         double loss_after = mse(model, x, y, count);
+
         logger_write(&logger, "  更新结果：w=%.10f，b=%.10f，MSE=%.10e，损失减少=% .10e\n",
                      model.weight, model.bias, loss_after, loss_before - loss_after);
     }
     double final_loss = mse(model, x, y, count);
+
     logger_write(&logger, "\n=== 训练结束与结果验证 ===\n");
     logger_write(&logger, "最终模型：预测值 = %.10f * x + %.10f\n", model.weight, model.bias);
     logger_write(&logger, "损失变化：%.10e → %.10e\n", initial_loss, final_loss);

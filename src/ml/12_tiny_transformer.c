@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* 教学规模：词表、宽度、头数、上下文、前馈宽度、容量与轮数。 */
 #define VOCAB 4
 #define DIM 16
 #define HEADS 2
@@ -21,8 +22,10 @@
 #define CAPACITY 32
 #define EPOCHS 250
 
+/* 每个注意力头按连续特征切片，模型宽度必须能被头数整除。 */
 static_assert(DIM % HEADS == 0, "每个注意力头必须获得整数维度");
 
+/* 所有可训练张量平铺在一个数组里；枚举值是每个张量的起始偏移。 */
 enum {
     EMB = 0,
     POS = EMB + VOCAB * DIM,
@@ -62,22 +65,29 @@ static const char *const testing[] = {"babc acbc cbac abac babc abac ",
                                       "cbac abac acbc babc cbac babc "};
 
 typedef struct {
+    /* steps 个连续位置各预测后一字符；上下文不跨块传递。 */
     size_t steps;
     unsigned input[CONTEXT];
     unsigned target[CONTEXT];
 } Sequence;
 
 typedef struct {
+    /* count 只表示 samples 中有效的前 count 个块。 */
     size_t count;
     Sequence samples[CAPACITY];
 } Dataset;
 
 typedef struct {
+    /* 以参数偏移访问嵌入、投影、归一化参数和分类器。 */
     double parameters[PARAMETERS];
 } Network;
 
+/* 一次前向的缓存，行优先布局为 [位置][特征]，供反向传播复用。
+ * x/u 是嵌入与位置相加后的表示及其归一化值；q/k/v 是注意力投影。
+ * c/o/y 是注意力上下文、输出投影和第一次残差结果；m/pre/activation/f
+ * 是前馈分支，z/last 是第二次残差结果及最终归一化值。
+ */
 typedef struct {
-    /* 所有二维矩阵展平成行优先数组，每个位置对应连续DIM或FF个值。 */
     double x[CONTEXT * DIM];
     double u[CONTEXT * DIM];
     double q[CONTEXT * DIM];
@@ -93,18 +103,23 @@ typedef struct {
     double z[CONTEXT * DIM];
     double last[CONTEXT * DIM];
     double hats[3][CONTEXT * DIM];
+    /* 每个 LayerNorm 缓存标准化值和各位置的逆标准差。 */
     double inverse[3][CONTEXT];
+    /* 注意力按 [头][查询位置][键位置] 存储，未来键位置保持为零。 */
     double attention[HEADS * CONTEXT * CONTEXT];
+    /* 分类器一开始写入 logits，softmax 后原地改为概率。 */
     double probability[CONTEXT * VOCAB];
     double loss;
 } Forward;
 
+/* 按所有有效位置汇总的平均交叉熵和下一字符准确率。 */
 typedef struct {
     double loss;
     double accuracy;
 } Metrics;
 
 typedef struct {
+    /* 对模型参数的 Adam 一、二阶矩和偏差修正状态。 */
     double first[PARAMETERS];
     double second[PARAMETERS];
     double beta1_power;
@@ -112,17 +127,19 @@ typedef struct {
 } Adam;
 
 typedef struct {
+    /* logger 由 main 持有；Output 只借用它并累计输出失败。 */
     Logger *logger;
     bool failed;
 } Output;
 
 /**
  * @brief 输出短报告，可选追加日志，并累计输出错误。
- * @param output 有效可写上下文，借用logger。
- * @param format 有效格式字符串及匹配的后续参数。
+ * @param output 有效可写输出状态，借用 logger 并累计失败。
+ * @param format 有效 printf 格式；后续参数须匹配，格式化结果小于 512 字节。
  */
 static void report(Output *output, const char *format, ...)
 {
+    /* 有界缓冲区避免报告内容溢出；过长或写入失败都会记录到 failed。 */
     char message[512];
     va_list arguments;
     va_start(arguments, format);
@@ -152,6 +169,7 @@ static bool dataset_encode(Dataset *data, const char *const *texts, size_t count
     if (count == 0) {
         return false;
     }
+    /* 先构造候选集；全部字符串和容量合法后才覆盖调用者数据。 */
     Dataset result = {0};
     for (size_t s = 0; s < count; ++s) {
         if (texts[s] == nullptr || strlen(texts[s]) < 2) {
@@ -163,6 +181,7 @@ static bool dataset_encode(Dataset *data, const char *const *texts, size_t count
                 return false;
             }
         }
+        /* 分块只在当前字符串内推进，末尾不足 CONTEXT 的块也会保留。 */
         for (size_t start = 0; start < length - 1;) {
             if (result.count == CAPACITY) {
                 return false;
@@ -192,9 +211,11 @@ static bool dataset_encode(Dataset *data, const char *const *texts, size_t count
 static void network_initialize(Network *network, uint32_t seed)
 {
     *network = (Network){0};
+    /* 权重随机初始化，偏置为零；LayerNorm gamma 设为一。 */
     const size_t starts[] = {EMB, POS, QW, KW, VW, OW, F1W, F2W, UW};
-    const size_t lengths[] = {VOCAB * DIM, CONTEXT * DIM, DIM * DIM, DIM * DIM,  DIM * DIM,
-                              DIM * DIM,   FF * DIM,      DIM * FF,  VOCAB * DIM};
+    const size_t lengths[] = {VOCAB * DIM, CONTEXT * DIM, DIM * DIM,
+                              DIM * DIM,   DIM * DIM,     DIM * DIM,
+                              FF * DIM,    DIM * FF,      VOCAB * DIM};
     for (size_t block = 0; block < sizeof(starts) / sizeof(starts[0]); ++block) {
         for (size_t i = 0; i < lengths[block]; ++i) {
             seed = seed * UINT32_C(1664525) + UINT32_C(1013904223);
@@ -222,6 +243,7 @@ static void network_initialize(Network *network, uint32_t seed)
 static void dense_forward(const double *x, double *y, size_t rows, size_t inputs, size_t outputs,
                           const double *w, const double *b)
 {
+    /* 每个位置独立计算 y[t,i] = b[i] + Σ_j w[i,j] x[t,j]。 */
     for (size_t t = 0; t < rows; ++t) {
         for (size_t i = 0; i < outputs; ++i) {
             double value = b[i];
@@ -248,10 +270,12 @@ static void dense_forward(const double *x, double *y, size_t rows, size_t inputs
 static void dense_backward(const double *x, const double *dy, double *dx, size_t rows,
                            size_t inputs, size_t outputs, const double *w, double *dw, double *db)
 {
+    /* dx 每次覆盖；dw 和 db 使用 +=，由调用者先清零以支持梯度累加。 */
     memset(dx, 0, rows * inputs * sizeof(double));
     for (size_t t = 0; t < rows; ++t) {
         for (size_t i = 0; i < outputs; ++i) {
             double delta = dy[t * outputs + i];
+            /* 偏置梯度累加 delta，权重梯度累加 delta×输入。 */
             db[i] += delta;
             for (size_t j = 0; j < inputs; ++j) {
                 dw[i * inputs + j] += delta * x[t * inputs + j];
@@ -274,6 +298,7 @@ static void dense_backward(const double *x, const double *dy, double *dx, size_t
 static void norm_forward(const double *x, double *y, double *hat, double *inverse, size_t rows,
                          const double *gamma, const double *beta)
 {
+    /* 每个位置单独沿 DIM 个特征求均值与总体方差，不混合不同位置。 */
     for (size_t t = 0; t < rows; ++t) {
         double mean = 0;
         for (size_t i = 0; i < DIM; ++i) {
@@ -284,9 +309,11 @@ static void norm_forward(const double *x, double *y, double *hat, double *invers
             double centered = x[t * DIM + i] - mean;
             variance += centered * centered / DIM;
         }
+        /* epsilon 防止常量特征行除以零；缓存逆标准差供反向使用。 */
         inverse[t] = 1 / sqrt(variance + 1e-5);
         for (size_t i = 0; i < DIM; ++i) {
             size_t index = t * DIM + i;
+            /* 标准化后再做可学习的逐特征缩放和平移。 */
             hat[index] = (x[index] - mean) * inverse[t];
             y[index] = gamma[i] * hat[index] + beta[i];
         }
@@ -307,6 +334,7 @@ static void norm_forward(const double *x, double *y, double *hat, double *invers
 static void norm_backward(const double *dy, double *dx, const double *hat, const double *inverse,
                           size_t rows, const double *gamma, double *dg, double *db)
 {
+    /* 扣除均值和方差方向投影；gamma、beta 梯度分别累加到 dg、db。 */
     for (size_t t = 0; t < rows; ++t) {
         double sum = 0;
         double projection = 0;
@@ -340,14 +368,17 @@ static void attention_forward(const double *q, const double *k, const double *v,
                               double *a, size_t rows, size_t heads)
 {
     assert(rows > 0 && rows <= CONTEXT && (heads == 1 || heads == HEADS));
+    /* 未来位置先保持零；后面只填写因果掩码允许的键位置。 */
     memset(a, 0, heads * CONTEXT * CONTEXT * sizeof(double));
     memset(c, 0, rows * DIM * sizeof(double));
     size_t width = DIM / heads;
+    /* 缩放点积避免分数随每头维度增大而过度放大。 */
     double scale = 1 / sqrt((double)width);
     for (size_t head = 0; head < heads; ++head) {
         for (size_t t = 0; t < rows; ++t) {
             double *row = a + (head * CONTEXT + t) * CONTEXT;
             double maximum = -INFINITY;
+            /* 只计算 s<=t 的键，因此当前位置看不到未来 token。 */
             for (size_t s = 0; s <= t; ++s) {
                 double score = 0;
                 for (size_t i = 0; i < width; ++i) {
@@ -358,12 +389,14 @@ static void attention_forward(const double *q, const double *k, const double *v,
                 maximum = fmax(maximum, score);
             }
             double sum = 0;
+            /* 减去该行最大分数后再取指数，稳定计算因果 softmax。 */
             for (size_t s = 0; s <= t; ++s) {
                 row[s] = exp(row[s] - maximum);
                 sum += row[s];
             }
             for (size_t s = 0; s <= t; ++s) {
                 row[s] /= sum;
+                /* 每个头只写自己的特征切片，最后拼接成 DIM 维上下文。 */
                 for (size_t i = 0; i < width; ++i) {
                     size_t d = head * width + i;
                     c[t * DIM + d] += row[s] * v[s * DIM + d];
@@ -390,6 +423,7 @@ static void attention_backward(const double *q, const double *k, const double *v
                                const double *dc, double *dq, double *dk, double *dv, size_t rows,
                                size_t heads)
 {
+    /* 清零三个输出后，逐查询位置累加共享键和值收到的梯度。 */
     memset(dq, 0, rows * DIM * sizeof(double));
     memset(dk, 0, rows * DIM * sizeof(double));
     memset(dv, 0, rows * DIM * sizeof(double));
@@ -400,6 +434,7 @@ static void attention_backward(const double *q, const double *k, const double *v
             const double *row = a + (head * CONTEXT + t) * CONTEXT;
             double da[CONTEXT] = {0};
             double mean = 0;
+            /* da 是损失对权重的导数；mean 是 softmax 雅可比的加权平均项。 */
             for (size_t s = 0; s <= t; ++s) {
                 for (size_t i = 0; i < width; ++i) {
                     size_t d = head * width + i;
@@ -408,6 +443,7 @@ static void attention_backward(const double *q, const double *k, const double *v
                 }
                 mean += row[s] * da[s];
             }
+            /* dL/d(q·k_s) = a_s(da_s - Σ_r a_r da_r)/sqrt(width)。 */
             for (size_t s = 0; s <= t; ++s) {
                 double ds = row[s] * (da[s] - mean) * scale;
                 for (size_t i = 0; i < width; ++i) {
@@ -432,12 +468,15 @@ static void network_forward(const Network *network, const Sequence *sequence, Fo
     *forward = (Forward){0};
     size_t rows = sequence->steps;
     const double *p = network->parameters;
+    /* token embedding 与可学习位置向量相加，作为第一个残差支路的输入。 */
     for (size_t t = 0; t < rows; ++t) {
         assert(sequence->input[t] < VOCAB && sequence->target[t] < VOCAB);
         for (size_t i = 0; i < DIM; ++i) {
-            forward->x[t * DIM + i] = p[EMB + sequence->input[t] * DIM + i] + p[POS + t * DIM + i];
+            forward->x[t * DIM + i] =
+                p[EMB + sequence->input[t] * DIM + i] + p[POS + t * DIM + i];
         }
     }
+    /* pre-LayerNorm 后分别投影 Q、K、V，再做因果多头注意力。 */
     norm_forward(forward->x, forward->u, forward->hats[0], forward->inverse[0], rows, p + G1,
                  p + B1);
     dense_forward(forward->u, forward->q, rows, DIM, DIM, p + QW, p + QB);
@@ -449,20 +488,24 @@ static void network_forward(const Network *network, const Sequence *sequence, Fo
     for (size_t i = 0; i < rows * DIM; ++i) {
         forward->y[i] = forward->x[i] + forward->o[i];
     }
+    /* 第一次残差后再 pre-LayerNorm，经过扩张、GELU 和降维前馈层。 */
     norm_forward(forward->y, forward->m, forward->hats[1], forward->inverse[1], rows, p + G2,
                  p + B2);
     dense_forward(forward->m, forward->pre, rows, DIM, FF, p + F1W, p + F1B);
     for (size_t i = 0; i < rows * FF; ++i) {
         double value = forward->pre[i];
+        /* 精确 GELU：x·Φ(x)，用 erf 计算标准正态分布函数 Φ。 */
         forward->activation[i] = 0.5 * value * (1 + erf(value / sqrt(2)));
     }
     dense_forward(forward->activation, forward->f, rows, FF, DIM, p + F2W, p + F2B);
     for (size_t i = 0; i < rows * DIM; ++i) {
         forward->z[i] = forward->y[i] + forward->f[i];
     }
+    /* 最终 LayerNorm 和字符分类器逐位置给出下一字符分布。 */
     norm_forward(forward->z, forward->last, forward->hats[2], forward->inverse[2], rows, p + G3,
                  p + B3);
     dense_forward(forward->last, forward->probability, rows, DIM, VOCAB, p + UW, p + UB);
+    /* 对每个位置用稳定 log-sum-exp 算交叉熵，再把 logits 原地转成概率。 */
     for (size_t t = 0; t < rows; ++t) {
         double *row = forward->probability + t * VOCAB;
         double maximum = row[0];
@@ -493,10 +536,12 @@ static void network_forward(const Network *network, const Sequence *sequence, Fo
 static void network_backward(const Network *network, const Sequence *sequence,
                              const Forward *forward, double *gradient)
 {
+    /* 所有分支对同一参数的影响相加；先清零，后续反向调用均使用 +=。 */
     memset(gradient, 0, PARAMETERS * sizeof(double));
     size_t rows = sequence->steps;
     const double *p = network->parameters;
     double logits[CONTEXT * VOCAB] = {0};
+    /* 交叉熵对每个 logit 的导数为 (概率 - one-hot) / 位置数。 */
     for (size_t t = 0; t < rows; ++t) {
         for (size_t k = 0; k < VOCAB; ++k) {
             logits[t * VOCAB + k] =
@@ -509,6 +554,7 @@ static void network_backward(const Network *network, const Sequence *sequence,
     double da[CONTEXT * FF];
     double dm[CONTEXT * DIM];
     double dy[CONTEXT * DIM];
+    /* softmax + 交叉熵的 logit 导数，再经过分类器与末端归一化。 */
     dense_backward(forward->last, logits, last, rows, DIM, VOCAB, p + UW, gradient + UW,
                    gradient + UB);
     norm_backward(last, dz, forward->hats[2], forward->inverse[2], rows, p + G3, gradient + G3,
@@ -517,6 +563,7 @@ static void network_backward(const Network *network, const Sequence *sequence,
                    gradient + F2B);
     for (size_t i = 0; i < rows * FF; ++i) {
         double value = forward->pre[i];
+        /* 对 exact GELU 求导，再乘到前馈第二层传回的上游梯度上。 */
         double derivative = 0.5 * (1 + erf(value / sqrt(2))) +
                             value * exp(-0.5 * value * value) / sqrt(2 * acos(-1));
         da[i] *= derivative;
@@ -524,18 +571,21 @@ static void network_backward(const Network *network, const Sequence *sequence,
     dense_backward(forward->m, da, dm, rows, DIM, FF, p + F1W, gradient + F1W, gradient + F1B);
     norm_backward(dm, dy, forward->hats[1], forward->inverse[1], rows, p + G2, gradient + G2,
                   gradient + B2);
+    /* 残差恒等支路的导数直接相加到前馈支路传回的 dy。 */
     for (size_t i = 0; i < rows * DIM; ++i) {
-        dy[i] += dz[i]; /* 前馈残差的直通导数。 */
+        dy[i] += dz[i];
     }
     double dc[CONTEXT * DIM];
     double dq[CONTEXT * DIM];
     double dk[CONTEXT * DIM];
     double dv[CONTEXT * DIM];
+    /* 注意力输出投影反向后，分别回到上下文和注意力参数。 */
     dense_backward(forward->c, dy, dc, rows, DIM, DIM, p + OW, gradient + OW, gradient + OB);
     attention_backward(forward->q, forward->k, forward->v, forward->attention, dc, dq, dk, dv, rows,
                        HEADS);
     double du[CONTEXT * DIM];
     double branch[CONTEXT * DIM];
+    /* Q、K、V 是并行分支；它们对 LayerNorm 输入的梯度必须相加。 */
     dense_backward(forward->u, dq, du, rows, DIM, DIM, p + QW, gradient + QW, gradient + QB);
     dense_backward(forward->u, dk, branch, rows, DIM, DIM, p + KW, gradient + KW, gradient + KB);
     for (size_t i = 0; i < rows * DIM; ++i) {
@@ -547,6 +597,7 @@ static void network_backward(const Network *network, const Sequence *sequence,
     }
     norm_backward(du, branch, forward->hats[0], forward->inverse[0], rows, p + G1, gradient + G1,
                   gradient + B1);
+    /* 重复 token 的 embedding 梯度累加；位置向量按位置分别累加。 */
     for (size_t t = 0; t < rows; ++t) {
         for (size_t i = 0; i < DIM; ++i) {
             double dx = dy[t * DIM + i] + branch[t * DIM + i];
@@ -568,6 +619,7 @@ static bool clip_gradient(double *gradient, double limit, double *norm)
     if (!isfinite(limit) || limit <= 0) {
         return false;
     }
+    /* 用 hypot 逐项累积 L2 范数，避免直接平方导致中间值溢出。 */
     double value = 0;
     for (size_t i = 0; i < PARAMETERS; ++i) {
         if (!isfinite(gradient[i])) {
@@ -579,6 +631,7 @@ static bool clip_gradient(double *gradient, double limit, double *norm)
         return false;
     }
     if (value > limit) {
+        /* 所有分量乘同一比例，限制长度但不改变梯度方向。 */
         double scale = limit / value;
         for (size_t i = 0; i < PARAMETERS; ++i) {
             gradient[i] *= scale;
@@ -597,14 +650,17 @@ static bool clip_gradient(double *gradient, double limit, double *norm)
  */
 static bool adam_update(Network *network, Adam *adam, const double *gradient)
 {
+    /* 在副本上计算；全部有限后才提交模型和优化器状态。 */
     Network next = *network;
     Adam state = *adam;
     state.beta1_power *= 0.9;
     state.beta2_power *= 0.999;
     for (size_t i = 0; i < PARAMETERS; ++i) {
         double g = gradient[i];
+        /* 一阶矩平滑梯度，二阶矩平滑梯度平方。 */
         state.first[i] = 0.9 * state.first[i] + 0.1 * g;
         state.second[i] = 0.999 * state.second[i] + 0.001 * g * g;
+        /* beta 幂用于修正矩状态从零开始产生的早期偏差。 */
         double first = state.first[i] / (1 - state.beta1_power);
         double second = state.second[i] / (1 - state.beta2_power);
         next.parameters[i] -= 0.003 * first / (sqrt(second) + 1e-8);
@@ -646,6 +702,7 @@ static Metrics evaluate(const Network *network, const Dataset *data)
     Metrics result = {0};
     size_t tokens = 0;
     size_t correct = 0;
+    /* 每个非重叠块独立前向；以有效字符数加权，避免尾块权重过大。 */
     for (size_t s = 0; s < data->count; ++s) {
         const Sequence *sequence = &data->samples[s];
         Forward forward;
@@ -676,8 +733,10 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, s
     Adam adam = {.beta1_power = 1, .beta2_power = 1};
     Network best = *network;
     size_t best_epoch = 0;
+    /* 初始模型作为 epoch 0 检查点，验证损失只负责选模型。 */
     double best_loss = evaluate(network, valid).loss;
     for (size_t epoch = 0; epoch < epochs; ++epoch) {
+        /* 一个 epoch 对全部训练块做一次全批量梯度更新。 */
         double batch[PARAMETERS] = {0};
         size_t tokens = 0;
         for (size_t s = 0; s < data->count; ++s) {
@@ -686,6 +745,7 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, s
             double gradient[PARAMETERS];
             network_forward(network, sequence, &forward);
             network_backward(network, sequence, &forward, gradient);
+            /* 单块梯度按该块 steps 平均；乘回 steps 后按字符数累加。 */
             tokens += sequence->steps;
             for (size_t i = 0; i < PARAMETERS; ++i) {
                 batch[i] += gradient[i] * (double)sequence->steps;
@@ -695,9 +755,11 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, s
             batch[i] /= (double)tokens;
         }
         double norm = 0;
+        /* 全语料梯度先裁剪到 L2 范数 1，再执行一次 Adam 更新。 */
         if (!clip_gradient(batch, 1, &norm) || !adam_update(network, &adam, batch)) {
             return false;
         }
+        /* 不用测试集挑参；只保留验证交叉熵更低的参数快照。 */
         Metrics check = evaluate(network, valid);
         if (check.loss < best_loss) {
             best_loss = check.loss;
@@ -724,7 +786,9 @@ static bool train(Network *network, const Dataset *data, const Dataset *valid, s
  */
 static Metrics bigram_evaluate(const Dataset *data, const Dataset *test)
 {
+    /* 基线只统计当前字符到下一字符的转移，不利用更早上下文。 */
     double counts[VOCAB][VOCAB];
+    /* 加一平滑让训练中未出现的转移仍有非零概率。 */
     for (size_t i = 0; i < VOCAB; ++i) {
         for (size_t j = 0; j < VOCAB; ++j) {
             counts[i][j] = 1;
@@ -769,6 +833,7 @@ static void generate(const Network *network, unsigned seed, char *text, size_t c
     assert(count > 0 && seed < VOCAB);
     text[0] = alphabet[seed];
     for (size_t length = 1; length < count; ++length) {
+        /* 只保留最近 CONTEXT 个字符；每次前向的位置从零开始。 */
         Sequence sequence = {0};
         sequence.steps = length < CONTEXT ? length : CONTEXT;
         size_t start = length - sequence.steps;
@@ -776,7 +841,7 @@ static void generate(const Network *network, unsigned seed, char *text, size_t c
             sequence.input[t] = (unsigned)(strchr(alphabet, text[start + t]) - alphabet);
         }
         Forward forward;
-        /* 生成无真实标签，target占位不影响前向概率，只使loss失去评估意义。 */
+        /* 标签只是占位；前向概率有效，但此时 loss 没有评估意义。 */
         network_forward(network, &sequence, &forward);
         text[length] = alphabet[argmax(forward.probability + (sequence.steps - 1) * VOCAB)];
     }
@@ -792,10 +857,12 @@ static void generate(const Network *network, unsigned seed, char *text, size_t c
 static void show_attention(const Forward *forward, const Sequence *sequence, Output *output)
 {
     for (size_t head = 0; head < HEADS; ++head) {
+        /* 输出每个查询位置的一整行权重，未来位置应为零。 */
         report(output, "head=%zu，列为输入位置；行内权重和为1。", head);
         for (size_t t = 0; t < sequence->steps; ++t) {
             char row[256] = {0};
             size_t used = 0;
+            /* used 保持已写字节数，确保 snprintf 总能收到剩余容量。 */
             for (size_t s = 0; s < sequence->steps; ++s) {
                 double value = forward->attention[(head * CONTEXT + t) * CONTEXT + s];
                 int written = snprintf(row + used, sizeof(row) - used, " %.3f", value);
@@ -823,6 +890,7 @@ static void test_gradients(void)
     network_forward(&network, &sequence, &forward);
     network_backward(&network, &sequence, &forward, gradient);
     const double epsilon = 1e-5;
+    /* 中心差分逐个扰动参数，与手写的整网反向传播结果比较。 */
     for (size_t i = 0; i < PARAMETERS; ++i) {
         double saved = network.parameters[i];
         network.parameters[i] = saved + epsilon;
@@ -862,6 +930,7 @@ static void test_primitive_gradients(void)
     double *values[] = {q, k, v};
     const double *derivatives[] = {dq, dk, dv};
     const double epsilon = 1e-5;
+    /* 以 Σ(context × upstream) 为标量目标，分别检查 Q、K、V 的导数。 */
     for (size_t block = 0; block < 3; ++block) {
         for (size_t i = 0; i < 3 * DIM; ++i) {
             double saved = values[block][i];
@@ -877,6 +946,7 @@ static void test_primitive_gradients(void)
             assert(fabs((loss[0] - loss[1]) / (2 * epsilon) - derivatives[block][i]) < 1e-8);
         }
     }
+    /* 后两个查询没有上游损失时，对应位置的注意力梯度应为零。 */
     memset(upstream + DIM, 0, 2 * DIM * sizeof(double));
     attention_forward(q, k, v, c, a, 3, HEADS);
     attention_backward(q, k, v, a, upstream, dq, dk, dv, 3, HEADS);
@@ -884,6 +954,7 @@ static void test_primitive_gradients(void)
         assert(dq[i] == 0 && dk[i] == 0 && dv[i] == 0);
     }
 
+    /* 用同一个中心差分目标检查 LayerNorm 的输入、gamma 和 beta 梯度。 */
     double x[DIM];
     double gamma[DIM];
     double beta[DIM];
@@ -925,6 +996,7 @@ static void test_primitive_gradients(void)
  */
 static void test_boundaries(Output *output)
 {
+    /* Q=K=0 时允许位置等权，逐步验证因果掩码与加权 V 的手算结果。 */
     double q[3 * DIM] = {0};
     double k[3 * DIM] = {0};
     double v[3 * DIM] = {0};
@@ -947,6 +1019,7 @@ static void test_boundaries(Output *output)
         report(output, "单头手算：Q=K=0，V每行=1/3/5，因果加权结果=1/2/3。");
         report(output, "注意力矩阵：[1 0 0]；[0.5 0.5 0]；[1/3 1/3 1/3]。");
     }
+    /* 常量特征行的方差为零；epsilon 应让前向与反向仍保持有限。 */
     double x[DIM];
     double y[DIM];
     double hat[DIM];
@@ -969,6 +1042,7 @@ static void test_boundaries(Output *output)
         assert(fabs(dx[i] - inverse[0] * ((double)i - 7.5)) < 1e-10);
     }
 
+    /* 非法字符或容量失败不应覆盖原数据；测试尾块是否保留。 */
     Dataset data;
     const char *const short_text[] = {"ab"};
     assert(dataset_encode(&data, short_text, 1) && data.count == 1 && data.samples[0].steps == 1);
@@ -994,6 +1068,7 @@ static void test_boundaries(Output *output)
     network_backward(&network, &one_step, &one, one_gradient);
     assert(isfinite(one.loss));
     assert(one.attention[0] == 1 && one.attention[CONTEXT * CONTEXT] == 1);
+    /* 改动位置 5 之后的输入，不得影响更早的预测结果。 */
     Sequence sequence = {.steps = CONTEXT};
     for (size_t t = 0; t < CONTEXT; ++t) {
         sequence.input[t] = (unsigned)(t % VOCAB);
@@ -1059,6 +1134,7 @@ static void test_boundaries(Output *output)
  */
 int main(int argc, char **argv)
 {
+    /* --test 压低报告量；--log 在 logs/ 中追加日志并同时输出到终端。 */
     bool quiet = argc == 2 && strcmp(argv[1], "--test") == 0;
     bool logging = argc == 2 && strcmp(argv[1], "--log") == 0;
     if (argc != 1 && !quiet && !logging) {
@@ -1072,14 +1148,19 @@ int main(int argc, char **argv)
     }
     Output output = {.logger = logging ? &logger : nullptr};
     bool success = true;
+
+    /* 先检查整网梯度、注意力/LayerNorm 原语和边界条件，再开始训练。 */
     test_gradients();
     test_primitive_gradients();
     test_boundaries(quiet ? nullptr : &output);
     if (!quiet) {
-        report(&output, "=== 单层Transformer：维度16，双头(每头8)，上下文16，FF32，%d个参数 ===",
+        report(&output, "=== 单层Transformer：维度16，双头(每头8)，上下文16，"
+                        "FF32，%d个参数 ===",
                PARAMETERS);
-        report(&output, "pre-LN/学习位置/GELU/残差；初始化42；Adam0.003；梯度裁剪1。");
+        report(&output, "pre-LN/学习位置/GELU/残差；初始化42；"
+                        "Adam0.003；梯度裁剪1。");
     }
+    /* 单条周期串只验证实现能拟合小样本，不作为泛化能力结论。 */
     Network tiny;
     network_initialize(&tiny, 42);
     const char *const mini[] = {"abcabcabc"};
@@ -1092,9 +1173,11 @@ int main(int argc, char **argv)
     Metrics fit = evaluate(&tiny, &small);
     assert(fit.loss < 0.02 && fit.accuracy == 1);
     if (!quiet) {
-        report(&output, "单条周期语料拟合：CE=%.5f accuracy=%.2f%%（仅实现验证）。", fit.loss,
-               100 * fit.accuracy);
+        report(&output,
+               "单条周期语料拟合：CE=%.5f accuracy=%.2f%%（仅实现验证）。",
+               fit.loss, 100 * fit.accuracy);
     }
+    /* 先按完整文本划分 train/validation/test，再分别切上下文块。 */
     Dataset data;
     Dataset valid;
     Dataset test;
@@ -1105,13 +1188,16 @@ int main(int argc, char **argv)
     network_initialize(&network, 42);
     double initial_loss = evaluate(&network, &data).loss;
     if (!quiet) {
-        report(&output, "完整文本8/2/2条→训练/验证/测试16/4/4块；尾块13步；初始训练CE=%.5f。",
+        report(&output,
+               "完整文本8/2/2条→训练/验证/测试16/4/4块；"
+               "尾块13步；初始训练CE=%.5f。",
                initial_loss);
     }
     if (!train(&network, &data, &valid, EPOCHS, quiet ? nullptr : &output)) {
         success = false;
         goto cleanup;
     }
+    /* 测试集只在检查点选定后评估，并与仅看相邻字符的基线比较。 */
     Metrics result = evaluate(&network, &test);
     Metrics baseline = bigram_evaluate(&data, &test);
     assert(evaluate(&network, &data).loss < initial_loss * 0.6);
@@ -1121,6 +1207,7 @@ int main(int argc, char **argv)
            "独立测试：Transformer CE=%.5f accuracy=%.2f%%；bigram CE=%.5f accuracy=%.2f%%。",
            result.loss, 100 * result.accuracy, baseline.loss, 100 * baseline.accuracy);
     if (!quiet) {
+        /* 生成和注意力仅供观察；泛化评估以独立测试集指标为准。 */
         char generated[61];
         generate(&network, 0, generated, 60);
         report(&output, "贪心生成：[%s]；生成不是独立泛化评价。", generated);
@@ -1132,8 +1219,10 @@ int main(int argc, char **argv)
         show_attention(&forward, &display.samples[0], &output);
     }
     report(&output,
-           "阶段7验证通过：2644参数梯度、单头手算、LayerNorm、因果掩码、微型拟合和独立评估。");
+           "阶段7验证通过：2644参数梯度、单头手算、LayerNorm、因果掩码、"
+           "微型拟合和独立评估。");
 cleanup:
+    /* 所有早退共用关闭日志和刷新标准输出的清理路径。 */
     if (!success) {
         fputs("Transformer更新失败：非有限数值\n", stderr);
     }

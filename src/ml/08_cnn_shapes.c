@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* 输入为 16×16 单通道灰度图；3×3 不填充卷积输出 14×14。 */
 #define SIDE 16
 #define PIXELS (SIDE * SIDE)
 #define KERNEL 3
@@ -18,43 +19,53 @@
 #define CONV_SIDE (SIDE - KERNEL + 1)
 #define CONV_PIXELS (CONV_SIDE * CONV_SIDE)
 #define POOL_SIDE (CONV_SIDE / 2)
+/* 每个通道池化为 7×7，展平后四个通道共 196 个特征。 */
 #define FEATURES (CHANNELS * POOL_SIDE * POOL_SIDE)
 #define CLASSES 3
+/* 张量形状依次为 1×16×16 → 4×14×14 → 4×7×7 → 196 → 3。 */
+
+/* 固定容量、批量大小与训练轮数，让示例可重复且便于观察。 */
 #define CAPACITY 180
 #define BATCH_SIZE 12
 #define EPOCHS 80
 
+/* 参数展平到一个数组；枚举标出各参数段起始偏移和总长度。 */
 enum {
-    CONV_W = 0,
-    CONV_B = CHANNELS * KERNEL * KERNEL,
-    FC_W = CONV_B + CHANNELS,
-    FC_B = FC_W + CLASSES * FEATURES,
+    CONV_W = 0, /* 四个 3×3 卷积核，共 36 个权重。 */
+    CONV_B = CHANNELS * KERNEL * KERNEL, /* 四个卷积偏置从此处开始。 */
+    FC_W = CONV_B + CHANNELS, /* 全连接权重紧接卷积偏置。 */
+    FC_B = FC_W + CLASSES * FEATURES, /* 分类偏置紧接全连接权重。 */
     PARAMETERS = FC_B + CLASSES
 };
 
+/** 一张归一化灰度图和类别编号；像素值在 [0,1]，按行优先排列。 */
 typedef struct {
     double image[PIXELS];
-    size_t target;
+    size_t target; /* 0、1、2 分别表示圆形、方形和三角形。 */
 } Sample;
 
+/** 固定容量的数据集；count 表示 samples 中已生成的样本数。 */
 typedef struct {
     size_t count;
     Sample samples[CAPACITY];
 } Dataset;
 
+/** 按上方偏移枚举顺序存放全部卷积层和分类层参数。 */
 typedef struct {
     double parameters[PARAMETERS];
 } Network;
 
+/** 一次前向传播的缓存；反向传播会用到池化窗口的获胜位置。 */
 typedef struct {
-    double preactivation[CHANNELS * CONV_PIXELS];
-    double activation[CHANNELS * CONV_PIXELS];
-    double pooled[FEATURES];
-    size_t winners[FEATURES]; /* 通道优先卷积数组中的绝对下标。 */
-    double logits[CLASSES];
-    double probabilities[CLASSES];
+    double preactivation[CHANNELS * CONV_PIXELS]; /* 卷积点积加偏置，尚未经过 ReLU。 */
+    double activation[CHANNELS * CONV_PIXELS]; /* ReLU 输出，按通道、行、列排列。 */
+    double pooled[FEATURES]; /* 池化后展平的全连接输入。 */
+    size_t winners[FEATURES]; /* 池化赢家在 activation 中的绝对下标。 */
+    double logits[CLASSES]; /* softmax 前的类别分数。 */
+    double probabilities[CLASSES]; /* softmax 后的类别概率。 */
 } Forward;
 
+/** Adam 的逐参数一阶矩、二阶矩及偏差修正幂次。 */
 typedef struct {
     double first[PARAMETERS];
     double second[PARAMETERS];
@@ -62,12 +73,14 @@ typedef struct {
     double beta2_power;
 } Adam;
 
+/** 一次数据集评估结果；混淆矩阵的行是真实类别，列是预测类别。 */
 typedef struct {
-    double loss;
-    size_t correct;
-    size_t confusion[CLASSES][CLASSES]; /* 行为真实标签，列为预测标签。 */
+    double loss; /* 数据集上的平均交叉熵。 */
+    size_t correct; /* 预测正确的样本数。 */
+    size_t confusion[CLASSES][CLASSES];
 } Metrics;
 
+/* 类别编号顺序须与 Sample.target 和混淆矩阵下标一致。 */
 static const char *class_names[CLASSES] = {"圆形", "方形", "三角形"};
 
 /**
@@ -85,7 +98,7 @@ static double random_unit(uint32_t *state)
  * @brief 生成灰度图形；各类别共用位置、尺寸、亮度、噪声的采样范围。
  * @param data 可写数据集，旧样本被覆盖。
  * @param count 样本数，3..CAPACITY 且为 CLASSES 的倍数。
- * @param seed 本数据集的种子，与初始化及打乱状态独立。
+ * @param seed 调用者为该数据集提供的种子；函数按值使用，不回写状态。
  */
 static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
 {
@@ -93,6 +106,7 @@ static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
     data->count = count;
     for (size_t i = 0; i < count; ++i) {
         Sample *sample = &data->samples[i];
+        /* 按类别轮流分配标签，图形参数仍逐张独立采样。 */
         sample->target = i % CLASSES;
         double center_x = 6.5 + 2 * random_unit(&seed);
         double center_y = 6.5 + 2 * random_unit(&seed);
@@ -102,6 +116,7 @@ static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
             for (size_t column = 0; column < SIDE; ++column) {
                 double dx = (double)column - center_x;
                 double dy = (double)row - center_y;
+                /* 默认使用圆形方程，再按标签替换为方形或三角形区域。 */
                 bool inside = dx * dx + dy * dy <= radius * radius;
                 if (sample->target == 1) {
                     inside = fabs(dx) <= radius && fabs(dy) <= radius;
@@ -112,6 +127,7 @@ static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
                 if (inside) {
                     value = brightness;
                 }
+                /* 背景和前景都加噪声，再裁切到网络使用的灰度范围。 */
                 value += 0.08 * (random_unit(&seed) - 0.5);
                 sample->image[row * SIDE + column] = fmin(1, fmax(0, value));
             }
@@ -130,6 +146,7 @@ static void dataset_generate(Dataset *data, size_t count, uint32_t seed)
 static double convolution_at(const double *image, const double *kernel, size_t row, size_t column)
 {
     double value = 0;
+    /* 输入按 SIDE 行优先索引，核按 KERNEL 行优先索引，逐项累加点积。 */
     for (size_t ky = 0; ky < KERNEL; ++ky) {
         for (size_t kx = 0; kx < KERNEL; ++kx) {
             value += image[(row + ky) * SIDE + column + kx] * kernel[ky * KERNEL + kx];
@@ -150,6 +167,7 @@ static void softmax(const double logits[CLASSES], double probabilities[CLASSES])
         maximum = fmax(maximum, logits[c]);
     }
     double sum = 0;
+    /* 先减最大分数再取指数；最后除以总和得到概率分布。 */
     for (size_t c = 0; c < CLASSES; ++c) {
         probabilities[c] = exp(logits[c] - maximum);
         sum += probabilities[c];
@@ -186,6 +204,7 @@ static double cross_entropy(const Forward *f, size_t target)
 static void network_initialize(Network *network, uint32_t seed)
 {
     *network = (Network){0};
+    /* 只覆盖权重区段；先前清零的卷积偏置和分类偏置保持为零。 */
     for (size_t p = CONV_W; p < CONV_B; ++p) {
         network->parameters[p] = (2 * random_unit(&seed) - 1) * sqrt(6.0 / (KERNEL * KERNEL));
     }
@@ -198,10 +217,11 @@ static void network_initialize(Network *network, uint32_t seed)
  * @brief 卷积→ReLU→2×2 最大池化→展平→全连接→softmax。
  * @param network 有效只读网络，参数及中间运算须有限且不溢出。
  * @param image PIXELS 个只读有限像素，不转移所有权。
- * @param f 有效可写缓存，不能与输入重叠，全部字段覆盖。
+ * @param f 有效可写缓存，不能与 network 或 image 重叠，全部字段覆盖。
  */
 static void network_forward(const Network *network, const double *image, Forward *f)
 {
+    /* 每个输出通道复用一个卷积核，输出索引按通道优先展开。 */
     for (size_t channel = 0; channel < CHANNELS; ++channel) {
         const double *kernel = &network->parameters[CONV_W + channel * KERNEL * KERNEL];
         for (size_t row = 0; row < CONV_SIDE; ++row) {
@@ -212,6 +232,7 @@ static void network_forward(const Network *network, const double *image, Forward
                 f->activation[index] = fmax(0, f->preactivation[index]);
             }
         }
+        /* 不重叠的 2×2 窗口降采样；同时保存赢家供反向传播路由梯度。 */
         for (size_t row = 0; row < POOL_SIDE; ++row) {
             for (size_t column = 0; column < POOL_SIDE; ++column) {
                 size_t feature = channel * POOL_SIDE * POOL_SIDE + row * POOL_SIDE + column;
@@ -231,6 +252,7 @@ static void network_forward(const Network *network, const double *image, Forward
             }
         }
     }
+    /* pooled 已按通道展平；每个类别用独立权重得到一个 logit。 */
     for (size_t c = 0; c < CLASSES; ++c) {
         f->logits[c] = network->parameters[FC_B + c];
         for (size_t feature = 0; feature < FEATURES; ++feature) {
@@ -245,12 +267,15 @@ static void network_forward(const Network *network, const double *image, Forward
  * @param network 对应 f 的只读旧参数，反向结束前不可修改。
  * @param sample 与 f 对应的只读样本，target 为合法类别。
  * @param f 相同网络版本的只读缓存，含池化获胜位置。
- * @param gradients 至少 PARAMETERS 个可写元素，不与输入重叠，先清零再累加。
- * @param image_gradient 至少 PIXELS 个可写元素，不与其他数组重叠；训练可忽略结果。
+ * @param gradients 至少 PARAMETERS 个可写元素，先清零再累加；
+ *        不与其他参数或输出数组重叠。
+ * @param image_gradient 至少 PIXELS 个可写元素，不与其他参数或输出数组重叠。
+ *        训练过程不使用此梯度。
  */
 static void network_backward(const Network *network, const Sample *sample, const Forward *f,
                              double gradients[PARAMETERS], double image_gradient[PIXELS])
 {
+    /* 输出数组由本函数完整写入，因此先清零，再对共享路径累加贡献。 */
     for (size_t p = 0; p < PARAMETERS; ++p) {
         gradients[p] = 0;
     }
@@ -258,6 +283,7 @@ static void network_backward(const Network *network, const Sample *sample, const
         image_gradient[i] = 0;
     }
     double pooled_gradient[FEATURES] = {0};
+    /* softmax 与交叉熵合并后，logit 梯度是概率减去 one-hot 标签。 */
     for (size_t c = 0; c < CLASSES; ++c) {
         double delta = f->probabilities[c] - (double)(c == sample->target);
         gradients[FC_B + c] = delta;
@@ -266,6 +292,7 @@ static void network_backward(const Network *network, const Sample *sample, const
             pooled_gradient[feature] += delta * network->parameters[FC_W + c * FEATURES + feature];
         }
     }
+    /* 最大池化只沿获胜位置回传；未获胜位置的梯度为零。 */
     for (size_t feature = 0; feature < FEATURES; ++feature) {
         size_t winner = f->winners[feature];
         if (f->preactivation[winner] <= 0) {
@@ -276,6 +303,7 @@ static void network_backward(const Network *network, const Sample *sample, const
         size_t row = (winner % CONV_PIXELS) / CONV_SIDE;
         size_t column = winner % CONV_SIDE;
         gradients[CONV_B + channel] += delta;
+        /* 卷积核跨位置共享且图像窗口重叠，参数和输入梯度都需累加。 */
         for (size_t ky = 0; ky < KERNEL; ++ky) {
             for (size_t kx = 0; kx < KERNEL; ++kx) {
                 size_t pixel = (row + ky) * SIDE + column + kx;
@@ -296,11 +324,13 @@ static void network_backward(const Network *network, const Sample *sample, const
  */
 static void network_update(Network *network, const double *gradients, Adam *adam, double rate)
 {
+    /* beta 幂次每次调用前进一次；一次调用对应一个小批次更新。 */
     adam->beta1_power *= 0.9;
     adam->beta2_power *= 0.999;
     for (size_t p = 0; p < PARAMETERS; ++p) {
         adam->first[p] = 0.9 * adam->first[p] + 0.1 * gradients[p];
         adam->second[p] = 0.999 * adam->second[p] + 0.001 * gradients[p] * gradients[p];
+        /* 用幂次修正零初始化矩的偏差，再按自适应步长更新参数。 */
         double first = adam->first[p] / (1 - adam->beta1_power);
         double second = adam->second[p] / (1 - adam->beta2_power);
         network->parameters[p] -= rate * first / (sqrt(second) + 1e-8);
@@ -339,6 +369,7 @@ static Metrics evaluate(const Network *network, const Dataset *data)
         size_t predicted = predict(&f);
         metrics.loss += cross_entropy(&f, data->samples[i].target);
         metrics.correct += predicted == data->samples[i].target;
+        /* 行下标是真实类别，列下标是预测类别。 */
         ++metrics.confusion[data->samples[i].target][predicted];
     }
     metrics.loss /= (double)data->count;
@@ -382,6 +413,7 @@ static void test_gradients(void)
     }
     Sample sample = {.target = 1};
     for (size_t i = 0; i < PIXELS; ++i) {
+        /* 正输入和正卷积权重令 ReLU 状态与池化赢家对小扰动稳定。 */
         sample.image[i] = 0.1 + (double)i / PIXELS;
     }
     Forward f;
@@ -389,6 +421,7 @@ static void test_gradients(void)
     double gradients[PARAMETERS] = {0};
     double image_gradient[PIXELS] = {0};
     network_backward(&network, &sample, &f, gradients, image_gradient);
+    /* 中心差分逐一核对 631 个参数梯度和 256 个输入像素梯度。 */
     const double epsilon = 1e-5;
     for (size_t p = 0; p < PARAMETERS; ++p) {
         Network plus = network;
@@ -425,6 +458,7 @@ static void test_gradients(void)
  */
 static void test_rules(void)
 {
+    /* 全一卷积核把窗口像素求和，用首尾输出检查有效卷积的边界索引。 */
     double image[PIXELS] = {0};
     double kernel[KERNEL * KERNEL] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
     for (size_t i = 0; i < PIXELS; ++i) {
@@ -433,6 +467,7 @@ static void test_rules(void)
     assert(convolution_at(image, kernel, 0, 0) == 162);
     assert(convolution_at(image, kernel, CONV_SIDE - 1, CONV_SIDE - 1) == 2151);
     Network network = {0};
+    /* 卷积核仅中心为 1；全一输入使池化候选相等，检查首个位置胜出。 */
     for (size_t channel = 0; channel < CHANNELS; ++channel) {
         network.parameters[CONV_W + channel * KERNEL * KERNEL + 4] = 1;
     }
@@ -452,12 +487,14 @@ static void test_rules(void)
     assert(fabs(image_gradient[SIDE + 1] - CHANNELS * 0.01 * f.probabilities[0]) < 1e-12);
     assert(image_gradient[SIDE + 2] == 0);
     network = (Network){0};
+    /* 零网络让所有 ReLU 输入为零，验证零点导数约定和预测平局规则。 */
     network_forward(&network, sample.image, &f);
     network_backward(&network, &sample, &f, gradients, image_gradient);
     for (size_t p = 0; p < FC_B; ++p) {
         assert(gradients[p] == 0);
     }
     assert(predict(&f) == 0);
+    /* 极端 logits 检查稳定 softmax 与 log-sum-exp 交叉熵。 */
     f.logits[0] = 1000;
     f.logits[1] = 0;
     f.logits[2] = -1000;
@@ -488,6 +525,7 @@ static void draw_tile(GfxCanvas *canvas, const double *values, size_t side, int 
             maximum = fmax(maximum, values[i]);
         }
     }
+    /* 常量特征图没有可拉伸范围，保留全黑，避免除以零。 */
     for (size_t row = 0; row < side; ++row) {
         for (size_t column = 0; column < side; ++column) {
             double scaled = 0;
@@ -505,8 +543,9 @@ static void draw_tile(GfxCanvas *canvas, const double *values, size_t side, int 
  * @brief 导出样本拼图或一个样本的特征图，保留已有文件。
  * @param network 有效只读网络。
  * @param data 至少九个样本的只读数据；拼图前三行各含三种类别。
- * @param features true 显示输入、固定边缘响应及四个学习特征；false 显示九个样本。
- * @param name 合法文件名前缀。
+ * @param features true 显示输入、固定边缘响应和四个学习特征；
+ *        false 显示九张样本。
+ * @param name 非空 ASCII 字母、数字、下划线或连字符组成的文件名前缀。
  * @return 成功为 true；失败时显示写入原因，已有图片不受影响。
  */
 static bool export_images(const Network *network, const Dataset *data, bool features,
@@ -524,6 +563,7 @@ static bool export_images(const Network *network, const Dataset *data, bool feat
         Forward f;
         network_forward(network, image, &f);
         double edge[CONV_PIXELS] = {0};
+        /* 该固定核仅用于可视化对照，不是训练得到的卷积核。 */
         const double kernel[] = {-1, 0, 1, -1, 0, 1, -1, 0, 1};
         for (size_t row = 0; row < CONV_SIDE; ++row) {
             for (size_t column = 0; column < CONV_SIDE; ++column) {
@@ -550,24 +590,29 @@ static bool export_images(const Network *network, const Dataset *data, bool feat
 /**
  * @brief 小批量训练，仅使用训练集梯度和验证集选模。
  * @param initial 有效只读起始参数。
- * @param training 非空只读训练数据。
- * @param validation 非空独立验证数据，不用于梯度。
+ * @param training 非空只读训练数据，样本数不超过 CAPACITY。
+ * @param validation 非空独立验证数据，样本数不超过 CAPACITY；
+ *        用于评估和选模，不参与梯度。
  * @param quiet 是否省略逐轮输出。
- * @param best 有效可写最佳网络输出，保存参数用于推理，不保存优化器快照。
+ * @param best 有效可写的最佳网络输出；只保存推理参数，
+ *        不保存优化器状态。
  */
 static void train(const Network *initial, const Dataset *training, const Dataset *validation,
                   bool quiet, Network *best)
 {
     Network current = *initial;
     *best = current;
+    /* 保留初始网络作为候选，防止所有训练轮次的验证损失都更高。 */
     double best_loss = evaluate(&current, validation).loss;
     Adam adam = {.beta1_power = 1, .beta2_power = 1};
     uint32_t seed = 2028;
     for (size_t epoch = 1; epoch <= EPOCHS; ++epoch) {
+        /* 保存样本下标并打乱顺序，不复制或改写训练样本本身。 */
         size_t order[CAPACITY] = {0};
         for (size_t i = 0; i < training->count; ++i) {
             order[i] = i;
         }
+        /* Fisher–Yates 式洗牌重排样本；固定局部种子使顺序可复现。 */
         for (size_t remaining = training->count; remaining > 1; --remaining) {
             size_t selected = (size_t)(random_unit(&seed) * (double)remaining);
             size_t temporary = order[remaining - 1];
@@ -575,11 +620,13 @@ static void train(const Network *initial, const Dataset *training, const Dataset
             order[selected] = temporary;
         }
         for (size_t start = 0; start < training->count; start += BATCH_SIZE) {
+            /* 末批可能不足 BATCH_SIZE，梯度按当前实际样本数求平均。 */
             size_t count = training->count - start;
             if (count > BATCH_SIZE) {
                 count = BATCH_SIZE;
             }
             double average[PARAMETERS] = {0};
+            /* 对当前批次逐样本求梯度，再取平均后只更新一次 Adam。 */
             for (size_t i = 0; i < count; ++i) {
                 const Sample *sample = &training->samples[order[start + i]];
                 Forward f;
@@ -594,6 +641,7 @@ static void train(const Network *initial, const Dataset *training, const Dataset
             network_update(&current, average, &adam, 0.003);
         }
         Metrics valid = evaluate(&current, validation);
+        /* 验证损失只用于挑选参数，不参与当前批次的梯度计算。 */
         if (valid.loss < best_loss) {
             best_loss = valid.loss;
             *best = current;
@@ -626,10 +674,12 @@ int main(int argc, char **argv)
     }
     test_rules();
     test_gradients();
+    /* 梯度和离散边界通过检查后，再开始模型训练。 */
     /* 静态数据区避免三个固定容量图像集合占用过多线程栈。 */
     static Dataset training;
     static Dataset validation;
     static Dataset testing;
+    /* 三组数据使用独立种子；测试集只在训练和验证选模结束后评估。 */
     dataset_generate(&training, 180, 2025);
     dataset_generate(&validation, 90, 2026);
     dataset_generate(&testing, 90, 2027);
@@ -648,6 +698,7 @@ int main(int argc, char **argv)
     Network best = {0};
     train(&initial, &training, &validation, quiet, &best);
     Metrics learned = evaluate(&best, &training);
+    /* 测试集不参与反向传播，也不参与 best 参数的选择。 */
     Metrics tested = evaluate(&best, &testing);
     assert(learned.loss < evaluate(&initial, &training).loss);
     assert((double)tested.correct / (double)testing.count >= 0.8 && tested.loss < 0.6);
