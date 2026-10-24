@@ -9,6 +9,10 @@ make sanitize-random-forest
 
 `make random-forest` 会运行三个固定种子的实验，不写文件。当前 Makefile 没有 `test-random-forest` 专项断言目标；消毒器目标运行同一个演示程序，检查这些执行路径上的内存和未定义行为。
 
+![三棵决策树对同一样本投票的示意图](images/38_random_forest.svg)
+
+示例三棵树给出 $1,0,1$，多数票为类别 $1$。这些票数仅用来解释森林投票，实际结果由训练数据决定。
+
 ## 源码地图
 
 | 概念 | 源码位置 | 代码状态及作用 |

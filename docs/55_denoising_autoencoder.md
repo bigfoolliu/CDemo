@@ -2,6 +2,10 @@
 
 源码：[`src/ml/09_denoising_autoencoder.c`](../src/ml/09_denoising_autoencoder.c)。本案例用纯 C 从头实现合成图像、噪声、全连接编码器与解码器、均方误差、反向传播、批量梯度和 Adam。它不依赖机器学习框架或 SDL；图片导出复用项目的纯 C BMP 模块。
 
+![去噪自编码器从受损图像重建干净目标的流程](images/55_denoising_autoencoder.svg)
+
+训练时先对原图加噪，再把受损图输入编码器；重建损失始终对照未损坏的原图。
+
 ## 运行与调试
 
 在仓库根目录运行：

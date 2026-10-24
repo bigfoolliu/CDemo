@@ -8,6 +8,10 @@ make test-naive-bayes
 make sanitize-naive-bayes
 ```
 
+![朴素贝叶斯从词频到类别分数的流程图](images/36_naive_bayes.svg)
+
+以短句“优惠 免费”为示意：先从训练文本估计类别先验和词条件概率，再累加各类对数分数，选择分数较大的类别。
+
 ## 源码地图
 
 | 概念 | 源码位置 | 代码状态及作用 |

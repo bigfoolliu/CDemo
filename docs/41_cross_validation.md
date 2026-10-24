@@ -4,6 +4,10 @@
 
 运行 `make cross-validation` 查看各候选值的折内 `log-loss`、平均分和最终测试结果；运行 `make sanitize-cross-validation` 检查本案例执行期间的内存访问和未定义行为。对应构建规则位于 [Makefile](../Makefile#L1179)。
 
+![四折交叉验证中训练折和验证折的轮换](images/41_cross_validation.svg)
+
+每一行是一轮示意：粉色折作验证，其余蓝色折作训练。标准化统计量必须在当轮训练折上重新计算。
+
 ## 先看数据如何流动
 
 ```text

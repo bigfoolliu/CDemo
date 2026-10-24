@@ -4,6 +4,10 @@
 
 运行 `make build/ml/19_linear_svm` 后执行 `./build/ml/19_linear_svm` 可查看模型参数、hinge 损失、几何间隔及错误数。对应的 [Makefile 目标](../Makefile#L1161) 中，`make sanitize-linear-svm` 用 ASan 和 UBSan 运行同一固定示例；`make linear-svm` 还会将分类区域和边界图独占写入 `exports/`，不覆盖已有图片。
 
+![线性 SVM 分类边界及两侧间隔的示意图](images/40_linear_svm.svg)
+
+中线表示分类边界，两条虚线表示间隔边界；靠近或违反间隔的点会产生 hinge 损失。图中坐标不是训练输出。
+
 ## 源码地图
 
 | 概念 | 源码位置 | 代码状态与作用 |

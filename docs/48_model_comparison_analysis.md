@@ -2,6 +2,10 @@
 
 本文结合 [`src/ml/28_model_comparison.c`](../src/ml/28_model_comparison.c) 和共享数据工具 [`src/ml/study_dataset.h`](../src/ml/study_dataset.h)，说明如何用纯 C 比较多个二分类器。程序读取同一份 CSV，固定测试集，重复生成训练/验证划分，让每个模型使用相同样本、预处理和指标。运行 `make model-comparison` 查看逐轮结果；运行 `make test-model-comparison` 验证分层、手算指标、树桩切分和测试集隔离。
 
+![共同数据条件下比较两个模型的流程](images/48_model_comparison.svg)
+
+两种模型共用数据划分、预处理原则与评价指标；验证集选参之后，才在固定测试集上比较结果。
+
 ## 先明确比较的对象和边界
 
 [`data/ml/study_outcomes.csv`](../data/ml/study_outcomes.csv) 有 $40$ 行、两个特征和二元标签。原始 `train` 与 `validation` 合并为 $32$ 条开发数据，原来的 `test` 保持为 $8$ 条固定测试数据。对每个随机种子，程序按类别分别打乱开发数据，并按 $3:1$ 分成训练和验证；每类有 $16$ 条，因此每轮得到 $12$ 条训练样本和 $4$ 条验证样本。五轮使用种子 $11$、$29$、$47$、$71$、$101$。

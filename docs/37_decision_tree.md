@@ -10,6 +10,10 @@ make sanitize-decision-tree  # 地址和未定义行为检查
 
 运行 `make decision-tree` 会在 `exports/` 独占创建 BMP，不覆盖已有图片。只想看终端里的树和误差，可以在构建后直接运行 `./build/ml/16_decision_tree`；默认运行不导出图片。
 
+![决策树按特征阈值把样本送往子节点的示意图](images/37_decision_tree.svg)
+
+图示一个阈值判断如何形成左右分支。实际代码通过比较候选切分的基尼增益确定特征与阈值。
+
 ## 源码地图
 
 | 概念 | 源码位置 | 对应状态与作用 |

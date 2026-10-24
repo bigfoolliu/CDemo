@@ -2,6 +2,10 @@
 
 源码：[src/ml/12_tiny_transformer.c](../src/ml/12_tiny_transformer.c)。本案例用 C23 和 `<math.h>` 实现一个单层 decoder-only 字符模型，手写注意力、LayerNorm、GELU、交叉熵、完整反向传播和 Adam；不使用机器学习框架或自动求导。它适合逐步观察核心计算，不代表可训练实用语言模型。
 
+![自回归 Transformer 的因果注意力矩阵](images/58_tiny_transformer.svg)
+
+第 $t$ 个位置只能读取自身和之前的位置；灰色格表示未来信息被遮挡，避免训练时偷看答案。
+
 ## 运行与调试
 
 ~~~~sh

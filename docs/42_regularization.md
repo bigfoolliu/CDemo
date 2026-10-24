@@ -4,6 +4,10 @@
 
 运行 `make regularization` 查看各候选系数的训练损失、验证损失、权重范数及三组种子的测试结果。运行 `make test-regularization` 检查全部参数的梯度和输入边界；`make sanitize-regularization` 用 ASan、UBSan 执行相同测试。构建规则在 [Makefile](../Makefile#L1196)。
 
+![模型复杂度、训练误差和验证误差的示意曲线](images/42_regularization.svg)
+
+蓝线与橙线展示过拟合的典型趋势，并非本程序测出的曲线。选择正则化强度时，应比较验证集而非仅看训练误差。
+
 ## 源码地图
 
 | 概念 | 源码位置 | 关键字段或变量 | 作用 |

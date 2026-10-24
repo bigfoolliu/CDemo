@@ -2,6 +2,10 @@
 
 本教程跟读 [`src/ml/22_resnet.c`](../src/ml/22_resnet.c)，从 $8\times8$ 合成线条图像开始，走过卷积、残差相加、分类、反向传播和参数更新。程序不依赖机器学习框架。运行 `make resnet` 可比较普通 CNN 与 ResNet；运行 `make test-resnet` 检查梯度与边界，运行 `make sanitize-resnet` 检查内存和未定义行为。阶段说明见[深度学习计划](50_deep_learning_plan.md#L269)，构建规则见 [Makefile](../Makefile#L1215)。
 
+![ResNet 残差主分支和恒等捷径相加的示意图](images/61_resnet.svg)
+
+主分支计算 $F(x)$，捷径直接传入 $x$，输出为 $F(x)+x$；反向传播在加法处也沿两条路径分流。
+
 ## 1. 案例输入与源码地图
 
 网络接收单通道灰度图 $X\in[0,1]^{8\times8}$，输出竖线、横线、斜线三类之一。训练、验证和测试分别使用 $60$、$60$、$120$ 张确定性生成的图像。数据由 `dataset_generate` 创建；网络层缓存集中在 `Forward`；`network_forward` 和 `sample_backward` 分别串起前向与单样本反向计算。

@@ -8,11 +8,13 @@
 enum {
     SAMPLE_COUNT = 6
 };
+
 typedef struct {
     double x;
     double y;
     int label;
 } Sample;
+
 typedef struct {
     double distance;
     size_t index;

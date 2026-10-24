@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360" role="img" aria-labelledby="title desc">
+  <title id="title">逻辑回归的 Sigmoid 概率曲线和分类阈值</title>
+  <desc id="desc">教学示例取权重 1、偏置 0。横轴输入从负 3 到正 3，正类概率随输入从约 0.047 升至 0.953，在输入 0 处穿过概率 0.5 的阈值。六个训练样本的标签在横轴下方标出。</desc>
+  <rect width="760" height="360" rx="14" fill="#f8fafc"/>
+  <g font-family="sans-serif" fill="#334155" font-size="14">
+    <text x="30" y="31" font-size="19" font-weight="700">从输入到正类概率</text>
+    <text x="30" y="52" fill="#64748b">教学示意：权重 1、偏置 0；不是训练结束后的参数</text>
+    <g stroke="#e2e8f0">
+      <path d="M80 60H570 M80 165H570 M80 270H570"/>
+      <path d="M80 60V270 M162 60V270 M244 60V270 M325 60V270 M407 60V270 M488 60V270 M570 60V270"/>
+    </g>
+    <path d="M80 165H570" stroke="#be123c" stroke-width="2" stroke-dasharray="6 5"/>
+    <path d="M325 60V270" stroke="#be123c" stroke-width="2" stroke-dasharray="6 5"/>
+    <path d="M80 260 C150 255 192 238 244 214 C282 195 303 173 325 165 C347 157 368 135 407 116 C459 92 500 75 570 70"
+          fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+    <g fill="#2563eb" stroke="white" stroke-width="2">
+      <circle cx="162" cy="245" r="6"/><circle cx="325" cy="165" r="6"/>
+      <circle cx="488" cy="85" r="6"/>
+    </g>
+    <g text-anchor="end" fill="#64748b">
+      <text x="69" y="65">1</text><text x="69" y="170">0.5</text><text x="69" y="275">0</text>
+    </g>
+    <g text-anchor="middle" fill="#64748b">
+      <text x="80" y="290">−3</text><text x="162" y="290">−2</text>
+      <text x="244" y="290">−1</text><text x="325" y="290">0</text>
+      <text x="407" y="290">1</text><text x="488" y="290">2</text>
+      <text x="570" y="290">3</text>
+    </g>
+    <text x="12" y="326" fill="#64748b">标签：</text>
+    <g text-anchor="middle" font-weight="700">
+      <text x="80" y="326" fill="#0f766e">0</text>
+      <text x="162" y="326" fill="#0f766e">0</text><text x="244" y="326" fill="#0f766e">0</text>
+      <text x="407" y="326" fill="#b45309">1</text><text x="488" y="326" fill="#b45309">1</text>
+      <text x="570" y="326" fill="#b45309">1</text>
+    </g>
+    <g fill="#475569">
+      <text x="601" y="112">正类概率</text>
+      <text x="601" y="135">随输入增大</text>
+      <text x="601" y="188">阈值 0.5</text>
+      <text x="601" y="216">边界 x = 0</text>
+    </g>
+  </g>
+</svg>

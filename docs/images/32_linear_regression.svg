@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360" role="img" aria-labelledby="title desc">
+  <title id="title">线性回归的样本点、当前预测直线与残差</title>
+  <desc id="desc">五个样本位于目标直线 y 等于 2x 加 1 上。当前直线 y 等于 0.4x 加 0.1，在 x 等于 2 时预测 0.9，目标 5，两者的竖直距离为残差 4.1。</desc>
+  <rect width="760" height="360" rx="14" fill="#f8fafc"/>
+  <g font-family="sans-serif" fill="#334155" font-size="14">
+    <text x="30" y="31" font-size="19" font-weight="700">五个样本与当前模型</text>
+    <text x="30" y="52" fill="#64748b">同一输入处，目标值与预测值的竖直差就是残差</text>
+    <g stroke="#e2e8f0" stroke-width="1">
+      <path d="M90 79H555 M90 127H555 M90 175H555 M90 223H555 M90 271H555"/>
+      <path d="M90 67V295 M200 67V295 M310 67V295 M420 67V295 M530 67V295"/>
+    </g>
+    <g stroke="#94a3b8" stroke-width="1.5">
+      <path d="M75 199H555"/>
+      <path d="M310 64V298"/>
+    </g>
+    <g text-anchor="middle" fill="#64748b">
+      <text x="90" y="319">−2</text><text x="200" y="319">−1</text>
+      <text x="310" y="319">0</text><text x="420" y="319">1</text>
+      <text x="530" y="319">2</text><text x="565" y="204">x</text>
+    </g>
+    <g text-anchor="end" fill="#64748b">
+      <text x="68" y="84">5</text><text x="68" y="132">3</text>
+      <text x="68" y="180">1</text><text x="68" y="228">−1</text>
+      <text x="68" y="276">−3</text>
+    </g>
+    <text x="294" y="59">y</text>
+    <path d="M90 271L530 79" fill="none" stroke="#0f766e" stroke-width="3"/>
+    <path d="M90 216L530 177" fill="none" stroke="#f59e0b" stroke-width="3"/>
+    <g fill="#0f766e" stroke="white" stroke-width="2">
+      <circle cx="90" cy="271" r="6"/><circle cx="200" cy="223" r="6"/>
+      <circle cx="310" cy="175" r="6"/><circle cx="420" cy="127" r="6"/>
+      <circle cx="530" cy="79" r="6"/>
+    </g>
+    <path d="M530 87V169" stroke="#be123c" stroke-width="3" stroke-dasharray="6 5"/>
+    <path d="M524 87H536 M524 169H536" stroke="#be123c" stroke-width="2"/>
+    <circle cx="530" cy="177" r="5" fill="#f59e0b" stroke="white" stroke-width="2"/>
+    <g font-size="14">
+      <circle cx="610" cy="104" r="5" fill="#0f766e"/><text x="625" y="109">已知样本</text>
+      <path d="M605 140H620" stroke="#0f766e" stroke-width="3"/><text x="625" y="145">目标直线</text>
+      <path d="M605 176H620" stroke="#f59e0b" stroke-width="3"/><text x="625" y="181">当前预测</text>
+      <path d="M612 208V228" stroke="#be123c" stroke-width="3" stroke-dasharray="5 4"/>
+      <text x="625" y="222">残差 4.1</text>
+      <text x="602" y="267" fill="#64748b">x = 2</text>
+      <text x="602" y="290" fill="#64748b">目标 5，预测 0.9</text>
+    </g>
+  </g>
+</svg>
