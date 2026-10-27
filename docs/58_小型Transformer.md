@@ -95,7 +95,11 @@ $$
 设输入字符 ID 为 $\xi_t$，其中 $0\le\xi_t<\mathcal{V}$，字符嵌入矩阵为 $E\in\mathbb{R}^{\mathcal{V}\times D}$，可学习位置矩阵为 $P\in\mathbb{R}^{16\times D}$，则位置表示为：
 
 $$
-x_{t,i}=E_{\xi_t,i}+P_{t,i},\qquad 0\le t<16,\quad 0\le i<16
+\begin{aligned}
+x_{t,i}&=E_{\xi_t,i}+P_{t,i},\\
+0&\le t<16,\\
+0&\le i<16
+\end{aligned}
 \tag{2}
 $$
 
@@ -106,7 +110,10 @@ $$
 [`dense_forward`](../src/ml/12_tiny_transformer.c#L222) 对每个位置独立执行仿射变换。用大写 $X,Y$ 表示任一全连接层的输入与输出，若输入宽度为 $I$、输出宽度为 $O$，则：
 
 $$
-Y_{t,i}=b_i+\sum_{j=0}^{I-1}W_{i,j}X_{t,j},\qquad 0\le i<O
+\begin{aligned}
+Y_{t,i}&=b_i+\sum_{j=0}^{I-1}W_{i,j}X_{t,j},\\
+0&\le i<O
+\end{aligned}
 \tag{3}
 $$
 
@@ -119,15 +126,19 @@ $$
 对一个位置的 $D$ 个特征，LayerNorm 计算总体均值 $\mu_t$、总体方差 $\sigma_t^2$、逆标准差 $r_t$ 和标准化特征 $\hat{x}_{t,i}$：
 
 $$
-\mu_t=\frac{1}{D}\sum_{i=0}^{D-1}x_{t,i},\qquad
-\sigma_t^2=\frac{1}{D}\sum_{i=0}^{D-1}(x_{t,i}-\mu_t)^2
+\begin{aligned}
+\mu_t&=\frac{1}{D}\sum_{i=0}^{D-1}x_{t,i},\\
+\sigma_t^2&=\frac{1}{D}\sum_{i=0}^{D-1}(x_{t,i}-\mu_t)^2
+\end{aligned}
 \tag{4}
 $$
 
 $$
-r_t=\frac{1}{\sqrt{\sigma_t^2+\varepsilon}},\qquad
-\hat{x}_{t,i}=(x_{t,i}-\mu_t)r_t,\qquad
-u_{t,i}=\gamma_i\hat{x}_{t,i}+\beta_i
+\begin{aligned}
+r_t&=\frac{1}{\sqrt{\sigma_t^2+\varepsilon}},\\
+\hat{x}_{t,i}&=(x_{t,i}-\mu_t)r_t,\\
+u_{t,i}&=\gamma_i\hat{x}_{t,i}+\beta_i
+\end{aligned}
 \tag{5}
 $$
 
@@ -150,9 +161,11 @@ $$
 第一组 LayerNorm 输出 $u$ 分别通过三个独立投影得到查询 $Q$、键 $K$、值 $V$：
 
 $$
-Q=uW_Q^\mathsf{T}+b_Q,\qquad
-K=uW_K^\mathsf{T}+b_K,\qquad
-V=uW_V^\mathsf{T}+b_V
+\begin{aligned}
+Q&=uW_Q^\mathsf{T}+b_Q,\\
+K&=uW_K^\mathsf{T}+b_K,\\
+V&=uW_V^\mathsf{T}+b_V
+\end{aligned}
 \tag{7}
 $$
 
@@ -180,11 +193,12 @@ $$
 一个头的上下文是允许位置的值向量加权和；对头内特征索引 $0\le i<d_h$，两个头分别写入输出向量的不同特征切片，相当于拼接：
 
 $$
-C_{t,\,h d_h+i}=\sum_{s=0}^{t}A^{(h)}_{t,s}V_{s,\,h d_h+i},
-\qquad
+\begin{aligned}
+C_{t,\,h d_h+i}&=\sum_{s=0}^{t}A^{(h)}_{t,s}V_{s,\,h d_h+i},\\
 A^{(h)}_{t,s}
-=\frac{\exp(S^{(h)}_{t,s}-S^{(h)}_{\max,t})}
+&=\frac{\exp(S^{(h)}_{t,s}-S^{(h)}_{\max,t})}
 {\sum_{j=0}^{t}\exp(S^{(h)}_{t,j}-S^{(h)}_{\max,t})}
+\end{aligned}
 \tag{9}
 $$
 
@@ -211,17 +225,18 @@ $$
 入口也包含一个完全手算的单头边界例子：令所有 $Q=K=0$，各位置所有 $V$ 特征依次为 $1,3,5$，每个允许分数都相同。于是：
 
 $$
-A=
+\begin{aligned}
+A&=
 \begin{bmatrix}
 1&0&0\\
 1/2&1/2&0\\
 1/3&1/3&1/3
-\end{bmatrix},
-\qquad
-C=
+\end{bmatrix},\\
+C&=
 \begin{bmatrix}
 1\\2\\3
 \end{bmatrix}
+\end{aligned}
 \tag{10}
 $$
 
@@ -232,16 +247,20 @@ $$
 注意力输出投影加回原表示，构成第一条残差；随后第二次 LayerNorm、两层前馈和第二条残差：
 
 $$
-y=x+o,\qquad
-m=\operatorname{LN}_2(y),\qquad
-a=mW_1^\mathsf{T}+b_1
+\begin{aligned}
+y&=x+o,\\
+m&=\operatorname{LN}_2(y),\\
+a&=mW_1^\mathsf{T}+b_1
+\end{aligned}
 \tag{11}
 $$
 
 $$
-\tilde a=\operatorname{GELU}(a),\qquad
-f=\tilde aW_2^\mathsf{T}+b_2,\qquad
-z=y+f
+\begin{aligned}
+\tilde a&=\operatorname{GELU}(a),\\
+f&=\tilde aW_2^\mathsf{T}+b_2,\\
+z&=y+f
+\end{aligned}
 \tag{12}
 $$
 
@@ -250,15 +269,19 @@ $x,o,y,m,f,z\in\mathbb{R}^{T\times16}$，而 $a,\tilde a\in\mathbb{R}^{T\times32
 源码采用精确的 `erf` 形式，而不是常见的 `tanh` 近似。令标准正态分布的累积分布函数和密度函数分别为 $\Phi$ 与 $\phi$，则：
 
 $$
+\begin{aligned}
 \operatorname{GELU}(x)=x\Phi(x)
-=\frac{x}{2}\left(1+\operatorname{erf}\left(\frac{x}{\sqrt{2}}\right)\right)
+&=\frac{x}{2}\left(1+\operatorname{erf}\left(\frac{x}{\sqrt{2}}\right)\right)
+\end{aligned}
 \tag{13}
 $$
 
 $$
+\begin{aligned}
 \frac{d\,\operatorname{GELU}(x)}{dx}
-=\Phi(x)+x\phi(x),\qquad
-\phi(x)=\frac{\exp(-x^2/2)}{\sqrt{2\pi}}
+&=\Phi(x)+x\phi(x),\\
+\phi(x)&=\frac{\exp(-x^2/2)}{\sqrt{2\pi}}
+\end{aligned}
 \tag{14}
 $$
 
@@ -267,7 +290,10 @@ $$
 第三组 LayerNorm 的输出存入 `last`。分类器权重 $W^U\in\mathbb{R}^{\mathcal{V}\times D}$、偏置 $b^U\in\mathbb{R}^{\mathcal{V}}$ 将每个位置映射到 $\mathcal{V}=4$ 个 logits。为避免与残差输出 $z$ 混淆，记第 $t$ 个位置、第 $k$ 类的 logit 为 $\zeta_{t,k}$：
 
 $$
-\zeta_{t,k}=b^U_k+\sum_{i=0}^{D-1}W^U_{k,i}\operatorname{last}_{t,i},\qquad 0\le k<\mathcal{V}
+\begin{aligned}
+\zeta_{t,k}&=b^U_k+\sum_{i=0}^{D-1}W^U_{k,i}\operatorname{last}_{t,i},\\
+0&\le k<\mathcal{V}
+\end{aligned}
 \tag{15}
 $$
 
@@ -281,9 +307,11 @@ $$
 这里 $p_{t,k}$ 是模型在位置 $t$ 预测下一个字符为类别 $k$ 的概率。前向把 `probability` 数组先用作 logits 的输出缓冲，计算后再原地覆盖为概率。令 $y_t^\star$ 表示 `target[t]` 的字符类别；上标星号用来和残差张量 $y$ 区分。损失用交叉熵和稳定的 log-sum-exp 计算：
 
 $$
-\ell_t=\log\left(\sum_{k=0}^{\mathcal{V}-1}\exp(\zeta_{t,k}-M_t)\right)+M_t-\zeta_{t,y_t^\star}
-=-\log p_{t,y_t^\star},\qquad
-L=\frac{1}{T}\sum_{t=0}^{T-1}\ell_t
+\begin{aligned}
+\ell_t&=\log\left(\sum_{k=0}^{\mathcal{V}-1}\exp(\zeta_{t,k}-M_t)\right)+M_t-\zeta_{t,y_t^\star}
+=-\log p_{t,y_t^\star},\\
+L&=\frac{1}{T}\sum_{t=0}^{T-1}\ell_t
+\end{aligned}
 \tag{17}
 $$
 
@@ -320,9 +348,11 @@ $$
 对 $Y=XW^\mathsf{T}+b$，输入有 $T$ 行、宽度为 $I$，输出宽度为 $O$，其梯度为：
 
 $$
-g^W_{i,j}=\sum_{t=0}^{T-1}g^Y_{t,i}X_{t,j},\qquad
-g^b_i=\sum_{t=0}^{T-1}g^Y_{t,i},\qquad
-g^X_{t,j}=\sum_{i=0}^{O-1}W_{i,j}g^Y_{t,i}
+\begin{aligned}
+g^W_{i,j}&=\sum_{t=0}^{T-1}g^Y_{t,i}X_{t,j},\\
+g^b_i&=\sum_{t=0}^{T-1}g^Y_{t,i},\\
+g^X_{t,j}&=\sum_{i=0}^{O-1}W_{i,j}g^Y_{t,i}
+\end{aligned}
 \tag{20}
 $$
 
@@ -333,26 +363,31 @@ $$
 对一个头、一个查询位置，先从上下文加权和 $C_{t,d}=\sum_s A_{t,s}V_{s,d}$ 求导。设 $g^C_{t,d}$ 是该上下文特征收到的上游导数，则：
 
 $$
-g^V_{s,d}\mathrel{+}=A_{t,s}g^C_{t,d},\qquad
-g^A_{t,s}=\sum_d g^C_{t,d}V_{s,d}
+\begin{aligned}
+g^V_{s,d}\mathrel{+}&=A_{t,s}g^C_{t,d},\\
+g^A_{t,s}&=\sum_d g^C_{t,d}V_{s,d}
+\end{aligned}
 \tag{21}
 $$
 
 [`attention_backward`](../src/ml/12_tiny_transformer.c#L389) 计算 softmax 行导数；令 $g^A_{t,s}$ 为损失对注意力权重的导数，可整理为：
 
 $$
+\begin{aligned}
 g^S_{t,s}
-=A_{t,s}\left(g^A_{t,s}
+&=A_{t,s}\left(g^A_{t,s}
 -\sum_{j=0}^{t}A_{t,j}g^A_{t,j}\right)
+\end{aligned}
 \tag{22}
 $$
 
 最后把分数对查询和键的导数传回：
 
 $$
-g^Q_{t,d}\mathrel{+}=\frac{1}{\sqrt{d_h}}\sum_{s=0}^{t}g^S_{t,s}K_{s,d},
-\qquad
-g^K_{s,d}\mathrel{+}=\frac{1}{\sqrt{d_h}}g^S_{t,s}Q_{t,d}
+\begin{aligned}
+g^Q_{t,d}\mathrel{+}&=\frac{1}{\sqrt{d_h}}\sum_{s=0}^{t}g^S_{t,s}K_{s,d},\\
+g^K_{s,d}\mathrel{+}&=\frac{1}{\sqrt{d_h}}g^S_{t,s}Q_{t,d}
+\end{aligned}
 \tag{23}
 $$
 
@@ -363,14 +398,18 @@ $$
 对单个位置，[`norm_backward`](../src/ml/12_tiny_transformer.c#L307) 令 $g^u_i$ 表示归一化输出收到的上游导数，$\eta_i=g^u_i\gamma_i$，$D=16$。把均值和方差对输入的影响合并后：
 
 $$
-g^x_i=r_t\left(\eta_i-\frac{1}{D}\sum_j \eta_j
+\begin{aligned}
+g^x_i&=r_t\left(\eta_i-\frac{1}{D}\sum_j \eta_j
 -\frac{\hat{x}_i}{D}\sum_j \eta_j\hat{x}_j\right)
+\end{aligned}
 \tag{24}
 $$
 
 $$
-g^{\gamma}_i\mathrel{+}=g^u_i\hat{x}_i,\qquad
-g^{\beta}_i\mathrel{+}=g^u_i
+\begin{aligned}
+g^{\gamma}_i\mathrel{+}&=g^u_i\hat{x}_i,\\
+g^{\beta}_i\mathrel{+}&=g^u_i
+\end{aligned}
 \tag{25}
 $$
 
@@ -379,8 +418,10 @@ $$
 边界测试给 `x` 的 $16$ 个特征全赋值 $5$，令 $\gamma_i=1$、$\beta_i=0$、上游梯度 $g^u_i=i$。此时均值为 $5$、方差为 $0$、$\hat{x}_i=0$、逆标准差为 $1/\sqrt{10^{-5}}\approx316.227766$，所以：
 
 $$
-g^x_i=316.227766\left(i-\frac{0+1+\cdots+15}{16}\right)
+\begin{aligned}
+g^x_i&=316.227766\left(i-\frac{0+1+\cdots+15}{16}\right)
 =316.227766(i-7.5)
+\end{aligned}
 \tag{26}
 $$
 
@@ -417,16 +458,20 @@ $$
 Adam 用一阶矩 $m_n$、二阶矩 $v_n$ 和偏差修正更新单个参数 $\theta_n$；$n$ 是优化器更新次数，$g_n$ 是该参数在第 $n$ 次更新时收到的梯度，不是字符位置。这里 Adam 的一阶矩 $m_n$ 与 `Forward.m`（第二次 LayerNorm 输出）是不同数组；LayerNorm 平移参数 $\beta_i$ 也与 Adam 衰减系数 $\beta_1,\beta_2$ 不同。学习率为 $0.003$，$\beta_1=0.9$、$\beta_2=0.999$、$\epsilon_{\text{Adam}}=10^{-8}$：
 
 $$
-m_n=\beta_1m_{n-1}+(1-\beta_1)g_n,\qquad
-v_n=\beta_2v_{n-1}+(1-\beta_2)g_n^2
+\begin{aligned}
+m_n&=\beta_1m_{n-1}+(1-\beta_1)g_n,\\
+v_n&=\beta_2v_{n-1}+(1-\beta_2)g_n^2
+\end{aligned}
 \tag{28}
 $$
 
 $$
-\hat{m}_n=\frac{m_n}{1-\beta_1^n},\qquad
-\hat{v}_n=\frac{v_n}{1-\beta_2^n},\qquad
-\theta_n=\theta_{n-1}
+\begin{aligned}
+\hat{m}_n&=\frac{m_n}{1-\beta_1^n},\\
+\hat{v}_n&=\frac{v_n}{1-\beta_2^n},\\
+\theta_n&=\theta_{n-1}
 -0.003\frac{\hat{m}_n}{\sqrt{\hat{v}_n}+10^{-8}}
+\end{aligned}
 \tag{29}
 $$
 

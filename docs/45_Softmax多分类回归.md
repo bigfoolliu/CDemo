@@ -72,25 +72,30 @@ $N=2$ 时，若两个样本的真实类别概率分别为 $1/2$ 和 $1/4$，则�
 $L$ 是优化目标，$N$ 是训练样本数。把 Softmax 与交叉熵对线性分数求导，会得到一个简洁的误差项：
 
 $$
-\frac{\partial L}{\partial z_{i,c}}=\frac{1}{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right).
+\begin{aligned}
+\frac{\partial L}{\partial z_{i,c}}&=\frac{1}{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right).
+\end{aligned}
 \tag{5}
 $$
 
 $\mathbb{1}[y_i=c]$ 在真实类别等于 $c$ 时为 $1$，否则为 $0$。再用链式法则，因 $z_{i,c}$ 对 $w_{c,f}$ 的导数是 $x_{i,f}$，对 $b_c$ 的导数是 $1$：
 
 $$
-\frac{\partial L}{\partial w_{c,f}}=\frac{1}{N}\sum_{i=1}^{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right)x_{i,f},
-\qquad
-\frac{\partial L}{\partial b_c}=\frac{1}{N}\sum_{i=1}^{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right).
+\begin{aligned}
+\frac{\partial L}{\partial w_{c,f}}&=\frac{1}{N}\sum_{i=1}^{N}\\
+&\quad\left(p_{i,c}-\mathbb{1}[y_i=c]\right)x_{i,f},\\
+\frac{\partial L}{\partial b_c}&=\frac{1}{N}\sum_{i=1}^{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right).
+\end{aligned}
 \tag{6}
 $$
 
 参数使用学习率 $\eta$ 做梯度下降：
 
 $$
-w_{c,f}\leftarrow w_{c,f}-\eta\frac{\partial L}{\partial w_{c,f}},
-\qquad
-b_c\leftarrow b_c-\eta\frac{\partial L}{\partial b_c}.
+\begin{aligned}
+w_{c,f}&\leftarrow w_{c,f}-\eta\frac{\partial L}{\partial w_{c,f}},\\
+b_c&\leftarrow b_c-\eta\frac{\partial L}{\partial b_c}.
+\end{aligned}
 \tag{7}
 $$
 

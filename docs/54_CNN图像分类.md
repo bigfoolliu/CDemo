@@ -59,15 +59,18 @@ make cnn-shapes                # 显式导出三张 BMP
 
 对像素列 $s$、行 $r$，代码先计算相对图形中心的偏移
 $$
-d_x=s-c_x,\qquad d_y=r-c_y.
+\begin{aligned}
+d_x&=s-c_x,\\
+d_y&=r-c_y.
+\end{aligned}
 \tag{1}
 $$
 这里 $c_x,c_y$ 是随机中心，坐标单位是像素，$r,s$ 从 $0$ 开始。半径参数 $\rho$ 同时用作圆半径、正方形半边长和三角形高度尺度。类别内部条件分别是
 $$
 \begin{aligned}
 \text{圆形：}&\quad d_x^2+d_y^2\le \rho^2,\\
-\text{方形：}&\quad |d_x|\le \rho\ \land\ |d_y|\le \rho,\\
-\text{三角形：}&\quad -\rho\le d_y\le \rho\ \land\
+\text{方形：}&\quad |d_x|&\le \rho\ \land\ |d_y|\le\rho,\\
+\text{三角形：}&\quad -\rho&\le d_y\le\rho\ \land\
 |d_x|\le \frac{d_y+\rho}{2}.
 \end{aligned}
 \tag{2}
@@ -76,7 +79,9 @@ $$
 
 背景像素先取 $0$，前景像素取亮度 $I_{\mathrm{fg}}$；随后每个像素都加噪并裁切：
 $$
-x_{r,s}=\min\!\left(1,\max\!\left(0,\ v_{r,s}+0.08(U-0.5)\right)\right),
+\begin{aligned}
+x_{r,s}&=\min\!\left(1,\max\!\left(0,\ v_{r,s}+0.08(U-0.5)\right)\right),
+\end{aligned}
 \tag{3}
 $$
 其中 $v_{r,s}$ 是前景亮度 $I_{\mathrm{fg}}$ 或背景零值，$U\in[0,1)$ 是本像素的伪随机数，所以噪声范围为 $[-0.04,0.04)$。`image[row * SIDE + column]` 是行优先一维数组中的像素位置。
@@ -87,32 +92,43 @@ $$
 
 随机数更新为
 $$
-R_{\ell+1}=(1664525R_\ell+1013904223)\bmod 2^{32},\qquad
-U_\ell=\frac{\lfloor R_{\ell+1}/2^8\rfloor}{2^{24}}\in[0,1).
+\begin{aligned}
+R_{\ell+1}&=(1664525R_\ell+1013904223)\bmod 2^{32},\\
+U_\ell&=\frac{\lfloor R_{\ell+1}/2^8\rfloor}{2^{24}}\in[0,1).
+\end{aligned}
 \tag{4}
 $$
 $R_\ell$ 是第 $\ell$ 次更新前的 `uint32_t` 状态，$\ell$ 从 $0$ 开始计随机数调用；无符号溢出按模 $2^{32}$ 回绕。生成一个样本时，代码先取中心横纵坐标、尺度和亮度，再为 $256$ 个像素各取一次噪声随机数。
 
 用训练数据种子 $2025$ 生成的数组下标 $45$ 是圆形样本。由于每个更早的样本消耗 $4+256=260$ 次随机数，它的图形参数为
 $$
+\begin{aligned}
 (c_x,c_y)\approx(7.325208,7.656242),\quad
-\rho\approx3.542011,\quad I_{\mathrm{fg}}\approx0.873462.
+\rho&\approx3.542011,\\
+I_{\mathrm{fg}}&\approx0.873462.
+\end{aligned}
 \tag{5}
 $$
 看它的像素 $(r,s)=(1,2)$：
 $$
-d_x=2-7.325208\approx-5.325208,\qquad
-d_y=1-7.656242\approx-6.656242,
+\begin{aligned}
+d_x&=2-7.325208\approx-5.325208,\\
+d_y&=1-7.656242\approx-6.656242,
+\end{aligned}
 \tag{6}
 $$
 $$
+\begin{aligned}
 d_x^2+d_y^2\approx72.663397
-> \rho^2\approx12.545845.
+&> \rho^2\approx12.545845.
+\end{aligned}
 \tag{7}
 $$
 它在圆形外，所以 $v_{1,2}=0$。该像素噪声随机数为 $U\approx0.957193$，于是
 $$
-x_{1,2}=0+0.08(0.957193-0.5)\approx0.036575.
+\begin{aligned}
+x_{1,2}&=0+0.08(0.957193-0.5)\approx0.036575.
+\end{aligned}
 \tag{8}
 $$
 这个小数不是前景，而是背景噪声；前面的图形条件和裁切顺序决定了它如何进入网络。
@@ -149,9 +165,10 @@ $$
 
 初始化先将网络的 $631$ 个参数全部清零，再只填充卷积权重和全连接权重，所以所有偏置保持为 $0$。给定 $U\in[0,1)$ 和尺度 $\alpha$，权重通过 $(2U-1)\alpha$ 映射到 $[-\alpha,\alpha)$。卷积核使用 $\alpha=\sqrt{6/9}$，全连接权重使用 $\alpha=\sqrt{3/196}$：
 $$
-\operatorname{Var}(K_{q,a,b})\approx\frac{(\sqrt{6/9})^2}{3}=\frac{2}{9},
-\qquad
-\operatorname{Var}(V_{c,i})\approx\frac{(\sqrt{3/196})^2}{3}=\frac{1}{196}.
+\begin{aligned}
+\operatorname{Var}(K_{q,a,b})&\approx\frac{(\sqrt{6/9})^2}{3}=\frac{2}{9},\\
+\operatorname{Var}(V_{c,i})&\approx\frac{(\sqrt{3/196})^2}{3}=\frac{1}{196}.
+\end{aligned}
 \tag{9}
 $$
 这里的方差来自连续均匀分布的理论尺度，是解释初始化意图的近似；实际代码使用固定种子的有限伪随机序列。卷积尺度考虑每个卷积位置的 $9$ 个输入；分类层尺度随 $196$ 个特征缩小，避免初始 logits 过大。代码先清零参数，再按两个尺度填充权重，见 [`network_initialize`](../src/ml/08_cnn_shapes.c#L206)。
@@ -179,38 +196,45 @@ $$
 把教学输入、核和结果分别记为 $X^{\mathrm{toy}}$、$W^{\mathrm{toy}}$、$Y^{\mathrm{toy}}$。行、列从 $0$ 开始，图中左上蓝色窗口和输出格的关系是：
 
 $$
-X^{\mathrm{toy}}=
+\begin{aligned}
+X^{\mathrm{toy}}&=
 \begin{bmatrix}
 0&0&1&1&1\\
 0&0&1&1&1\\
 0&0&1&1&1\\
 0&0&1&1&1\\
 0&0&1&1&1
-\end{bmatrix},\qquad
-W^{\mathrm{toy}}=
+\end{bmatrix},\\
+W^{\mathrm{toy}}&=
 \begin{bmatrix}
 -1&0&1\\
 -1&0&1\\
 -1&0&1
 \end{bmatrix}.
+\end{aligned}
 \tag{11}
 $$
 
 核不翻转，窗口内对应格逐个相乘、再把 $9$ 个乘积相加。若窗口左上角位于输入的第 $r$ 行、第 $s$ 列，输出为：
 
 $$
+\begin{aligned}
 Y^{\mathrm{toy}}_{r,s}
-=\sum_{a=0}^{2}\sum_{b=0}^{2}
-W^{\mathrm{toy}}_{a,b}X^{\mathrm{toy}}_{r+a,s+b},
-\qquad 0\le r,s<3.
+&=\sum_{a=0}^{2}\sum_{b=0}^{2}
+W^{\mathrm{toy}}_{a,b}X^{\mathrm{toy}}_{r+a,s+b},\\
+0&\ler,\\
+s&<3.
+\end{aligned}
 \tag{12}
 $$
 
 其中 $a,b$ 分别是核内的行、列偏移；$r+a,s+b$ 是窗口覆盖的输入坐标。例如左上角 $r=s=0$ 时，三行像素都是 $(0,0,1)$，所以：
 
 $$
+\begin{aligned}
 Y^{\mathrm{toy}}_{0,0}
-=3\bigl[0(-1)+0(0)+1(1)\bigr]=3.
+&=3\bigl[0(-1)+0(0)+1(1)\bigr]=3.
+\end{aligned}
 \tag{13}
 $$
 
@@ -231,7 +255,9 @@ $$
 输出为何从 $5\times5$ 变成 $3\times3$？设一边输入长度为 $N$、核边长为 $K$、每侧填充像素数为 $P$、步长为 $S$，且窗口必须完整落在填充后的范围内，则一边的输出格数为：
 
 $$
-N_{\mathrm{out}}=\left\lfloor\frac{N+2P-K}{S}\right\rfloor+1.
+\begin{aligned}
+N_{\mathrm{out}}&=\left\lfloor\frac{N+2P-K}{S}\right\rfloor+1.
+\end{aligned}
 \tag{15}
 $$
 
@@ -253,10 +279,11 @@ for (size_t ky = 0; ky < KERNEL; ++ky) {
 
 令 $X_{r,s}$ 为输入像素，$K_{q,a,b}$ 为第 $q$ 个卷积核的元素，$b_q^{\mathrm{conv}}$ 为该通道偏置。输出位置满足 $0\le r,s<14$，核位置满足 $0\le a,b<3$：
 $$
-Z_{q,r,s}=b_q^{\mathrm{conv}}+
-\sum_{a=0}^{2}\sum_{b=0}^{2}K_{q,a,b}X_{r+a,s+b},
-\qquad
-A_{q,r,s}=\max(0,Z_{q,r,s}).
+\begin{aligned}
+Z_{q,r,s}&=b_q^{\mathrm{conv}}+
+\sum_{a=0}^{2}\sum_{b=0}^{2}K_{q,a,b}X_{r+a,s+b},\\
+A_{q,r,s}&=\max(0,Z_{q,r,s}).
+\end{aligned}
 \tag{16}
 $$
 $Z$ 是 `preactivation`，$A$ 是 `activation`。同一个 $K_q$ 在 $14\times14$ 个位置重复使用，这就是权重共享；每个输出只看当前 $3\times3$ 区域，这就是局部连接。代码没有翻转核，所以严格说计算的是互相关，虽然深度学习代码通常仍称它为卷积。
@@ -306,16 +333,17 @@ $$
 
 因此 `winners[0]` 是通道 $0$ 的绝对下标 $14=0\times196+1\times14+0$，池化输出 $P_{0,0,0}=0.015504780483$。赢家对应输入图像的行 $1$、列 $0$ 左上角的 $3\times3$ 图像块。用该块和实际初始化卷积核逐项相乘：
 $$
-X_{\mathrm{patch}}=
+\begin{aligned}
+X_{\mathrm{patch}}&=
 \begin{bmatrix}
 0 & 0 & 0.036575\\
 0.026583 & 0 & 0\\
 0 & 0 & 0.037568
-\end{bmatrix},
-\qquad
-Z_{0,1,0}=0+\sum_{a=0}^{2}\sum_{b=0}^{2}K_{0,a,b}X_{1+a,b}
+\end{bmatrix},\\
+Z_{0,1,0}&=0+\sum_{a=0}^{2}\sum_{b=0}^{2}K_{0,a,b}X_{1+a,b}
 =0.036575(0.126200)+0.026583(-0.453067)+0.037568(0.610435)
 \approx0.015504780.
+\end{aligned}
 \tag{19}
 $$
 这些项就是该位置的九项互相关点积中非零的三项。由于结果加上零偏置后仍为正，ReLU 保留它；池化窗口另外三个位置都是 $0$，所以该位置获胜。
@@ -341,12 +369,13 @@ $$
 $$
 最大值 $z_{\max}=z_0$，指数项约为
 $$
-\left(
+\begin{aligned}
+&\left(
 e^{z_0-z_{\max}},e^{z_1-z_{\max}},e^{z_2-z_{\max}}
 \right)
-\approx(1,0.434995676,0.424033273),
-\qquad
-\text{分母}\approx1.859028949.
+\approx(1,0.434995676,0.424033273),\\
+\text{分母}&\approx1.859028949.
+\end{aligned}
 \tag{23}
 $$
 因此
@@ -358,12 +387,16 @@ $$
 
 源码直接用 logits 计算三分类交叉熵，不先对可能舍入成 $0$ 的概率取对数。令 $z_y$ 为正确类别的 logit，损失为
 $$
-L(z,y)=z_{\max}-z_y+\ln\!\left(\sum_{c=0}^{2}e^{z_c-z_{\max}}\right).
+\begin{aligned}
+L(z,y)&=z_{\max}-z_y+\ln\!\left(\sum_{c=0}^{2}e^{z_c-z_{\max}}\right).
+\end{aligned}
 \tag{25}
 $$
 对样本 $45$，$z_{\max}=z_y$，所以
 $$
-L=0+\ln(1.859028949)\approx0.620054281.
+\begin{aligned}
+L&=0+\ln(1.859028949)\approx0.620054281.
+\end{aligned}
 \tag{26}
 $$
 `softmax` 与 `cross_entropy` 都减去最大 logit；极端分数测试也验证了这种写法的数值行为。
@@ -374,7 +407,9 @@ $$
 
 令 $y$ 为正确类别，$\mathbf1[c=y]$ 在条件成立时为 $1$，否则为 $0$。softmax 与交叉熵合并后，logit 梯度简化为
 $$
-\delta_c=\frac{\partial L}{\partial z_c}=p_c-\mathbf1[c=y].
+\begin{aligned}
+\delta_c&=\frac{\partial L}{\partial z_c}=p_c-\mathbf1[c=y].
+\end{aligned}
 \tag{27}
 $$
 它省去了显式构造 softmax 雅可比矩阵。样本 $45$ 的三项为
@@ -387,10 +422,12 @@ $$
 
 全连接权重梯度、偏置梯度以及传回特征 $i$ 的梯度为
 $$
-\frac{\partial L}{\partial V_{c,i}}=\delta_cP_i,\qquad
-\frac{\partial L}{\partial b_c^{\mathrm{fc}}}=\delta_c,\qquad
-g_i=\frac{\partial L}{\partial P_i}
+\begin{aligned}
+\frac{\partial L}{\partial V_{c,i}}&=\delta_cP_i,\\
+\frac{\partial L}{\partial b_c^{\mathrm{fc}}}&=\delta_c,\\
+g_i&=\frac{\partial L}{\partial P_i}
 =\sum_{c=0}^{2}\delta_cV_{c,i}.
+\end{aligned}
 \tag{29}
 $$
 这里 $g_i$ 要累加三个分类路径；代码中的 `pooled_gradient[feature] += ...` 正在做这个求和。对刚才的特征 $P_0=0.015504780483$，三个类别的回传路径是：
@@ -417,12 +454,13 @@ $$
 
 令 $(r^*_{q,u,v},s^*_{q,u,v})$ 是池化窗口 $(q,u,v)$ 的赢家位置。若赢家激活为正，则卷积核梯度与卷积偏置梯度为
 $$
+\begin{aligned}
 \frac{\partial L}{\partial K_{q,a,b}}
-=\sum_{\substack{u,v\\Z_{q,r^*,s^*}>0}}
-g_{q,u,v}X_{r^*_{q,u,v}+a,\,s^*_{q,u,v}+b},
-\qquad
+&=\sum_{\substack{u,v\\Z_{q,r^*,s^*}>0}}
+g_{q,u,v}X_{r^*_{q,u,v}+a,\,s^*_{q,u,v}+b},\\
 \frac{\partial L}{\partial b_q^{\mathrm{conv}}}
-=\sum_{\substack{u,v\\Z_{q,r^*,s^*}>0}}g_{q,u,v}.
+&=\sum_{\substack{u,v\\Z_{q,r^*,s^*}>0}}g_{q,u,v}.
+\end{aligned}
 \tag{31}
 $$
 这里池化展平特征下标满足 $i=49q+7u+v$，所以 $g_{q,u,v}$ 就是前面定义的 $g_i$。求和遍历同一通道内所有池化窗口的赢家。因为共享卷积核在许多位置复用，对同一个核权重的梯度必须**累加**这些位置的贡献；不能只保留最后一次点积的结果，代码对应 [`network_backward`](../src/ml/08_cnn_shapes.c#L279)。
@@ -436,9 +474,10 @@ g_0X_{1,2}
 $$
 同一张样本还有其他池化窗口会使用同一个核元素。把通道 $0$ 所有正激活赢家的空间贡献累加后，源码得到
 $$
-\frac{\partial L}{\partial K_{0,0,2}}\approx0.055346491,
-\qquad
-\frac{\partial L}{\partial b_0^{\mathrm{conv}}}\approx-0.155221092.
+\begin{aligned}
+\frac{\partial L}{\partial K_{0,0,2}}&\approx0.055346491,\\
+\frac{\partial L}{\partial b_0^{\mathrm{conv}}}&\approx-0.155221092.
+\end{aligned}
 \tag{33}
 $$
 这两个数是单个样本的梯度；后面的训练还会对一批样本再求平均。
@@ -476,24 +515,27 @@ $$
 $$
 这批中有 $4$ 个圆形样本；首批对圆形概率的总和约为 $5.516675156$，因此
 $$
-\bar g_{628}\approx\frac{5.516675156-4}{12}=0.126389596.
+\begin{aligned}
+\bar g_{628}&\approx\frac{5.516675156-4}{12}=0.126389596.
+\end{aligned}
 \tag{38}
 $$
 
 优化器是 Adam，矩按**批次更新**计步。令 $t$ 为批次更新序号，$\bar g_{t,j}$ 为当前批量梯度，$m_{t,j}$ 和 $v_{t,j}$ 分别是一阶、二阶矩，$\beta_1=0.9$、$\beta_2=0.999$、学习率 $\eta=0.003$、$\epsilon=10^{-8}$：
 $$
-m_{t,j}=\beta_1m_{t-1,j}+(1-\beta_1)\bar g_{t,j},
-\qquad
-v_{t,j}=\beta_2v_{t-1,j}+(1-\beta_2)\bar g_{t,j}^2,
+\begin{aligned}
+m_{t,j}&=\beta_1m_{t-1,j}+(1-\beta_1)\bar g_{t,j},\\
+v_{t,j}&=\beta_2v_{t-1,j}+(1-\beta_2)\bar g_{t,j}^2,
+\end{aligned}
 \tag{39}
 $$
 $$
-\widehat m_{t,j}=\frac{m_{t,j}}{1-\beta_1^t},
-\qquad
-\widehat v_{t,j}=\frac{v_{t,j}}{1-\beta_2^t},
-\qquad
-\theta_j\leftarrow\theta_j-\eta
+\begin{aligned}
+\widehat m_{t,j}&=\frac{m_{t,j}}{1-\beta_1^t},\\
+\widehat v_{t,j}&=\frac{v_{t,j}}{1-\beta_2^t},\\
+\theta_j&\leftarrow\theta_j-\eta
 \frac{\widehat m_{t,j}}{\sqrt{\widehat v_{t,j}}+\epsilon}.
+\end{aligned}
 \tag{40}
 $$
 $\theta_j$ 是扁平参数数组中下标为 $j$ 的参数。源码用 `beta1_power`、`beta2_power` 保存 $\beta_1^t$、$\beta_2^t$，并把 $\epsilon$ 放在平方根外。首批开始时矩为 $0$，所以对参数下标 $j=628$，第一次偏差校正后 $\widehat m_{1,628}=\bar g_{628}$、$\widehat v_{1,628}=\bar g_{628}^2$。该偏置初值为 $0$，更新结果为
@@ -527,13 +569,17 @@ g_j^{\mathrm{num}}
 $$
 其中 $e_j$ 是只有第 $j$ 项为 $1$ 的单位向量。对参数下标 $j=40$（类别 $0$、池化特征 $0$ 的全连接权重），程序实际得到
 $$
-J(\theta+10^{-5}e_{40})\approx0.965558513331,\qquad
-J(\theta-10^{-5}e_{40})\approx0.965557100154,
+\begin{aligned}
+J(\theta+10^{-5}e_{40})&\approx0.965558513331,\\
+J(\theta-10^{-5}e_{40})&\approx0.965557100154,
+\end{aligned}
 \tag{44}
 $$
 $$
-g_{40}^{\mathrm{num}}\approx0.070658841600,\qquad
-g_{40}^{\mathrm{ana}}\approx0.070658841603.
+\begin{aligned}
+g_{40}^{\mathrm{num}}&\approx0.070658841600,\\
+g_{40}^{\mathrm{ana}}&\approx0.070658841603.
+\end{aligned}
 \tag{45}
 $$
 两者差约为 $3\times10^{-12}$。测试允许的误差是

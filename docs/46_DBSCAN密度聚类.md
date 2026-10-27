@@ -25,7 +25,9 @@ DBSCAN 不需要预先指定簇的数量。它由两个参数定义“足够密�
 点 $i$ 的坐标是 $\mathbf{x}_i=(x_i,y_i)$。点 $i$ 的 $\varepsilon$ 邻域定义为：
 
 $$
-N_{\varepsilon}(i)=\left\{j\mid \lVert\mathbf{x}_i-\mathbf{x}_j\rVert_2\leq\varepsilon\right\}.
+\begin{aligned}
+N_{\varepsilon}(i)&=\left\{j\mid \lVert\mathbf{x}_i-\mathbf{x}_j\rVert_2\leq\varepsilon\right\}.
+\end{aligned}
 \tag{1}
 $$
 
@@ -47,7 +49,11 @@ $$
 程序先访问 $A$。它到自身的距离为 $0$，到 $C$ 的距离为 $|1.50-0.70|=0.80$；到 $B$ 的距离是 $1.50$，到 $D$、$E$ 的距离都大于 $0.9$。所以：
 
 $$
-N_{0.9}(A)=\{A,C\},\qquad \lvert N_{0.9}(A)\rvert=2<4.
+\begin{aligned}
+N_{0.9}(A)&=\{A,\\
+C\},\\
+\lvert N_{0.9}(A)\rvert&=2<4.
+\end{aligned}
 \tag{3}
 $$
 

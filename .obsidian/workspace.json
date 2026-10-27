@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/13_康威生命游戏.md",
-                "mode": "source",
-                "source": false
+                "file": "docs/36_朴素贝叶斯.md",
+                "mode": "preview",
+                "source": true
               },
               "icon": "lucide-file",
-              "title": "13_life"
+              "title": "36_朴素贝叶斯"
             }
           }
         ]
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/13_康威生命游戏.md",
+                "file": "docs/36_朴素贝叶斯.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -212,17 +212,25 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
-    "docs/37_决策树.md",
-    "docs/44_类别不平衡与概率校准.md",
-    "docs/42_神经网络正则化.md",
-    "docs/41_交叉验证.md",
-    "docs/40_线性支持向量机.md",
-    "docs/43_CSV标准化与独立测试评估.md",
-    "docs/53_二维多层感知机.md",
-    "docs/35_K均值聚类分析.md",
     "docs/34_K近邻分析.md",
     "docs/33_逻辑回归分析.md",
     "docs/32_线性回归分析.md",
+    "docs/52_XOR多层感知机.md",
+    "docs/50_深度学习学习计划.md",
+    "docs/47_梯度提升树.md",
+    "docs/46_DBSCAN密度聚类.md",
+    "docs/48_公平模型比较.md",
+    "docs/42_神经网络正则化.md",
+    "docs/41_交叉验证.md",
+    "docs/40_线性支持向量机.md",
+    "docs/45_Softmax多分类回归.md",
+    "docs/53_二维多层感知机.md",
+    "docs/14_迷宫生成与寻路.md",
+    "docs/13_康威生命游戏.md",
+    "docs/37_决策树.md",
+    "docs/44_类别不平衡与概率校准.md",
+    "docs/43_CSV标准化与独立测试评估.md",
+    "docs/35_K均值聚类分析.md",
     "2026-10-27.md",
     "docs/61_残差网络.md",
     "docs/60_生成对抗网络.md",
@@ -232,14 +240,6 @@
     "docs/55_去噪自编码器.md",
     "docs/16_贝塞尔曲线编辑器.md",
     "docs/19_落沙模拟.md",
-    "docs/38_随机森林.md",
-    "docs/56_字符循环神经网络.md",
-    "docs/51_数值计算与梯度.md",
-    "docs/17_粒子喷泉.md",
-    "docs/48_公平模型比较.md",
-    "docs/59_变分自编码器.md",
-    "docs/58_小型Transformer.md",
-    "docs/15_寻路算法.md",
     "db1.base",
     "Excalidraw",
     "未命名.canvas"

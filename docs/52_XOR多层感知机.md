@@ -46,17 +46,16 @@ XOR 的两个输入不同则标签为 $1$，相同则标签为 $0$。样本索�
 所有输入、权重、偏置、激活和损失在这个小例子中都没有物理单位。令 $\mathbb R$ 表示实数集合，网络形状为：
 
 $$
-x\in\mathbb R^2
-\longrightarrow
-W_1\in\mathbb R^{4\times2},\ b_1\in\mathbb R^4
-\longrightarrow
-a\in\mathbb R^4
-\longrightarrow
-W_2\in\mathbb R^4,\ b_2\in\mathbb R
-\longrightarrow
-z\in\mathbb R
-\longrightarrow
-p\in(0,1).
+\begin{aligned}
+x&\in\mathbb R^2,\\
+W_1&\in\mathbb R^{4\times2},\\
+b_1&\in\mathbb R^4,\\
+a&\in\mathbb R^4,\\
+W_2&\in\mathbb R^4,\\
+b_2&\in\mathbb R,\\
+z&\in\mathbb R,\\
+p&\in(0,1).
+\end{aligned}
 \tag{1}
 $$
 
@@ -78,14 +77,20 @@ $$
 两个正样本 $(0,1)$ 和 $(1,0)$ 要求：
 
 $$
-\alpha_1+\beta\ge0,\qquad \alpha_0+\beta\ge0.
+\begin{aligned}
+\alpha_1+\beta&\ge0,\\
+\alpha_0+\beta&\ge0.
+\end{aligned}
 \tag{2}
 $$
 
 相加得到 $\alpha_0+\alpha_1+2\beta\ge0$。两个负样本 $(0,0)$ 和 $(1,1)$ 则要求：
 
 $$
-\beta<0,\qquad \alpha_0+\alpha_1+\beta<0.
+\begin{aligned}
+\beta&<0,\\
+\alpha_0+\alpha_1+\beta&<0.
+\end{aligned}
 \tag{3}
 $$
 
@@ -109,13 +114,13 @@ $$
 sigmoid 把实数分数映射到概率。$z\ge0$ 时用 $1/(1+e^{-z})$；$z<0$ 时源码改用 $e^z/(1+e^z)$，避免求可能溢出的大正指数：
 
 $$
-p=\sigma(z)=
-\begin{cases}
-\dfrac{1}{1+e^{-z}}, & z\ge0,\\[4pt]
-\dfrac{e^z}{1+e^z}, & z<0.
-\end{cases}
-\qquad
-p=\sigma(0.1)\approx0.5249791875.
+\begin{aligned}
+p&=\sigma(z)=\begin{cases}
+\dfrac{1}{1+e^{-z}},  z\ge0,\\[4pt]
+\dfrac{e^z}{1+e^z},  z<0.
+\end{cases}\\
+p&=\sigma(0.1)\approx0.5249791875.
+\end{aligned}
 \tag{5}
 $$
 
@@ -129,7 +134,9 @@ $$
 其中 $y$ 是取 $0$ 或 $1$ 的标签，$\ln$ 是自然对数。将 sigmoid 代入后可改写成仅依赖 logit 的稳定形式：
 
 $$
-L(z,y)=\max(z,0)-yz+\ln\!\left(1+e^{-|z|}\right).
+\begin{aligned}
+L(z,y)&=\max(z,0)-yz+\ln\!\left(1+e^{-|z|}\right).
+\end{aligned}
 \tag{7}
 $$
 
@@ -149,19 +156,23 @@ $$
 先对概率求导，再乘 sigmoid 的导数。利用 $dp/dz=p(1-p)$：
 
 $$
+\begin{aligned}
 \frac{dL}{dz}
-=\left(-\frac{y}{p}+\frac{1-y}{1-p}\right)p(1-p)
+&=\left(-\frac{y}{p}+\frac{1-y}{1-p}\right)p(1-p)
 =-y(1-p)+(1-y)p
 =p-y.
+\end{aligned}
 \tag{9}
 $$
 
 本例代入 $p\approx0.5249791875$、$y=1$：
 
 $$
-\delta_{\mathrm{out}}=\frac{dL}{dz}=p-y
+\begin{aligned}
+\delta_{\mathrm{out}}&=\frac{dL}{dz}=p-y
 =0.5249791875-1
 \approx-0.4750208125.
+\end{aligned}
 \tag{10}
 $$
 
@@ -176,14 +187,15 @@ $$
 $$
 
 $$
+\begin{aligned}
 \frac{\partial L}{\partial w_1}
-=\delta_{\mathrm{out}}x_1
+&=\delta_{\mathrm{out}}x_1
 =-0.4750208125\times2
-=-0.9500416250,
-\qquad
+=-0.9500416250,\\
 \frac{\partial L}{\partial b}
-=\delta_{\mathrm{out}}
+&=\delta_{\mathrm{out}}
 \approx-0.4750208125.
+\end{aligned}
 \tag{12}
 $$
 
@@ -194,14 +206,18 @@ $$
 [`random_weight`](../src/ml/06_xor_mlp.c#L65-L75) 使用 `uint32_t` 状态，而不是平台实现可能不同的 `rand()`。令 $q_k$ 为第 $k$ 次更新前的 32 位无符号状态，$r_k$ 为更新后状态右移 $8$ 位的整数，$u_k$ 为归一化值，则源码对应：
 
 $$
-q_{k+1}=(1664525q_k+1013904223)\bmod2^{32},\qquad
-r_k=\left\lfloor\frac{q_{k+1}}{2^8}\right\rfloor,
+\begin{aligned}
+q_{k+1}&=(1664525q_k+1013904223)\bmod2^{32},\\
+r_k&=\left\lfloor\frac{q_{k+1}}{2^8}\right\rfloor,
+\end{aligned}
 \tag{13}
 $$
 
 $$
-u_k=\frac{r_k}{2^{24}}\in[0,1),\qquad
-w_k=1.6u_k-0.8\in[-0.8,0.8).
+\begin{aligned}
+u_k&=\frac{r_k}{2^{24}}\in[0,1),\\
+w_k&=1.6u_k-0.8\in[-0.8,0.8).
+\end{aligned}
 \tag{14}
 $$
 
@@ -210,20 +226,25 @@ $$
 按此算法从种子 $42$ 生成、四舍五入到小数点后六位的初始参数为：
 
 $$
-W_1=\begin{bmatrix}
+\begin{aligned}
+W_1&=\begin{bmatrix}
 -0.396248 & -0.659000\\
  -0.443913 & -0.198944\\
 -0.084350 & -0.610464\\
  0.791415 &  0.565124
-\end{bmatrix},\qquad
-W_2=\begin{bmatrix}
+\end{bmatrix},\\
+W_2&=\begin{bmatrix}
 0.123650 & -0.758938 & 0.598102 & -0.000517
 \end{bmatrix},
+\end{aligned}
 \tag{15}
 $$
 
 $$
-b_1=\begin{bmatrix}0&0&0&0\end{bmatrix}^{\mathsf T},\qquad b_2=0.
+\begin{aligned}
+b_1&=\begin{bmatrix}0&0&0&0\end{bmatrix}^{\mathsf T},\\
+b_2&=0.
+\end{aligned}
 \tag{16}
 $$
 
@@ -234,13 +255,18 @@ $$
 训练循环中的第一个样本是 $n=0$：$x_0=(0,0)$、$y_0=0$。令 $u_h$ 为隐藏神经元的加权输入，$a_h$ 为 `tanh` 输出。前向传播公式与 [`network_forward`](../src/ml/06_xor_mlp.c#L99-L112) 一一对应：
 
 $$
-u_h=b_{1,h}+\sum_{i=0}^{1}W_{1,h,i}x_{0,i},\qquad
-a_h=\tanh(u_h),
+\begin{aligned}
+u_h&=b_{1,h}+\sum_{i=0}^{1}W_{1,h,i}x_{0,i},\\
+a_h&=\tanh(u_h),
+\end{aligned}
 \tag{17}
 $$
 
 $$
-z=b_2+\sum_{h=0}^{3}W_{2,h}a_h,\qquad p=\sigma(z).
+\begin{aligned}
+z&=b_2+\sum_{h=0}^{3}W_{2,h}a_h,\\
+p&=\sigma(z).
+\end{aligned}
 \tag{18}
 $$
 
@@ -260,52 +286,64 @@ forward.logit += network->parameters[W2 + h] * forward.hidden[h];
 由于两个输入均为零、初始隐藏偏置也为零，对每个 $h$ 都有：
 
 $$
-u_h=0+W_{1,h,0}\times0+W_{1,h,1}\times0=0,
-\qquad a_h=\tanh(0)=0.
+\begin{aligned}
+u_h&=0+W_{1,h,0}\times0+W_{1,h,1}\times0=0,\\
+a_h&=\tanh(0)=0.
+\end{aligned}
 \tag{19}
 $$
 
 所以 $z=0+\sum_{h=0}^{3}W_{2,h}\times0=0$，$p=\sigma(0)=0.5$。标签 $y_0=0$，该样本损失为：
 
 $$
-L_0=\max(0,0)-0\times0+\ln(1+e^0)=\ln2\approx0.6931471806.
+\begin{aligned}
+L_0&=\max(0,0)-0\times0+\ln(1+e^0)=\ln2\approx0.6931471806.
+\end{aligned}
 \tag{20}
 $$
 
 反向传播先得 $\delta_{\mathrm{out}}=p-y_0=0.5$。对隐藏层，令 $\delta_h$ 表示损失对 $u_h$ 的导数。因为 $d\tanh(u_h)/du_h=1-a_h^2$，链式法则给出：
 
 $$
-\delta_h=\delta_{\mathrm{out}}W_{2,h}(1-a_h^2),\qquad
-\frac{\partial L}{\partial W_{2,h}}=\delta_{\mathrm{out}}a_h,\qquad
-\frac{\partial L}{\partial b_2}=\delta_{\mathrm{out}},
+\begin{aligned}
+\delta_h&=\delta_{\mathrm{out}}W_{2,h}(1-a_h^2),\\
+\frac{\partial L}{\partial W_{2,h}}&=\delta_{\mathrm{out}}a_h,\\
+\frac{\partial L}{\partial b_2}&=\delta_{\mathrm{out}},
+\end{aligned}
 \tag{21}
 $$
 
 $$
-\frac{\partial L}{\partial W_{1,h,i}}=\delta_hx_{0,i},\qquad
-\frac{\partial L}{\partial b_{1,h}}=\delta_h.
+\begin{aligned}
+\frac{\partial L}{\partial W_{1,h,i}}&=\delta_hx_{0,i},\\
+\frac{\partial L}{\partial b_{1,h}}&=\delta_h.
+\end{aligned}
 \tag{22}
 $$
 
 此时 $a_h=0$，所以输出权重梯度全为零；$x_{0,i}=0$，所以输入权重梯度全为零。隐藏偏置梯度则为 $\delta_h=0.5W_{2,h}$。代入初始 $W_2$ 得：
 
 $$
-\nabla_{b_1}L_0\approx
+\begin{aligned}
+\nabla_{b_1}L_0&\approx
 \begin{bmatrix}
 0.061824942 & -0.379468918 & 0.299050951 & -0.000258636
-\end{bmatrix}^{\mathsf T},
-\qquad
-\nabla_{b_2}L_0=0.5.
+\end{bmatrix}^{\mathsf T},\\
+\nabla_{b_2}L_0&=0.5.
+\end{aligned}
 \tag{23}
 $$
 
 `network_backward` 将这些梯度写入数组；它不会修改网络。接着训练率 $\eta=0.1$，`network_update` 对每个参数下标 $r\in\{0,\ldots,16\}$ 执行 $\theta_r\leftarrow\theta_r-\eta g_r$，其中 $\theta_r$ 是参数，$g_r$ 是对应梯度。于是这一步后：
 
 $$
-b_1\approx
+\begin{aligned}
+b_1&\approx
 \begin{bmatrix}
 -0.006182494 & 0.037946892 & -0.029905095 & 0.000025864
-\end{bmatrix}^{\mathsf T},\qquad b_2=-0.05,
+\end{bmatrix}^{\mathsf T},\\
+b_2&=-0.05,
+\end{aligned}
 \tag{24}
 $$
 
@@ -314,18 +352,20 @@ $$
 紧接着循环处理 $n=1$，即 $x_1=(0,1)$、$y_1=1$。使用刚更新的偏置，四个隐藏层加权输入约为：
 
 $$
-u\approx\begin{bmatrix}-0.665183&-0.160997&-0.640369&0.565150\end{bmatrix}^{\mathsf T},
-\qquad
-a=\tanh(u)\approx\begin{bmatrix}-0.581802&-0.159620&-0.565151&0.511789\end{bmatrix}^{\mathsf T}.
+\begin{aligned}
+u&\approx\begin{bmatrix}-0.665183&-0.160997&-0.640369&0.565150\end{bmatrix}^{\mathsf T},\\
+a&=\tanh(u)\approx\begin{bmatrix}-0.581802&-0.159620&-0.565151&0.511789\end{bmatrix}^{\mathsf T}.
+\end{aligned}
 \tag{25}
 $$
 
 输出层将四个特征加权求和：
 
 $$
-z\approx-0.05-0.071940+0.121142-0.338018-0.000265=-0.339081,
-\qquad
-p=\sigma(z)\approx0.416033.
+\begin{aligned}
+z&\approx-0.05-0.071940+0.121142-0.338018-0.000265=-0.339081,\\
+p&=\sigma(z)\approx0.416033.
+\end{aligned}
 \tag{26}
 $$
 
@@ -336,9 +376,11 @@ $$
 把上面的链式法则推广到任意输入。对每个隐藏下标 $h$ 和输入下标 $i$：
 
 $$
-u_h=b_{1,h}+\sum_{i=0}^{1}W_{1,h,i}x_i,
-\qquad a_h=\tanh(u_h),
-\qquad z=b_2+\sum_{h=0}^{3}W_{2,h}a_h.
+\begin{aligned}
+u_h&=b_{1,h}+\sum_{i=0}^{1}W_{1,h,i}x_i,\\
+a_h&=\tanh(u_h),\\
+z&=b_2+\sum_{h=0}^{3}W_{2,h}a_h.
+\end{aligned}
 \tag{27}
 $$
 
@@ -353,8 +395,10 @@ $$
 例如当某隐藏激活 $a_h=0.5$、对应输出权重 $W_{2,h}=0.4$、输出误差 $\delta_{\mathrm{out}}=-0.2$ 时：
 
 $$
+\begin{aligned}
 \delta_h=(-0.2)\times0.4\times(1-0.5^2)
-=-0.08\times0.75=-0.06.
+&=-0.08\times0.75=-0.06.
+\end{aligned}
 \tag{29}
 $$
 
@@ -379,8 +423,10 @@ gradients[B1 + h] = hidden_delta;
 一个 epoch 是按固定顺序访问四个样本一次。每个样本都独立执行前向、反向、更新，因此这里是在线 SGD，而不是整批梯度下降：
 
 $$
-\theta^{(t+1)}=\theta^{(t)}-\eta\nabla_\theta L_n(\theta^{(t)}),
-\qquad \eta=0.1.
+\begin{aligned}
+\theta^{(t+1)}&=\theta^{(t)}-\eta\nabla_\theta L_n(\theta^{(t)}),\\
+\eta&=0.1.
+\end{aligned}
 \tag{30}
 $$
 
@@ -467,8 +513,10 @@ $$
 分子是在只增加或减少一个参数后重新前向计算的损失差；除以 $2\varepsilon$ 是中心差分近似。源码对四个样本、每个样本的 $17$ 个参数都进行比较。接受条件为：
 
 $$
+\begin{aligned}
 |g^{\mathrm{num}}_r-g^{\mathrm{ana}}_r|
-<10^{-8}+10^{-6}\max\!\left(|g^{\mathrm{num}}_r|,|g^{\mathrm{ana}}_r|\right),
+&<10^{-8}+10^{-6}\max\!\left(|g^{\mathrm{num}}_r|,|g^{\mathrm{ana}}_r|\right),
+\end{aligned}
 \tag{35}
 $$
 

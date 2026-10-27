@@ -73,9 +73,10 @@ $$
 $\tilde{x}_{ij}$ 是无量纲的标准化特征。以 CSV 第 37 行的测试样本 $(5.3,58)$ 为例：
 
 $$
-\tilde{x}_{i0}=\frac{5.3-5.275}{2.47070334}\approx0.010119,
-\qquad
-\tilde{x}_{i1}=\frac{58-59.45833333}{29.05021395}\approx-0.050200.
+\begin{aligned}
+\tilde{x}_{i0}&=\frac{5.3-5.275}{2.47070334}\approx0.010119,\\
+\tilde{x}_{i1}&=\frac{58-59.45833333}{29.05021395}\approx-0.050200.
+\end{aligned}
 \tag{4}
 $$
 
@@ -86,9 +87,10 @@ $$
 令 $w_j$ 是第 $j$ 个特征的模型权重，$b$ 是偏置，$a_i$ 是样本 $i$ 的线性分数，$p_i$ 是预测为正类的概率。`model_predict` 先将样本变换成 $\tilde{x}_{ij}$，再计算：
 
 $$
-a_i=b+\sum_{j=0}^{1}w_j\tilde{x}_{ij},
-\qquad
-p_i=\operatorname{sigmoid}(a_i)=\frac{1}{1+e^{-a_i}}.
+\begin{aligned}
+a_i&=b+\sum_{j=0}^{1}w_j\tilde{x}_{ij},\\
+p_i&=\operatorname{sigmoid}(a_i)=\frac{1}{1+e^{-a_i}}.
+\end{aligned}
 \tag{5}
 $$
 
@@ -104,7 +106,9 @@ $$
 为避免极端概率下直接计算 $\log(0)$，源码改用等价的 logit 形式：
 
 $$
-\ell_i=\max(a_i,0)-y_i a_i+\log\left(1+e^{-|a_i|}\right).
+\begin{aligned}
+\ell_i&=\max(a_i,0)-y_i a_i+\log\left(1+e^{-|a_i|}\right).
+\end{aligned}
 \tag{7}
 $$
 
@@ -122,20 +126,22 @@ $$
 因为 $a_i=b+\sum_jw_j\tilde{x}_{ij}$，权重和偏置的平均梯度是：
 
 $$
-g_{w_j}=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(p_i-y_i)\tilde{x}_{ij},
-\qquad
-g_b=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(p_i-y_i).
+\begin{aligned}
+g_{w_j}&=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}\\
+&\quad(p_i-y_i)\tilde{x}_{ij},\\
+g_b&=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(p_i-y_i).
+\end{aligned}
 \tag{9}
 $$
 
 $g_{w_j}$ 和 $g_b$ 分别对应 `weight_gradients[j] / training_count` 与 `bias_gradient / training_count`。代码在 [`model_train` 的训练循环](../src/ml/23_csv_standardization.c#L553)中逐行累加，随后执行梯度下降：
 
 $$
-w_j\leftarrow w_j-\eta g_{w_j},
-\qquad
-b\leftarrow b-\eta g_b,
-\qquad
-\eta=0.2.
+\begin{aligned}
+w_j&\leftarrow w_j-\eta g_{w_j},\\
+b&\leftarrow b-\eta g_b,\\
+\eta&=0.2.
+\end{aligned}
 \tag{10}
 $$
 
@@ -149,9 +155,10 @@ $$
 将训练集中全部 $24$ 条样本贡献相加后，第一轮的平均梯度为 $g_w\approx(-0.426667,-0.422401)$、$g_b=0$。从 $w=(0,0)$ 开始，第一次更新得到：
 
 $$
-w\approx(0.085333,0.084480),
-\qquad
-b=0.
+\begin{aligned}
+w&\approx(0.085333,0.084480),\\
+b&=0.
+\end{aligned}
 \tag{12}
 $$
 
@@ -166,9 +173,10 @@ $$
 测试集第 4 个样本是 CSV 第 37 行：原始特征 $(5.3,58)$，标签 $y_i=0$。本次训练结束时模型参数为 $w=(5.16922914,4.66285991)$、$b=0.40497958$。标准化值代入线性层：
 
 $$
-a_i=0.40497958+5.16922914(0.01011858)+4.66285991(-0.05020043)\approx0.22320723,
-\qquad
-p_i=\frac{1}{1+e^{-0.22320723}}\approx0.555571.
+\begin{aligned}
+a_i&=0.40497958+5.16922914(0.01011858)+4.66285991(-0.05020043)\approx0.22320723,\\
+p_i&=\frac{1}{1+e^{-0.22320723}}\approx0.555571.
+\end{aligned}
 \tag{13}
 $$
 

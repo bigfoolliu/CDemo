@@ -23,7 +23,11 @@ less logs/ml/11_gru_memory.log   # 查看完整日志
 每条序列由开始比特、若干噪声符号和结束标记组成。输入词表大小为 $I=5$：编号 $0$ 和 $1$ 是目标比特，编号 $2$ 和 $3$ 是不携带标签信息的噪声，编号 $4$ 是结束标记。设标签为 $y\in\{0,1\}$、噪声间隔为 $G$、总时间步数为 $T=G+2$，输入协议是
 
 $$
-x_0=y,\qquad x_t\in\{2,3\}\ (1\le t\le G),\qquad x_{T-1}=4.
+\begin{aligned}
+x_0&=y,\\
+x_t&\in\{2,3\}\ (1\le t\le G),\\
+x_{T-1}&=4.
+\end{aligned}
 \tag{1}
 $$
 
@@ -34,8 +38,10 @@ $$
 数据标签按序列编号奇偶交替，所以每个偶数大小的数据集严格平衡。噪声由无符号线性同余状态生成：若当前状态为 $s_n$，下一状态为
 
 $$
-s_{n+1}=(1664525s_n+1013904223)\bmod 2^{32},\qquad
-x_t=2+(s_{n+1}\mathbin{\texttt{>>}}31).
+\begin{aligned}
+s_{n+1}&=(1664525s_n+1013904223)\bmod 2^{32},\\
+x_t&=2+(s_{n+1}\mathbin{\texttt{>>}}31).
+\end{aligned}
 \tag{2}
 $$
 
@@ -58,7 +64,9 @@ $$
 隐藏宽度记作 $H=8$。每个门或候选状态各有输入权重 $W_q\in\mathbb{R}^{H\times I}$、循环权重 $U_q\in\mathbb{R}^{H\times H}$ 和偏置 $b_q\in\mathbb{R}^{H}$，其中 $q\in\{z,r,n\}$。一个参数块有
 
 $$
-B=HI+H^2+H=8\cdot5+8\cdot8+8=112
+\begin{aligned}
+B&=HI+H^2+H=8\cdot5+8\cdot8+8=112
+\end{aligned}
 \tag{3}
 $$
 
@@ -71,17 +79,26 @@ $$
 对每个时间步 $t\in\{0,\ldots,T-1\}$，$x_t\in\{0,1\}^{I}$ 是 token 的 one-hot 向量，$h_t\in\mathbb{R}^{H}$ 是读取该 token 前的状态。源码采用 **reset-before** 候选计算：
 
 $$
-a_t^z=W_zx_t+U_zh_t+b_z,\qquad z_t=\sigma(a_t^z),
+\begin{aligned}
+a_t^z&=W_zx_t+U_zh_t+b_z,\\
+z_t&=\sigma(a_t^z),
+\end{aligned}
 \tag{4}
 $$
 
 $$
-a_t^r=W_rx_t+U_rh_t+b_r,\qquad r_t=\sigma(a_t^r),
+\begin{aligned}
+a_t^r&=W_rx_t+U_rh_t+b_r,\\
+r_t&=\sigma(a_t^r),
+\end{aligned}
 \tag{5}
 $$
 
 $$
-a_t^n=W_nx_t+U_n(r_t\odot h_t)+b_n,\qquad n_t=\tanh(a_t^n),
+\begin{aligned}
+a_t^n&=W_nx_t+U_n(r_t\odot h_t)+b_n,\\
+n_t&=\tanh(a_t^n),
+\end{aligned}
 \tag{6}
 $$
 
@@ -112,26 +129,34 @@ reset-before 还意味着 $U_n(r_t\odot h_t)$。通常它不等于 $r_t\odot(U_n
 门函数也可以直接代入核对：
 
 $$
-z_{0,0}=\frac{1}{1+e^{-(-0.469476040006)}}\approx0.384740265408,\qquad
-r_{0,0}=\frac{1}{1+e^{-(-0.161377125382)}}\approx0.459743046989,
+\begin{aligned}
+z_{0,0}&=\frac{1}{1+e^{-(-0.469476040006)}}\approx0.384740265408,\\
+r_{0,0}&=\frac{1}{1+e^{-(-0.161377125382)}}\approx0.459743046989,
+\end{aligned}
 \tag{8}
 $$
 
 $$
-n_{0,0}=\tanh(0.067724741206)\approx0.067621387804.
+\begin{aligned}
+n_{0,0}&=\tanh(0.067724741206)\approx0.067621387804.
+\end{aligned}
 \tag{9}
 $$
 
 门函数也可以直接代入核对：
 
 $$
-z_{0,0}=\frac{1}{1+e^{-(-0.469476040006)}}\approx0.384740265408,\qquad
-r_{0,0}=\frac{1}{1+e^{-(-0.161377125382)}}\approx0.459743046989,
+\begin{aligned}
+z_{0,0}&=\frac{1}{1+e^{-(-0.469476040006)}}\approx0.384740265408,\\
+r_{0,0}&=\frac{1}{1+e^{-(-0.161377125382)}}\approx0.459743046989,
+\end{aligned}
 \tag{10}
 $$
 
 $$
-n_{0,0}=\tanh(0.067724741206)\approx0.067621387804.
+\begin{aligned}
+n_{0,0}&=\tanh(0.067724741206)\approx0.067621387804.
+\end{aligned}
 \tag{11}
 $$
 
@@ -160,14 +185,19 @@ $$
 二元交叉熵为
 
 $$
-\mathcal{L}=-y\log p-(1-y)\log(1-p),\qquad p=\sigma(\ell).
+\begin{aligned}
+\mathcal{L}&=-y\log p-(1-y)\log(1-p),\\
+p&=\sigma(\ell).
+\end{aligned}
 \tag{13}
 $$
 
 这里 $y\in\{0,1\}$ 是序列开头比特，$p$ 是模型预测其为 $1$ 的概率，$\ell$ 是终点 logit，$\log$ 表示自然对数。源码不直接对可能接近 $0$ 的概率取对数，而使用等价的稳定形式
 
 $$
-\mathcal{L}=\max(\ell,0)-y\ell+\log\left(1+e^{-|\ell|}\right).
+\begin{aligned}
+\mathcal{L}&=\max(\ell,0)-y\ell+\log\left(1+e^{-|\ell|}\right).
+\end{aligned}
 \tag{14}
 $$
 
@@ -185,7 +215,9 @@ $$
 二元交叉熵对 logit 的导数化简为
 
 $$
-\delta_o=\frac{\partial\mathcal{L}}{\partial\ell}=p-y.
+\begin{aligned}
+\delta_o&=\frac{\partial\mathcal{L}}{\partial\ell}=p-y.
+\end{aligned}
 \tag{16}
 $$
 
@@ -247,9 +279,11 @@ $$
 同一分量的更新门激活前梯度为
 
 $$
-g^z_{2,0}=0.028035529419\left(0.126820026976-(-0.238806756737)\right)
+\begin{aligned}
+g^z_{2,0}&=0.028035529419\left(0.126820026976-(-0.238806756737)\right)
 \times0.489724875494(1-0.489724875494)
 \approx0.002561552879.
+\end{aligned}
 \tag{23}
 $$
 
@@ -283,19 +317,23 @@ $$
 对于 $q\in\{z,r\}$，全部时间步累加后的输入权重、循环权重和偏置梯度分别为
 
 $$
-\nabla_{W_q}\mathcal{L}=\sum_{t=0}^{T-1}g_t^q x_t^{\mathsf T},\qquad
-\nabla_{U_q}\mathcal{L}=\sum_{t=0}^{T-1}g_t^q h_t^{\mathsf T},\qquad
-\nabla_{b_q}\mathcal{L}=\sum_{t=0}^{T-1}g_t^q.
+\begin{aligned}
+\nabla_{W_q}\mathcal{L}&=\sum_{t=0}^{T-1}g_t^q x_t^{\mathsf T},\\
+\nabla_{U_q}\mathcal{L}&=\sum_{t=0}^{T-1}g_t^q h_t^{\mathsf T},\\
+\nabla_{b_q}\mathcal{L}&=\sum_{t=0}^{T-1}g_t^q.
+\end{aligned}
 \tag{25}
 $$
 
 这里 $q$ 只表示更新门或重置门。候选状态的输入权重仍是 $g_t^n x_t^{\mathsf T}$，但循环权重使用重置后的输入：
 
 $$
+\begin{aligned}
 \nabla_{U_n}\mathcal{L}
-=\sum_{t=0}^{T-1}g_t^n(r_t\odot h_t)^{\mathsf T},\qquad
+&=\sum_{t=0}^{T-1}g_t^n(r_t\odot h_t)^{\mathsf T},\\
 \nabla_{b_n}\mathcal{L}
-=\sum_{t=0}^{T-1}g_t^n.
+&=\sum_{t=0}^{T-1}g_t^n.
+\end{aligned}
 \tag{26}
 $$
 
@@ -316,9 +354,11 @@ $$
 `test_gradients` 在同一个三步序列上检查全部活动参数和全部 $H=8$ 个初始状态分量。对每个待测标量 $\theta$，中心差分近似为
 
 $$
+\begin{aligned}
 g_{\mathrm{numeric}}(\theta)
-=\frac{\mathcal{L}(\theta+\varepsilon)-\mathcal{L}(\theta-\varepsilon)}{2\varepsilon},
-\qquad \varepsilon=10^{-5}.
+&=\frac{\mathcal{L}(\theta+\varepsilon)-\mathcal{L}(\theta-\varepsilon)}{2\varepsilon},\\
+\varepsilon&=10^{-5}.
+\end{aligned}
 \tag{28}
 $$
 
@@ -327,7 +367,10 @@ $$
 另一个可手算的测试将 GRU 所有参数设为零，令初始状态只有 $h_{0,0}=0.8$，并取 $G=0$。零激活前值给出
 
 $$
-z_{0,0}=r_{0,0}=\sigma(0)=0.5,\qquad n_{0,0}=\tanh(0)=0.
+\begin{aligned}
+z_{0,0}&=r_{0,0}=\sigma(0)=0.5,\\
+n_{0,0}&=\tanh(0)=0.
+\end{aligned}
 \tag{29}
 $$
 
@@ -338,7 +381,10 @@ $$
 每轮对 $32$ 条独立训练序列计算各自的单终点 BCE 梯度，再对序列取算术平均。记活动参数数为 $P$、第 $s$ 条序列对第 $i$ 个参数的梯度为 $g_{s,i}$，该轮平均梯度为
 
 $$
-g_i=\frac{1}{32}\sum_{s=0}^{31}g_{s,i},\qquad i\in\{0,\ldots,P-1\}.
+\begin{aligned}
+g_i&=\frac{1}{32}\sum_{s=0}^{31}g_{s,i},\\
+i&\in\{0,\ldots,P-1\}.
+\end{aligned}
 \tag{30}
 $$
 
@@ -347,15 +393,19 @@ $$
 裁剪后的全批梯度向量 $g_k$ 用于 Adam，其中 $g_{k,i}$ 是第 $k$ 轮、第 $i$ 个活动参数的梯度。令 $k$ 表示从 $1$ 开始的训练更新轮次，$m_k$ 和 $v_k$ 分别是一阶、二阶矩；平方、开方和除法都逐参数进行。两种矩初值为零，超参数为 $\beta_1=0.9$、$\beta_2=0.999$、学习率 $\eta=0.01$、稳定项 $\epsilon=10^{-8}$：
 
 $$
-m_k=\beta_1m_{k-1}+(1-\beta_1)g_k,\qquad
-v_k=\beta_2v_{k-1}+(1-\beta_2)g_k^2,
+\begin{aligned}
+m_k&=\beta_1m_{k-1}+(1-\beta_1)g_k,\\
+v_k&=\beta_2v_{k-1}+(1-\beta_2)g_k^2,
+\end{aligned}
 \tag{31}
 $$
 
 $$
-\widehat m_k=\frac{m_k}{1-\beta_1^k},\qquad
-\widehat v_k=\frac{v_k}{1-\beta_2^k},\qquad
-\theta_k=\theta_{k-1}-\eta\frac{\widehat m_k}{\sqrt{\widehat v_k}+\epsilon}.
+\begin{aligned}
+\widehat m_k&=\frac{m_k}{1-\beta_1^k},\\
+\widehat v_k&=\frac{v_k}{1-\beta_2^k},\\
+\theta_k&=\theta_{k-1}-\eta\frac{\widehat m_k}{\sqrt{\widehat v_k}+\epsilon}.
+\end{aligned}
 \tag{32}
 $$
 
