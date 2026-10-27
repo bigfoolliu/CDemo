@@ -74,7 +74,7 @@ def main() -> int:
     docs_dir = Path(__file__).resolve().parents[1] / "docs"
     changed: list[str] = []
     total = 0
-    for path in sorted(docs_dir.glob("*.md")):
+    for path in sorted(docs_dir.rglob("*.md")):
         original = path.read_text(encoding="utf-8")
         updated, count = number_equations(original, str(path))
         total += count
