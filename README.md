@@ -178,9 +178,9 @@ make build/basics/01_types
 
 ## 23. 机器学习入门案例
 
-`src/ml/` 提供三十一个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
+`src/ml/` 提供三十二个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
 
-每个 C 案例都有标准库 Python 对照：编号 01–28、30–31 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `31_batch_dense_gradients.c` 对应 `31_batch_dense_gradients.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
+每个 C 案例都有标准库 Python 对照：编号 01–28、30–32 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `32_scalar_autodiff.c` 对应 `32_scalar_autodiff.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -215,10 +215,13 @@ make build/basics/01_types
 | `29_gmm_em.c` | 高斯混合模型、软分配、责任度与 EM 参数更新 |
 | `30_matrix_transforms.c` | M01：二维矩阵对基与点的作用、秩亏及复合顺序 |
 | `31_batch_dense_gradients.c` | M02：两条样本的全连接层前向、三类梯度与一次更新 |
+| `32_scalar_autodiff.c` | M03：固定容量标量计算图、共享梯度累加及 XOR 自动求导 |
 
 运行 `make matrix-transforms` 和 `python3 src/python/ml/30_matrix_transforms.py`，逐行比较基向量及点的坐标；`make test-matrix-transforms` 核对 C/Python 输出与边界，`make sanitize-matrix-transforms` 验证 C 内存和未定义行为。推导、手算及静态坐标图见[二维矩阵变换实验室](docs/ai/75_二维矩阵变换实验室.md)。
 
 运行 `make batch-dense-gradients` 与 `python3 src/python/ml/31_batch_dense_gradients.py` 对照同一批数据的预测、损失、输入/权重/偏置梯度及更新结果。`make test-batch-dense-gradients` 检查十个中心差分梯度、批大小变化和 C/Python 输出；`make sanitize-batch-dense-gradients` 验证 C 程序。推导与示意图见[批量全连接层与矩阵求导](docs/ai/76_批量全连接层与矩阵求导.md)。
+
+运行 `make scalar-autodiff` 与 `python3 src/python/ml/32_scalar_autodiff.py` 对照固定 XOR 训练；`make test-scalar-autodiff` 检查共享节点、手写梯度、中心差分和 C/Python 输出，`make sanitize-scalar-autodiff` 检查 C 实现。逐步手算、计算图及限制见[标量计算图与自动求导](docs/ai/77_标量计算图与自动求导.md)。
 
 GMM 与 EM 的 Python 版本同样使用纯标准库。运行 `make gmm` 和 `make gmm-python` 对比两种语言对同一二维数据的训练过程；完整推导和源码地图见 [GMM 与 EM 教程](docs/ai/49_高斯混合模型与期望最大化.md)。
 

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420" role="img" aria-labelledby="title desc">
+  <title id="title">共享变量的标量计算图</title>
+  <desc id="desc">变量 x 同时进入平方、乘以 y 和指数三个分支；分支结果汇入 f，反向传播时 x 的梯度累加三条路径的贡献。</desc>
+  <rect width="900" height="420" fill="#f7f6f2"/>
+  <text x="45" y="48" font-size="26" font-family="sans-serif" fill="#243b45">f = x·x + x·y + exp(x)</text>
+  <text x="45" y="78" font-size="15" font-family="sans-serif" fill="#52616b">正向沿箭头计算；反向沿箭头逆向传梯度，同一变量的贡献相加</text>
+  <g stroke="#557285" stroke-width="2.5" fill="none" marker-end="url(#arrow)">
+    <path d="M162 209 L294 147"/><path d="M162 210 L294 244"/><path d="M162 210 L294 339"/>
+    <path d="M162 331 L294 254"/><path d="M421 145 L543 194"/><path d="M421 245 L543 208"/>
+    <path d="M659 200 L752 240"/><path d="M421 340 L752 260"/>
+  </g>
+  <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9" fill="#557285"/></marker></defs>
+  <g font-family="sans-serif" text-anchor="middle" font-size="18">
+    <rect x="65" y="177" width="96" height="56" rx="8" fill="#dceaf0" stroke="#557285"/><text x="113" y="212" fill="#20323d">x = 2</text>
+    <rect x="65" y="306" width="96" height="56" rx="8" fill="#dceaf0" stroke="#557285"/><text x="113" y="341" fill="#20323d">y = 3</text>
+    <rect x="294" y="119" width="127" height="56" rx="8" fill="#f3dfd9" stroke="#b86b58"/><text x="357" y="154" fill="#4d2e29">x·x = 4</text>
+    <rect x="294" y="219" width="127" height="56" rx="8" fill="#f3dfd9" stroke="#b86b58"/><text x="357" y="254" fill="#4d2e29">x·y = 6</text>
+    <rect x="294" y="315" width="127" height="56" rx="8" fill="#f3dfd9" stroke="#b86b58"/><text x="357" y="350" fill="#4d2e29">exp(x) ≈ 7.389</text>
+    <rect x="543" y="173" width="116" height="56" rx="8" fill="#e7e8c8" stroke="#7f8b46"/><text x="601" y="208" fill="#343b22">4 + 6 = 10</text>
+    <rect x="752" y="226" width="107" height="56" rx="8" fill="#dbebe1" stroke="#4c8764"/><text x="805" y="261" fill="#214330">f ≈ 17.389</text>
+  </g>
+  <rect x="535" y="322" width="324" height="60" rx="6" fill="#fff" stroke="#b86b58"/>
+  <text x="552" y="346" font-size="16" font-family="sans-serif" fill="#4d2e29">∂f/∂x = 2x + y + exp(x)</text>
+  <text x="552" y="370" font-size="16" font-family="sans-serif" fill="#4d2e29">= 4 + 3 + 7.389 ≈ 14.389</text>
+</svg>
