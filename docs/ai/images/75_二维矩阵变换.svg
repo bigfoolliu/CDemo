@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="690" viewBox="0 0 960 690" role="img" aria-labelledby="title desc">
+  <title id="title">二维矩阵变换：基向量与点的像</title>
+  <desc id="desc">六个坐标平面对照原始基和点与缩放、旋转、错切、投影及不同复合顺序的结果。</desc>
+  <rect width="960" height="690" fill="#faf9f5"/>
+  <text x="32" y="34" font-family="sans-serif" font-size="22" fill="#213b48">二维矩阵如何移动基与点</text>
+  <line x1="32" y1="55" x2="60" y2="55" stroke="#8b9ba0" stroke-dasharray="5 4" stroke-width="3"/>
+  <text x="67" y="60" font-family="sans-serif" font-size="14" fill="#334b56">原始基、原始点</text>
+  <line x1="248" y1="55" x2="276" y2="55" stroke="#2879a0" stroke-width="4"/>
+  <text x="283" y="60" font-family="sans-serif" font-size="14" fill="#334b56">变换后 e₁</text>
+  <line x1="414" y1="55" x2="442" y2="55" stroke="#c08732" stroke-width="4"/>
+  <text x="449" y="60" font-family="sans-serif" font-size="14" fill="#334b56">变换后 e₂</text>
+  <line x1="578" y1="55" x2="606" y2="55" stroke="#bd5265" stroke-width="4"/>
+  <text x="613" y="60" font-family="sans-serif" font-size="14" fill="#334b56">变换后 p</text>
+  <defs>
+    <g id="grid">
+      <line x1="-4.5" y1="0" x2="4.5" y2="0" stroke="#c6cfd0" stroke-width=".035"/>
+      <line x1="0" y1="-3.3" x2="0" y2="3.3" stroke="#c6cfd0" stroke-width=".035"/>
+      <line x1="0" y1="0" x2="1" y2="0" stroke="#8b9ba0" stroke-dasharray=".13 .1" stroke-width=".075"/>
+      <line x1="0" y1="0" x2="0" y2="1" stroke="#8b9ba0" stroke-dasharray=".13 .1" stroke-width=".075"/>
+      <line x1="0" y1="0" x2="1" y2="2" stroke="#8b9ba0" stroke-dasharray=".13 .1" stroke-width=".075"/>
+      <circle cx="1" cy="2" r=".095" fill="#8b9ba0"/>
+      <circle cx="0" cy="0" r=".055" fill="#536b74"/>
+    </g>
+    <g id="card"><rect x="0" y="0" width="296" height="265" rx="8" fill="#fff" stroke="#bac8cc" stroke-width="1.4"/></g>
+  </defs>
+
+  <g transform="translate(20 85)"><use href="#card"/><text x="16" y="27" font-family="sans-serif" font-size="17" fill="#254a5c">1. 单位变换 I</text><text x="16" y="248" font-family="sans-serif" font-size="14" fill="#576d76">p=(1,2)，det=1</text></g>
+  <g transform="translate(165 214) scale(29 -29)"><use href="#grid"/><line x1="0" y1="0" x2="1" y2="0" stroke="#2879a0" stroke-width=".085"/><line x1="0" y1="0" x2="0" y2="1" stroke="#c08732" stroke-width=".085"/><line x1="0" y1="0" x2="1" y2="2" stroke="#bd5265" stroke-width=".085"/><circle cx="1" cy="2" r=".11" fill="#bd5265"/></g>
+
+  <g transform="translate(332 85)"><use href="#card"/><text x="16" y="27" font-family="sans-serif" font-size="17" fill="#254a5c">2. 缩放 S</text><text x="16" y="248" font-family="sans-serif" font-size="14" fill="#576d76">p=(2,1)，det=1</text></g>
+  <g transform="translate(477 214) scale(29 -29)"><use href="#grid"/><line x1="0" y1="0" x2="2" y2="0" stroke="#2879a0" stroke-width=".085"/><line x1="0" y1="0" x2="0" y2=".5" stroke="#c08732" stroke-width=".085"/><line x1="0" y1="0" x2="2" y2="1" stroke="#bd5265" stroke-width=".085"/><circle cx="2" cy="1" r=".11" fill="#bd5265"/></g>
+
+  <g transform="translate(644 85)"><use href="#card"/><text x="16" y="27" font-family="sans-serif" font-size="17" fill="#254a5c">3. 逆时针旋转 R</text><text x="16" y="248" font-family="sans-serif" font-size="14" fill="#576d76">p=(-2,1)，det=1</text></g>
+  <g transform="translate(789 214) scale(29 -29)"><use href="#grid"/><line x1="0" y1="0" x2="0" y2="1" stroke="#2879a0" stroke-width=".085"/><line x1="0" y1="0" x2="-1" y2="0" stroke="#c08732" stroke-width=".085"/><line x1="0" y1="0" x2="-2" y2="1" stroke="#bd5265" stroke-width=".085"/><circle cx="-2" cy="1" r=".11" fill="#bd5265"/></g>
+
+  <g transform="translate(20 370)"><use href="#card"/><text x="16" y="27" font-family="sans-serif" font-size="17" fill="#254a5c">4. 水平错切 H</text><text x="16" y="248" font-family="sans-serif" font-size="14" fill="#576d76">p=(3,2)，det=1</text></g>
+  <g transform="translate(165 499) scale(29 -29)"><use href="#grid"/><line x1="0" y1="0" x2="1" y2="0" stroke="#2879a0" stroke-width=".085"/><line x1="0" y1="0" x2="1" y2="1" stroke="#c08732" stroke-width=".085"/><line x1="0" y1="0" x2="3" y2="2" stroke="#bd5265" stroke-width=".085"/><circle cx="3" cy="2" r=".11" fill="#bd5265"/></g>
+
+  <g transform="translate(332 370)"><use href="#card"/><text x="16" y="27" font-family="sans-serif" font-size="17" fill="#254a5c">5. 投影 P</text><text x="16" y="248" font-family="sans-serif" font-size="14" fill="#576d76">p=(1,0)，det=0；e₂ 归零</text></g>
+  <g transform="translate(477 499) scale(29 -29)"><use href="#grid"/><line x1="0" y1="0" x2="1" y2="0" stroke="#2879a0" stroke-width=".085"/><line x1="0" y1="0" x2="1" y2="0" stroke="#bd5265" stroke-width=".085"/><circle cx="1" cy="0" r=".11" fill="#bd5265"/><circle cx="0" cy="0" r=".11" fill="#c08732"/></g>
+
+  <g transform="translate(644 370)"><use href="#card"/><text x="16" y="27" font-family="sans-serif" font-size="17" fill="#254a5c">6. 复合顺序：RS 与 SR</text><text x="16" y="236" font-family="sans-serif" font-size="14" fill="#576d76">RS·p=(-1,2)</text><text x="160" y="236" font-family="sans-serif" font-size="14" fill="#576d76">SR·p=(-4,0.5)</text></g>
+  <g transform="translate(789 499) scale(29 -29)"><use href="#grid"/><line x1="0" y1="0" x2="0" y2="2" stroke="#2879a0" stroke-width=".085"/><line x1="0" y1="0" x2="-.5" y2="0" stroke="#c08732" stroke-width=".085"/><line x1="0" y1="0" x2="-1" y2="2" stroke="#bd5265" stroke-width=".085"/><circle cx="-1" cy="2" r=".11" fill="#bd5265"/><line x1="0" y1="0" x2="-4" y2=".5" stroke="#7e579d" stroke-width=".08"/><circle cx="-4" cy=".5" r=".11" fill="#7e579d"/></g>
+  <text x="20" y="670" font-family="sans-serif" font-size="13" fill="#576d76">图中 y 轴向上；紫色仅表示 SR·p。程序坐标与图中单位完全一致。</text>
+</svg>

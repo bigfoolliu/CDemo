@@ -901,6 +901,38 @@ sanitize-numeric-foundations:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/05_numeric_foundations.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/05_numeric_foundations
 	./build/sanitize/ml/05_numeric_foundations
 
+# M01：不依赖 SDL 的二维矩阵变换；默认示例由 SOURCES/PYTHON_EXAMPLES 自动收集。
+.PHONY: matrix-transforms test-matrix-transforms sanitize-matrix-transforms
+matrix-transforms: build/ml/30_matrix_transforms
+	./build/ml/30_matrix_transforms
+
+# 核对手算与边界，再逐行比较 C/Python 的同一组点和基向量。
+test-matrix-transforms: build/ml/30_matrix_transforms
+	./build/ml/30_matrix_transforms --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) tests/matrix_transforms_compare.py
+
+# 独立消毒器产物，不覆盖普通构建和教学输出。
+sanitize-matrix-transforms:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/30_matrix_transforms.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/30_matrix_transforms
+	./build/sanitize/ml/30_matrix_transforms --test
+
+# M02：两条二维样本的全连接层求导；默认示例由通用规则自动收集。
+.PHONY: batch-dense-gradients test-batch-dense-gradients sanitize-batch-dense-gradients
+batch-dense-gradients: build/ml/31_batch_dense_gradients
+	./build/ml/31_batch_dense_gradients
+
+# 检查十个数值梯度、批量均值与 C/Python 的同一组中间值。
+test-batch-dense-gradients: build/ml/31_batch_dense_gradients
+	./build/ml/31_batch_dense_gradients --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) tests/batch_dense_gradients_compare.py
+
+# 独立运行地址与未定义行为消毒器，保留普通构建产物。
+sanitize-batch-dense-gradients:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/31_batch_dense_gradients.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/31_batch_dense_gradients
+	./build/sanitize/ml/31_batch_dense_gradients --test
+
 # 阶段 1 独立入口；固定规模的 XOR 短训练也接入默认测试与调试。
 .PHONY: xor-mlp test-xor-mlp sanitize-xor-mlp
 xor-mlp: build/ml/06_xor_mlp
@@ -1472,7 +1504,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行 C/Python 示例，再执行蛇规则、AI 数值、日志与纯 C 核心测试。
 # C 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1567,6 +1599,8 @@ clean:
 	rm -f build/sanitize/ml/07_mlp_2d
 	rm -f build/sanitize/ml/06_xor_mlp
 	rm -f build/sanitize/ml/05_numeric_foundations
+	rm -f build/sanitize/ml/30_matrix_transforms
+	rm -f build/sanitize/ml/31_batch_dense_gradients
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/bezier_demo build/debug/graphics/bezier_demo build/tests/bezier_test build/tests/bezier_window_test build/sanitize/bezier_test
 	rm -f build/graphics/ripple_demo build/debug/graphics/ripple_demo build/tests/ripple_test build/tests/ripple_window_test build/sanitize/ripple_test

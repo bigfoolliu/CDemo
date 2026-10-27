@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="590" viewBox="0 0 1000 590" role="img" aria-labelledby="title desc">
+  <title id="title">两条样本的全连接层前向和反向传播</title>
+  <desc id="desc">输入矩阵、权重和偏置形成预测与损失；误差经平均后反向流向输入、权重和偏置梯度。</desc>
+  <rect width="1000" height="590" fill="#faf9f5"/>
+  <text x="30" y="38" font-family="sans-serif" font-size="23" font-weight="700" fill="#254557">M02 · 从两条样本到三类梯度</text>
+  <text x="30" y="63" font-family="sans-serif" font-size="14" fill="#607781">前向：蓝色 ｜ 反向：红色 ｜ 每行代表一条样本</text>
+  <defs>
+    <marker id="forward" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#347fa3"/></marker>
+    <marker id="backward" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b75c63"/></marker>
+  </defs>
+  <g fill="#fff" stroke="#aabdc3" stroke-width="1.5">
+    <rect x="30" y="105" width="210" height="115" rx="9"/>
+    <rect x="280" y="105" width="210" height="115" rx="9"/>
+    <rect x="530" y="105" width="160" height="115" rx="9"/>
+    <rect x="730" y="105" width="240" height="115" rx="9"/>
+    <rect x="730" y="255" width="240" height="88" rx="9"/>
+    <rect x="30" y="392" width="210" height="128" rx="9"/>
+    <rect x="280" y="392" width="210" height="128" rx="9"/>
+    <rect x="530" y="392" width="160" height="128" rx="9"/>
+    <rect x="730" y="392" width="240" height="128" rx="9"/>
+  </g>
+  <g font-family="sans-serif" font-size="17" font-weight="700" fill="#235674">
+    <text x="47" y="134">输入 X · 2×2</text><text x="297" y="134">权重 W · 2×2</text>
+    <text x="547" y="134">偏置 b · 2</text><text x="747" y="134">预测 Z=XW+b</text>
+    <text x="747" y="284">目标 Y 与损失 L</text>
+  </g>
+  <g font-family="monospace" font-size="15" fill="#344e59">
+    <text x="47" y="165">[ 1   2 ]</text><text x="47" y="189">[-1   1 ]</text>
+    <text x="297" y="165">[ 1  -1 ]</text><text x="297" y="189">[ 2  0.5]</text>
+    <text x="547" y="173">[0.5,-0.5]</text>
+    <text x="747" y="165">[5.5,-0.5]</text><text x="747" y="189">[1.5, 1.0]</text>
+    <text x="747" y="312">L=1.84375</text>
+  </g>
+  <g fill="none" stroke="#347fa3" stroke-width="3" marker-end="url(#forward)">
+    <path d="M240 156 C385 72 600 72 720 143"/>
+    <path d="M490 169 C590 93 668 102 720 162"/>
+    <path d="M690 180 H720"/>
+    <path d="M850 221 V245"/>
+  </g>
+  <text x="57" y="261" font-family="sans-serif" font-size="14" fill="#607781">每个输出是输入行与权重列的点积</text>
+  <g fill="none" stroke="#b75c63" stroke-width="3" marker-end="url(#backward)">
+    <path d="M850 345 V380"/>
+    <path d="M730 455 H710 V365 H135 V382"/>
+    <path d="M385 365 V382"/><path d="M610 365 V382"/>
+  </g>
+  <g font-family="sans-serif" font-size="16" font-weight="700" fill="#9b424d">
+    <text x="47" y="422">dX · 2×2</text><text x="297" y="422">dW · 2×2</text>
+    <text x="547" y="422">db · 2</text><text x="747" y="422">误差梯度 Δ=E/4</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#563e47">
+    <text x="47" y="453">[1,1.6875]</text><text x="47" y="478">[0.375,0.75]</text>
+    <text x="297" y="453">[0.5,-0.125]</text><text x="297" y="478">[2.125,-0.25]</text>
+    <text x="547" y="463">[1.25,-0.125]</text>
+    <text x="747" y="453">[0.875,-0.125]</text><text x="747" y="478">[0.375, 0]</text>
+  </g>
+  <text x="30" y="557" font-family="sans-serif" font-size="14" fill="#607781">向量—雅可比积传回 dX；两条样本的贡献相加形成 dW 和 db。示例无激活函数。</text>
+</svg>
