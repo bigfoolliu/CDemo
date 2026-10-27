@@ -129,6 +129,8 @@ static bool move_point(Point *point)
 
 机器学习案例配套 `docs/30_机器学习案例总览.md`，使用固定数据保持可重复，验证损失下降、预测及算法边界。明确区分实现验证与真实数据评估，不将训练集结果当作泛化能力证明。
 
+`src/ml/` 中每个编号案例都应提供同编号 Python 对照，放在 `src/python/ml/`；已有例外 `src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。优先使用 Python 标准库，保持算法概念、固定数据和输出目的可对照；若为清晰教学而缩小模型或步骤，须在脚本和专题文档中明确说明。新增或修改案例时同步更新 `make python` 收集规则及 README/机器学习总览中的说明。
+
 `src/common/logger.h` 提供单线程双输出日志记录器；线性回归默认追加写入 `logs/linear_regression.log`。每行包含本地毫秒时间戳、调用源码文件名和行号，多行消息逐行加前缀。`make test-logger` 验证双输出一致、调用位置、多行、追加行为及失败路径，保留用户已有日志。
 
 C 示例使用标准库 `assert` 检查行为，无第三方测试框架或覆盖率门槛。Python 单元测试需要时使用标准库 `unittest`，放在 `tests/python/`；现有端到端脚本仍由专用 Make 目标运行。行为变更和缺陷修复应配套验证，覆盖有意义的结果及边界条件，避免未定义行为。验证 C 断言时不要使用 `-DNDEBUG`。提交前运行 `make test` 和 `make lint`，报告所用 C 编译器、Python 版本及缺失特性。

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/36_朴素贝叶斯.md",
+                "file": "docs/50_深度学习学习计划.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "36_朴素贝叶斯"
+              "title": "50_深度学习学习计划"
             }
           }
         ]
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/36_朴素贝叶斯.md",
+                "file": "docs/50_深度学习学习计划.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -212,11 +212,22 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
-    "docs/23_Python入门与项目约定.md",
-    "scripts/check_python_syntax.py",
-    "src/python/basics.py",
-    "src/python",
+    "src/python/ml/16_decision_tree.py",
+    "src/python/ml/28_model_comparison.py",
+    "src/python/ml/10_char_rnn.py",
+    "src/python/ml/27_gradient_boosting.py",
+    "src/python/ml/26_dbscan.py",
+    "src/python/ml/25_softmax_regression.py",
+    "src/python/ml/24_reliability_assessment.py",
+    "src/python/ml/23_csv_standardization.py",
+    "src/python/ml/22_resnet.py",
+    "src/python/ml/21_regularization.py",
+    "src/python/ml/20_cross_validation.py",
+    "docs/49_高斯混合模型与期望最大化.md",
     "docs/71_机器学习深度学习大模型补充框架.md",
+    "docs/70_机器学习到智能体学习路线.md",
+    "docs/36_朴素贝叶斯.md",
+    "docs/23_Python入门与项目约定.md",
     "docs/34_K近邻分析.md",
     "docs/33_逻辑回归分析.md",
     "docs/32_线性回归分析.md",
@@ -237,14 +248,6 @@
     "docs/43_CSV标准化与独立测试评估.md",
     "docs/35_K均值聚类分析.md",
     "2026-10-27.md",
-    "docs/61_残差网络.md",
-    "docs/60_生成对抗网络.md",
-    "scripts/__pycache__/number_equations.cpython-37.pyc",
-    "scripts/number_equations.py",
-    "docs/57_GRU门控网络.md",
-    "docs/55_去噪自编码器.md",
-    "db1.base",
-    "Excalidraw",
     "未命名.canvas"
   ]
 }

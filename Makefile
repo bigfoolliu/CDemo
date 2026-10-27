@@ -45,8 +45,8 @@ CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -g
 # 自动收集各独立 main 示例；不包含 modules、games 和 graphics，
 # 这些目录需要多文件链接、特殊依赖或交互入口，分别由专用规则管理。
 SOURCES := $(wildcard src/*.c src/basics/*.c src/advanced/*.c src/ml/*.c src/stdlib/*.c)
-# Python 教学示例按文件名排序运行；每个文件都应提供独立 main 入口。
-PYTHON_EXAMPLES := $(wildcard src/python/*.py)
+# Python 教学示例按目录与文件名收集；机器学习案例与 C 示例编号对应。
+PYTHON_EXAMPLES := $(wildcard src/python/*.py src/python/ml/*.py)
 # 标准库专区可执行文件清单，例如 src/stdlib/01_stdio.c -> build/stdlib/01_stdio。
 STDLIB_PROGRAMS := $(patsubst src/%.c,build/%,$(wildcard src/stdlib/*.c))
 # 机器学习案例清单，用于批量运行及单独追加数学库 -lm。
@@ -823,7 +823,7 @@ build/debug/tests/snake_ai_test: tests/snake_ai_test.c src/games/snake_ai.c $(AI
 	$(CC) $(CPPFLAGS) $(DEBUG_CFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
 
 # --- 默认构建、运行、验证及清理入口（均为伪目标）---
-.PHONY: all run test lint clean advanced sanitize ml snake test-snake-terminal
+.PHONY: all run test lint clean advanced sanitize ml snake test-snake-terminal gmm gmm-python
 # 默认入口：构建普通示例、多文件模块、人工蛇及 AI 程序，不执行它们。
 # SDL 窗口和独立测试程序不属于 all，按需由专用目标构建。
 all: $(PROGRAMS) $(GAME_PROGRAM) $(AI_PROGRAM)
@@ -879,6 +879,13 @@ build/ml/01_linear_regression: src/common/logger.h
 # 构建并运行机器学习案例；线性回归会追加写入 logs/ 中的持久日志。
 ml: $(ML_PROGRAMS)
 	@set -e; for program in $(ML_PROGRAMS); do "$$program"; done
+
+# GMM 的 C 与 Python 版本共享数据和初始化；分别运行便于逐项比较输出。
+gmm: build/ml/29_gmm_em
+	./build/ml/29_gmm_em
+
+gmm-python:
+	PYTHONPATH=src/python PYTHONDONTWRITEBYTECODE=1 $(PYTHON) src/python/gmm_em.py
 
 # 阶段 0 独立入口；该示例也由 SOURCES 自动接入默认运行、检查及调试。
 .PHONY: numeric-foundations test-numeric-foundations sanitize-numeric-foundations
@@ -1499,6 +1506,7 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 # C 代码以严格警告执行 -fsyntax-only；Python 语法由前置 lint-python 检查。
 # 不链接、不生成 C 可执行文件，也不验证运行行为；SDL 窗口编译由专用目标验证。
 lint: lint-python
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/29_gmm_em.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/21_regularization.c tests/regularization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/csv_standardization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/reliability_assessment_test.c

@@ -178,7 +178,9 @@ make build/basics/01_types
 
 ## 23. 机器学习入门案例
 
-`src/ml/` 提供二十七个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/30_机器学习案例总览.md) 阅读算法步骤和练习。
+`src/ml/` 提供二十九个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/30_机器学习案例总览.md) 阅读算法步骤和练习。
+
+每个 C 案例都有标准库 Python 对照：编号 01–28 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `01_linear_regression.c` 对应 `01_linear_regression.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -209,6 +211,10 @@ make build/basics/01_types
 | `25_softmax_regression.c` | 多分类 Softmax、交叉熵梯度与训练/验证/测试评估 |
 | `26_dbscan.c` | DBSCAN 核心点、边界点、密度扩展与噪声识别 |
 | `27_gradient_boosting.c` | 平方损失梯度提升、回归树桩、残差和验证集选轮次 |
+| `28_model_comparison.c` | 固定数据划分、共同预处理与公平模型比较 |
+| `29_gmm_em.c` | 高斯混合模型、软分配、责任度与 EM 参数更新 |
+
+GMM 与 EM 的 Python 版本同样使用纯标准库。运行 `make gmm` 和 `make gmm-python` 对比两种语言对同一二维数据的训练过程；完整推导和源码地图见 [GMM 与 EM 教程](docs/49_高斯混合模型与期望最大化.md)。
 
 运行 `make vae` 导出重建对照、二维潜在网格、插值与先验随机样本四张 BMP；阅读 [VAE 教程](docs/59_变分自编码器.md)。`make test-vae` 和 `make sanitize-vae` 验证全部参数及重参数化导数；`--log` 追加日志至 `logs/ml/13_vae_shapes.log`。
 
@@ -285,7 +291,7 @@ make snake-ai
 
 ## 28. Python 学习专区
 
-阅读 [Python 入门与本项目约定](docs/23_Python入门与项目约定.md)，从 `src/python/basics.py` 开始。运行 `make python` 执行 Python 示例，`make lint-python` 检查仓库内 Python 源文件语法。需要第三方机器学习库的专题会单独说明依赖，并使用本地 `.venv/` 虚拟环境；C 示例仍可独立构建和运行。
+阅读 [Python 入门与本项目约定](docs/23_Python入门与项目约定.md)，从 `src/python/basics.py` 开始，再按编号阅读 `src/python/ml/` 中与 C 机器学习案例对应的实现。运行 `make python` 执行 Python 示例，`make lint-python` 检查仓库内 Python 源文件语法。需要第三方机器学习库的专题会单独说明依赖，并使用本地 `.venv/` 虚拟环境；C 示例仍可独立构建和运行。
 
 ## 29. 参考资料
 
