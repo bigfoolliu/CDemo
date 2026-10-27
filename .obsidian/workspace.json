@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/33_逻辑回归分析.md",
+                "file": "docs/38_随机森林.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "33_逻辑回归分析"
+              "title": "38_随机森林"
             }
           }
         ]
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/33_逻辑回归分析.md",
+                "file": "docs/38_随机森林.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -212,6 +212,11 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
+    "docs/37_决策树.md",
+    "docs/36_朴素贝叶斯.md",
+    "docs/34_K近邻分析.md",
+    "docs/33_逻辑回归分析.md",
+    "docs/images/34_K近邻分类与回归.svg",
     "docs/54_CNN图像分类.md",
     "docs/images/33_多特征逻辑回归.svg",
     "docs/50_深度学习学习计划.md",
@@ -229,10 +234,7 @@
     "docs/49_高斯混合模型与期望最大化.md",
     "docs/71_机器学习深度学习大模型补充框架.md",
     "docs/70_机器学习到智能体学习路线.md",
-    "docs/36_朴素贝叶斯.md",
     "docs/23_Python入门与项目约定.md",
-    "docs/34_K近邻分析.md",
-    "docs/33_逻辑回归分析.md",
     "docs/32_线性回归分析.md",
     "docs/52_XOR多层感知机.md",
     "docs/47_梯度提升树.md",
@@ -245,11 +247,9 @@
     "docs/53_二维多层感知机.md",
     "docs/14_迷宫生成与寻路.md",
     "docs/13_康威生命游戏.md",
-    "docs/37_决策树.md",
     "docs/44_类别不平衡与概率校准.md",
     "docs/43_CSV标准化与独立测试评估.md",
     "docs/35_K均值聚类分析.md",
-    "2026-10-27.md",
     "未命名.canvas"
   ]
 }
