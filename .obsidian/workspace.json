@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/13_life.md",
+                "file": "docs/13_康威生命游戏.md",
                 "mode": "source",
                 "source": false
               },
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/12_sorting.md",
+                "file": "docs/12_排序算法.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/12_sorting.md",
+                "file": "docs/12_排序算法.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/13_life.md",
+                "file": "docs/13_康威生命游戏.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -176,8 +176,8 @@
             "state": {
               "type": "git-view",
               "state": {},
-              "icon": "git-pull-request",
-              "title": "Source Control"
+              "icon": "lucide-ghost",
+              "title": "git-view"
             }
           },
           {
@@ -186,8 +186,8 @@
             "state": {
               "type": "calendar",
               "state": {},
-              "icon": "calendar-with-checkmark",
-              "title": "Calendar"
+              "icon": "lucide-ghost",
+              "title": "calendar"
             }
           }
         ],
@@ -212,34 +212,34 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
-    "docs/37_decision_tree.md",
-    "docs/44_reliability_assessment_analysis.md",
-    "docs/42_regularization.md",
-    "docs/41_cross_validation.md",
-    "docs/40_linear_svm.md",
-    "docs/43_csv_standardization_analysis.md",
-    "docs/53_mlp_2d.md",
-    "docs/35_kmeans_analysis.md",
-    "docs/34_knn_analysis.md",
-    "docs/33_logistic_regression_analysis.md",
-    "docs/32_linear_regression_analysis.md",
+    "docs/37_决策树.md",
+    "docs/44_类别不平衡与概率校准.md",
+    "docs/42_神经网络正则化.md",
+    "docs/41_交叉验证.md",
+    "docs/40_线性支持向量机.md",
+    "docs/43_CSV标准化与独立测试评估.md",
+    "docs/53_二维多层感知机.md",
+    "docs/35_K均值聚类分析.md",
+    "docs/34_K近邻分析.md",
+    "docs/33_逻辑回归分析.md",
+    "docs/32_线性回归分析.md",
     "2026-10-27.md",
-    "docs/61_resnet.md",
-    "docs/60_gan_2d.md",
+    "docs/61_残差网络.md",
+    "docs/60_生成对抗网络.md",
     "scripts/__pycache__/number_equations.cpython-37.pyc",
     "scripts/number_equations.py",
-    "docs/57_gru_memory.md",
-    "docs/55_denoising_autoencoder.md",
-    "docs/16_bezier.md",
-    "docs/19_sand.md",
-    "docs/38_random_forest.md",
-    "docs/56_char_rnn.md",
-    "docs/51_numeric_foundations.md",
-    "docs/17_particles.md",
-    "docs/48_model_comparison_analysis.md",
-    "docs/59_vae.md",
-    "docs/58_tiny_transformer.md",
-    "docs/15_pathfinding.md",
+    "docs/57_GRU门控网络.md",
+    "docs/55_去噪自编码器.md",
+    "docs/16_贝塞尔曲线编辑器.md",
+    "docs/19_落沙模拟.md",
+    "docs/38_随机森林.md",
+    "docs/56_字符循环神经网络.md",
+    "docs/51_数值计算与梯度.md",
+    "docs/17_粒子喷泉.md",
+    "docs/48_公平模型比较.md",
+    "docs/59_变分自编码器.md",
+    "docs/58_小型Transformer.md",
+    "docs/15_寻路算法.md",
     "db1.base",
     "Excalidraw",
     "未命名.canvas"
