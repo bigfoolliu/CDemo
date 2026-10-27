@@ -32,6 +32,7 @@ make sanitize-random-forest
 
 $$
 x_{r,c}=-0.875+0.25c+\delta,\qquad y_{r,c}=-0.875+0.25r+\delta
+\tag{1}
 $$
 
 其中训练集使用 $\delta=0$，测试集使用 $\delta=0.0625$。圆内标签为正类，边界也归负类：
@@ -42,6 +43,7 @@ z_{r,c}=
 1,&x_{r,c}^{2}+y_{r,c}^{2}<0.55\\
 0,&x_{r,c}^{2}+y_{r,c}^{2}\ge0.55
 \end{cases}
+\tag{2}
 $$
 
 例如训练网格的 $(r,c)=(0,0)$ 得到 $(x,y)=(-0.875,-0.875)$，平方距离为 $0.875^2+0.875^2=1.53125$，因此标签为 $0$；$(r,c)=(3,3)$ 得到 $(-0.125,-0.125)$，平方距离为 $0.03125<0.55$，因此标签为 $1$。
@@ -57,6 +59,7 @@ $$
 $$
 s_{\ell+1}=(1664525s_\ell+1013904223)\bmod2^{32},\qquad
 u_\ell=\left\lfloor\frac{s_{\ell+1}}{2^{16}}\right\rfloor
+\tag{3}
 $$
 
 这里 $s_\ell$ 是第 $\ell$ 步的 $32$ 位状态，$u_\ell$ 是返回的 $16$ 位伪随机整数。令 $b$ 表示代码参数 `upper_bound`，`random_index` 返回的下标可写为 $u_\ell\bmod b$。本例的范围只用 $64$ 个样本或 $2$ 个特征；它们都整除 $2^{16}$，所以对均匀的 $16$ 位输入，取模映射本身不会造成余数不均。不过线性同余发生器是确定性教学工具，不是独立随机源，也不适用于安全场景。
@@ -67,10 +70,12 @@ $$
 
 $$
 P_{\mathrm{OOB}}=\left(1-\frac{1}{n}\right)^n
+\tag{4}
 $$
 
 $$
 \mathbb{E}[N_{\text{OOB}}]=n\left(1-\frac{1}{n}\right)^n
+\tag{5}
 $$
 
 本例 $n=64$，所以单个样本理论上约有 $0.365$ 的机会成为某棵树的袋外样本；每棵树期望有 $64(63/64)^{64}\approx23.36$ 个袋外样本。期望不是每棵树必须达到的数量：当前 Apple Clang $17$、主种子 $2025$ 的首棵树实际抽到 $42$ 个不同样本，留下 $22$ 个袋外样本。
@@ -94,6 +99,7 @@ next.in_bag[selected] = true;
 
 $$
 f_t=u^{(t)}\bmod F,\qquad F=2
+\tag{6}
 $$
 
 其中 $f_t$ 是节点 $t$ 选择的特征编号，$u^{(t)}$ 是该节点消耗的下一个随机值，$F$ 是特征总数。每个节点只随机考虑一个特征，即每个节点候选特征数 $m_{\mathrm{try}}=1$；之后在这个特征上枚举所有相邻不同值的中点，并选其中基尼增益最大的阈值。随机性来自 bootstrap 样本和节点特征选择；阈值本身不是随机挑的。
@@ -114,16 +120,19 @@ if (!find_candidate(samples, indices, count, positives, feature, &candidate)) {
 
 $$
 G(t)=2p_t(1-p_t)
+\tag{7}
 $$
 
 切分后左、右样本数为 $n_L,n_R$，且 $n_t=n_L+n_R$；子节点的加权不纯度及切分增益为：
 
 $$
 G_{\text{after}}=\frac{n_L}{n_t}G(L)+\frac{n_R}{n_t}G(R)
+\tag{8}
 $$
 
 $$
 \operatorname{Gain}=G(t)-G_{\text{after}}
+\tag{9}
 $$
 
 源码中的 `impurity(positives, count)` 对应 $G(t)$，`find_candidate` 的 `child_impurity` 对应 $G_{\text{after}}$。它对当前特征按值排序，随扫描更新左侧正类数；右侧正类数由父节点正类数减去左侧正类数得到。相同相邻特征值不生成切分点，中点阈值用 `<=` 规则划分；若最佳增益不大于 $10^{-12}$，函数返回失败，建树把当前节点保留为叶节点。
@@ -149,6 +158,7 @@ double gain = parent - child_impurity;
 
 $$
 \tau_k=v_k+\frac{v_{k+1}-v_k}{2},\qquad v_k<v_{k+1}
+\tag{10}
 $$
 
 首棵树根节点的特征 $x_1$ 在该处相邻值是 $0.625$ 和 $0.875$，代入得到 $0.625+(0.875-0.625)/2=0.75$。候选阈值还要通过基尼增益比较，只有选中的阈值才用于构造左右子节点。
@@ -159,18 +169,22 @@ $$
 
 $$
 G(\text{root})=2\cdot\frac{32}{64}\cdot\left(1-\frac{32}{64}\right)=0.5
+\tag{11}
 $$
 
 $$
 G(L)=2\cdot\frac{32}{56}\cdot\left(1-\frac{32}{56}\right)=\frac{24}{49}\approx0.489796,\qquad G(R)=0
+\tag{12}
 $$
 
 $$
 G_{\text{after}}=\frac{56}{64}\cdot\frac{24}{49}+\frac{8}{64}\cdot0=\frac{3}{7}\approx0.428571
+\tag{13}
 $$
 
 $$
 \operatorname{Gain}=0.5-\frac{3}{7}=\frac{1}{14}\approx0.071429
+\tag{14}
 $$
 
 这项计算对应 [`find_candidate`](../src/ml/17_random_forest.c#L130) 对随机选中特征枚举阈值，并由 [`build_tree_node`](../src/ml/17_random_forest.c#L186) 接受候选、分配左右样本的过程。上述根节点细节依赖当前工具链对成员子种子表达式的求值顺序；下文解释其可移植性限制。
@@ -184,6 +198,7 @@ $$
 $$
 \hat z=\begin{cases}1,&v_1>v_0\\0,&v_1\le v_0\end{cases},\qquad
 q=\frac{v_1}{T}
+\tag{15}
 $$
 
 这里 $q$ 是正类树票占比，不是校准后的后验概率。`forest_predict` 只有在所有树都成功预测后，才写入类别和比例；平票归类别 $0$。
@@ -215,11 +230,13 @@ if (next.members[i].in_bag[sample]) {
 
 $$
 \hat z_j^{\text{OOB}}=\begin{cases}1,&v_{j,1}>v_{j,0}\\0,&v_{j,1}\le v_{j,0}\end{cases}
+\tag{16}
 $$
 
 $$
 E_{\text{OOB}}=\sum_{j:V_j>0}\mathbf{1}\left[\hat z_j^{\text{OOB}}\ne z_j\right],\qquad
 C_{\text{OOB}}=\sum_{j=0}^{63}\mathbf{1}[V_j>0]
+\tag{17}
 $$
 
 其中 $z_j$ 是训练标签，$\mathbf{1}[\cdot]$ 在括号条件成立时为 $1$，否则为 $0$；$E_{\text{OOB}}$ 是错误数，$C_{\text{OOB}}$ 是有覆盖样本数。没有任何袋外票的样本会被跳过；如果整批样本都没有覆盖，`oob_evaluate` 返回失败。

@@ -32,16 +32,16 @@ make sanitize-xor-mlp
 
 XOR 的两个输入不同则标签为 $1$，相同则标签为 $0$。样本索引为 $n\in\{0,1,2,3\}$，输入下标为 $i\in\{0,1\}$；这两个下标在源码循环中都从 $0$ 开始。
 
-| 数学符号 | 含义 | 源码对应 |
-| --- | --- | --- |
-| $x_{n,i}\in\{0,1\}$ | 第 $n$ 个样本的第 $i$ 个输入 | `xor_inputs[n][i]` |
-| $y_n\in\{0,1\}$ | 第 $n$ 个样本的正确标签 | `xor_targets[n]` |
-| $h\in\{0,1,2,3\}$ | 隐藏神经元下标 | `for (size_t h = 0; h < HIDDEN; ++h)` |
-| $W_{1,h,i}, b_{1,h}$ | 输入层到隐藏层的权重和偏置 | `parameters[W1 + h * INPUTS + i]`、`parameters[B1 + h]` |
-| $u_h, a_h$ | 隐藏层第 $h$ 个神经元的加权输入与激活 | `preactivation`、`forward.hidden[h]` |
-| $W_{2,h}, b_2$ | 隐藏层到输出层的权重和偏置 | `parameters[W2 + h]`、`parameters[B2]` |
-| $z, p$ | sigmoid 前的 logit 和输出概率 | `forward.logit`、`forward.probability` |
-| $L, J$ | 单个样本的交叉熵和四样本平均损失 | `binary_cross_entropy`、`network_loss` |
+| 数学符号                 | 含义                     | 源码对应                                                   |
+| -------------------- | ---------------------- | ------------------------------------------------------ |
+| $x_{n,i}\in\{0,1\}$  | 第 $n$ 个样本的第 $i$ 个输入    | `xor_inputs[n][i]`                                     |
+| $y_n\in\{0,1\}$      | 第 $n$ 个样本的正确标签         | `xor_targets[n]`                                       |
+| $h\in\{0,1,2,3\}$    | 隐藏神经元下标                | `for (size_t h = 0; h < HIDDEN; ++h)`                  |
+| $W_{1,h,i}, b_{1,h}$ | 输入层到隐藏层的权重和偏置          | `parameters[W1 + h * INPUTS + i]`、`parameters[B1 + h]` |
+| $u_h, a_h$           | 隐藏层第 $h$ 个神经元的加权输入与激活  | `preactivation`、`forward.hidden[h]`                    |
+| $W_{2,h}, b_2$       | 隐藏层到输出层的权重和偏置          | `parameters[W2 + h]`、`parameters[B2]`                  |
+| $z, p$               | sigmoid 前的 logit 和输出概率 | `forward.logit`、`forward.probability`                  |
+| $L, J$               | 单个样本的交叉熵和四样本平均损失       | `binary_cross_entropy`、`network_loss`                  |
 
 所有输入、权重、偏置、激活和损失在这个小例子中都没有物理单位。令 $\mathbb R$ 表示实数集合，网络形状为：
 
@@ -57,6 +57,7 @@ W_2\in\mathbb R^4,\ b_2\in\mathbb R
 z\in\mathbb R
 \longrightarrow
 p\in(0,1).
+\tag{1}
 $$
 
 源码把参数存入单个 `double parameters[17]`，便于统一遍历和逐项检查梯度。枚举偏移定义在 [`W1` 到 `PARAMETERS`](../src/ml/06_xor_mlp.c#L18-L25)：
@@ -78,12 +79,14 @@ $$
 
 $$
 \alpha_1+\beta\ge0,\qquad \alpha_0+\beta\ge0.
+\tag{2}
 $$
 
 相加得到 $\alpha_0+\alpha_1+2\beta\ge0$。两个负样本 $(0,0)$ 和 $(1,1)$ 则要求：
 
 $$
 \beta<0,\qquad \alpha_0+\alpha_1+\beta<0.
+\tag{3}
 $$
 
 相加得到同一个左侧表达式 $\alpha_0+\alpha_1+2\beta<0$，与前一个不等式矛盾。增加训练轮数无法弥补模型表达能力不足；需要非线性隐藏层。源码在 [`network_forward`](../src/ml/06_xor_mlp.c#L99-L112) 中用 `tanh` 产生非线性特征，再由输出层组合。
@@ -100,6 +103,7 @@ $$
 z=w_0x_0+w_1x_1+b
 =0.5\times1+(-0.25)\times2+0.1
 =0.1.
+\tag{4}
 $$
 
 sigmoid 把实数分数映射到概率。$z\ge0$ 时用 $1/(1+e^{-z})$；$z<0$ 时源码改用 $e^z/(1+e^z)$，避免求可能溢出的大正指数：
@@ -112,18 +116,21 @@ p=\sigma(z)=
 \end{cases}
 \qquad
 p=\sigma(0.1)\approx0.5249791875.
+\tag{5}
 $$
 
 分支实现见 [`sigmoid`](../src/ml/06_xor_mlp.c#L40-L52)。浮点舍入可能让极端输入的概率恰好成为 $0$ 或 $1$，所以损失不能简单地对这个概率取对数。二分类交叉熵的常规定义是：
 
 $$
 L=-y\ln p-(1-y)\ln(1-p).
+\tag{6}
 $$
 
 其中 $y$ 是取 $0$ 或 $1$ 的标签，$\ln$ 是自然对数。将 sigmoid 代入后可改写成仅依赖 logit 的稳定形式：
 
 $$
 L(z,y)=\max(z,0)-yz+\ln\!\left(1+e^{-|z|}\right).
+\tag{7}
 $$
 
 对本例，$y=1$ 且 $z=0.1$：
@@ -132,6 +139,7 @@ $$
 L=0.1-1\times0.1+\ln(1+e^{-0.1})
 =\ln(1+0.9048374)
 \approx0.6443966601.
+\tag{8}
 $$
 
 源码使用 `fmax`、`fabs` 和 `log1p` 实现此式，见 [`binary_cross_entropy`](../src/ml/06_xor_mlp.c#L54-L63)。例如 $z=1000,y=0$ 时，损失为 $1000+\ln(1+e^{-1000})\approx1000$，不会先把 $p$ 舍入为 $1$ 再计算 $\ln(1-p)$。
@@ -145,6 +153,7 @@ $$
 =\left(-\frac{y}{p}+\frac{1-y}{1-p}\right)p(1-p)
 =-y(1-p)+(1-y)p
 =p-y.
+\tag{9}
 $$
 
 本例代入 $p\approx0.5249791875$、$y=1$：
@@ -153,6 +162,7 @@ $$
 \delta_{\mathrm{out}}=\frac{dL}{dz}=p-y
 =0.5249791875-1
 \approx-0.4750208125.
+\tag{10}
 $$
 
 这里 $\delta_{\mathrm{out}}$ 表示输出 logit 的梯度。权重通过 $z=w_0x_0+w_1x_1+b$ 影响损失，因此：
@@ -162,6 +172,7 @@ $$
 =\delta_{\mathrm{out}}x_0
 =-0.4750208125\times1
 =-0.4750208125,
+\tag{11}
 $$
 
 $$
@@ -173,6 +184,7 @@ $$
 \frac{\partial L}{\partial b}
 =\delta_{\mathrm{out}}
 \approx-0.4750208125.
+\tag{12}
 $$
 
 因此实现中不再额外乘 $p(1-p)$：这个因子已经在 sigmoid 与交叉熵的合并求导中抵消。`test_neuron` 用中心差分对 $dL/dz$ 做独立数值核对。
@@ -184,11 +196,13 @@ $$
 $$
 q_{k+1}=(1664525q_k+1013904223)\bmod2^{32},\qquad
 r_k=\left\lfloor\frac{q_{k+1}}{2^8}\right\rfloor,
+\tag{13}
 $$
 
 $$
 u_k=\frac{r_k}{2^{24}}\in[0,1),\qquad
 w_k=1.6u_k-0.8\in[-0.8,0.8).
+\tag{14}
 $$
 
 这里 $q_0=42$ 是本例种子，$k$ 是权重生成序号；模 $2^{32}$ 对应无符号整数回绕。`network_initialize` 先把整个网络清零，再对每个隐藏神经元依次生成两个 $W_1$ 权重和一个 $W_2$ 权重，所以所有偏置初始为零。
@@ -205,10 +219,12 @@ W_1=\begin{bmatrix}
 W_2=\begin{bmatrix}
 0.123650 & -0.758938 & 0.598102 & -0.000517
 \end{bmatrix},
+\tag{15}
 $$
 
 $$
 b_1=\begin{bmatrix}0&0&0&0\end{bmatrix}^{\mathsf T},\qquad b_2=0.
+\tag{16}
 $$
 
 矩阵行对应 $h=0,1,2,3$，列对应 $i=0,1$。这些数值是按源码的整数生成步骤计算后显示的近似值；后续手算使用未舍入的权重，只在文档中显示有限小数位。相同编译环境中的两次初始化会逐位相等，源码也逐项断言这一点。不同数学库实现可能令后续 `tanh` 结果有细微舍入差异。
@@ -220,10 +236,12 @@ $$
 $$
 u_h=b_{1,h}+\sum_{i=0}^{1}W_{1,h,i}x_{0,i},\qquad
 a_h=\tanh(u_h),
+\tag{17}
 $$
 
 $$
 z=b_2+\sum_{h=0}^{3}W_{2,h}a_h,\qquad p=\sigma(z).
+\tag{18}
 $$
 
 源码在每个隐藏单元中累加输入，再把 `tanh` 结果立刻送入输出层；末尾才计算 sigmoid：
@@ -244,12 +262,14 @@ forward.logit += network->parameters[W2 + h] * forward.hidden[h];
 $$
 u_h=0+W_{1,h,0}\times0+W_{1,h,1}\times0=0,
 \qquad a_h=\tanh(0)=0.
+\tag{19}
 $$
 
 所以 $z=0+\sum_{h=0}^{3}W_{2,h}\times0=0$，$p=\sigma(0)=0.5$。标签 $y_0=0$，该样本损失为：
 
 $$
 L_0=\max(0,0)-0\times0+\ln(1+e^0)=\ln2\approx0.6931471806.
+\tag{20}
 $$
 
 反向传播先得 $\delta_{\mathrm{out}}=p-y_0=0.5$。对隐藏层，令 $\delta_h$ 表示损失对 $u_h$ 的导数。因为 $d\tanh(u_h)/du_h=1-a_h^2$，链式法则给出：
@@ -258,11 +278,13 @@ $$
 \delta_h=\delta_{\mathrm{out}}W_{2,h}(1-a_h^2),\qquad
 \frac{\partial L}{\partial W_{2,h}}=\delta_{\mathrm{out}}a_h,\qquad
 \frac{\partial L}{\partial b_2}=\delta_{\mathrm{out}},
+\tag{21}
 $$
 
 $$
 \frac{\partial L}{\partial W_{1,h,i}}=\delta_hx_{0,i},\qquad
 \frac{\partial L}{\partial b_{1,h}}=\delta_h.
+\tag{22}
 $$
 
 此时 $a_h=0$，所以输出权重梯度全为零；$x_{0,i}=0$，所以输入权重梯度全为零。隐藏偏置梯度则为 $\delta_h=0.5W_{2,h}$。代入初始 $W_2$ 得：
@@ -274,6 +296,7 @@ $$
 \end{bmatrix}^{\mathsf T},
 \qquad
 \nabla_{b_2}L_0=0.5.
+\tag{23}
 $$
 
 `network_backward` 将这些梯度写入数组；它不会修改网络。接着训练率 $\eta=0.1$，`network_update` 对每个参数下标 $r\in\{0,\ldots,16\}$ 执行 $\theta_r\leftarrow\theta_r-\eta g_r$，其中 $\theta_r$ 是参数，$g_r$ 是对应梯度。于是这一步后：
@@ -283,6 +306,7 @@ b_1\approx
 \begin{bmatrix}
 -0.006182494 & 0.037946892 & -0.029905095 & 0.000025864
 \end{bmatrix}^{\mathsf T},\qquad b_2=-0.05,
+\tag{24}
 $$
 
 而 $W_1$、$W_2$ 保持原值。这展示了为什么“输入为零”时输入权重没有更新，但隐藏偏置和输出偏置仍能更新。反向传播必须读取更新前的 $W_2$；因此代码先完整计算梯度，再调用 [`network_update`](../src/ml/06_xor_mlp.c#L140-L153)。
@@ -293,6 +317,7 @@ $$
 u\approx\begin{bmatrix}-0.665183&-0.160997&-0.640369&0.565150\end{bmatrix}^{\mathsf T},
 \qquad
 a=\tanh(u)\approx\begin{bmatrix}-0.581802&-0.159620&-0.565151&0.511789\end{bmatrix}^{\mathsf T}.
+\tag{25}
 $$
 
 输出层将四个特征加权求和：
@@ -301,6 +326,7 @@ $$
 z\approx-0.05-0.071940+0.121142-0.338018-0.000265=-0.339081,
 \qquad
 p=\sigma(z)\approx0.416033.
+\tag{26}
 $$
 
 因为正确标签是 $1$，这次概率仍偏低，稳定交叉熵约为 $L_1=0.876991$。下一次反向传播会产生非零的 $W_1$ 梯度，因为输入的第二个分量为 $1$；随后更新会同时改变隐藏特征和输出。这里展示的是源码固定顺序 SGD 的前两次样本处理，不是独立于训练循环的虚构批次。
@@ -313,6 +339,7 @@ $$
 u_h=b_{1,h}+\sum_{i=0}^{1}W_{1,h,i}x_i,
 \qquad a_h=\tanh(u_h),
 \qquad z=b_2+\sum_{h=0}^{3}W_{2,h}a_h.
+\tag{27}
 $$
 
 令 $y$ 是当前样本标签，$p=\sigma(z)$ 是前向缓存的概率。输出层误差信号为 $\delta_{\mathrm{out}}=p-y$；继续向隐藏层传递时乘以输出权重和 `tanh` 的导数：
@@ -320,6 +347,7 @@ $$
 $$
 \delta_h=\frac{\partial L}{\partial u_h}
 =\delta_{\mathrm{out}}W_{2,h}(1-a_h^2).
+\tag{28}
 $$
 
 例如当某隐藏激活 $a_h=0.5$、对应输出权重 $W_{2,h}=0.4$、输出误差 $\delta_{\mathrm{out}}=-0.2$ 时：
@@ -327,6 +355,7 @@ $$
 $$
 \delta_h=(-0.2)\times0.4\times(1-0.5^2)
 =-0.08\times0.75=-0.06.
+\tag{29}
 $$
 
 这个隐藏神经元的输入权重梯度等于其误差信号乘以输入。若输入分量 $x_i=2$，则 $\partial L/\partial W_{1,h,i}=-0.06\times2=-0.12$；偏置梯度为 $\partial L/\partial b_{1,h}=-0.06$。这些例子是对源码公式的手算示范，数值不声称是训练过程中的某个隐藏单元状态。
@@ -352,6 +381,7 @@ gradients[B1 + h] = hidden_delta;
 $$
 \theta^{(t+1)}=\theta^{(t)}-\eta\nabla_\theta L_n(\theta^{(t)}),
 \qquad \eta=0.1.
+\tag{30}
 $$
 
 其中 $t$ 是单次样本更新序号，$n$ 是当前样本序号，$\theta$ 是全部 $17$ 个参数组成的向量。源码每轮有四次更新，总共执行 $5000\times4=20000$ 次更新。输出的平均损失是在更新后用同一份当前网络重新计算：
@@ -373,6 +403,7 @@ network->parameters[p] -= learning_rate * gradients[p];
 
 $$
 J(\theta)=\frac{1}{4}\sum_{n=0}^{3}L(z_n,y_n).
+\tag{31}
 $$
 
 这里 $z_n$ 是当前网络对第 $n$ 个样本算出的 logit，$y_n$ 是对应标签。用种子 $42$ 的初始参数计算，四个样本损失依次约为 $0.693147$、$0.824990$、$0.589571$ 和 $0.679898$，因此：
@@ -380,6 +411,7 @@ $$
 $$
 J(\theta^{(0)})\approx\frac{0.693147+0.824990+0.589571+0.679898}{4}
 \approx0.696902.
+\tag{32}
 $$
 
 固定环境本次运行的训练观察值为：
@@ -417,6 +449,7 @@ x=[1,1]，目标=0，概率=0.002081，预测=0
 
 $$
 \frac{0.5-0.5-0.5+0.5}{4}=0.
+\tag{33}
 $$
 
 因此源码测试中全零网络的四样本平均梯度全部为零，网络会停在 $p=0.5$。仅把偏置设为零并没有这个问题：随机权重已经让不同隐藏单元得到不同输入响应。固定种子使实验可复现，但不是每个随机初始化都能保证同样快地收敛。
@@ -428,6 +461,7 @@ $$
 $$
 g^{\mathrm{num}}_r=
 \frac{L(\theta+\varepsilon\mathbf e_r)-L(\theta-\varepsilon\mathbf e_r)}{2\varepsilon}.
+\tag{34}
 $$
 
 分子是在只增加或减少一个参数后重新前向计算的损失差；除以 $2\varepsilon$ 是中心差分近似。源码对四个样本、每个样本的 $17$ 个参数都进行比较。接受条件为：
@@ -435,6 +469,7 @@ $$
 $$
 |g^{\mathrm{num}}_r-g^{\mathrm{ana}}_r|
 <10^{-8}+10^{-6}\max\!\left(|g^{\mathrm{num}}_r|,|g^{\mathrm{ana}}_r|\right),
+\tag{35}
 $$
 
 其中 $g^{\mathrm{ana}}_r$ 是 `network_backward` 写出的解析梯度。绝对误差项照顾接近零的梯度，相对误差项随梯度大小缩放。本次 `make test-xor-mlp` 输出最大绝对误差 $1.399\times10^{-11}$。

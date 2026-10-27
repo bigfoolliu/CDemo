@@ -61,6 +61,7 @@ make sanitize-numeric-foundations
 
 $$
 \operatorname{index}(r,c)=r n+c.
+\tag{1}
 $$
 
 这里 $r$ 是行下标，$c$ 是列下标，$n$ 是列数。源码实际使用 `data[row * columns + column]`；对应的 `row`、`column` 是 C 循环变量，分别表示 $r$、$c$。
@@ -75,6 +76,7 @@ A=
 \end{bmatrix},
 \qquad
 \operatorname{data}_A=[1,2,3,4,5,6].
+\tag{2}
 $$
 
 这里 $\operatorname{data}_A$ 表示矩阵 $A$ 在源码 `a.data` 中的行优先存储序列。
@@ -101,6 +103,7 @@ $$
 
 $$
 C_{r,c}=\sum_{s=0}^{k-1}A_{r,s}B_{s,c}.
+\tag{3}
 $$
 
 这里 $C$ 是输出矩阵，$s$ 从 $0$ 到 $k-1$ 遍历共享维度；下标从 $0$ 开始。C 源码中循环变量 `k` 扮演公式中的 $s$，内层循环的 `sum` 累加一个输出格的点积：
@@ -126,6 +129,7 @@ B=
 \end{bmatrix},
 \qquad
 C=AB.
+\tag{4}
 $$
 
 逐项计算：
@@ -137,6 +141,7 @@ C_{0,1}&=1\cdot8+2\cdot10+3\cdot12=8+20+36=64,\\
 C_{1,0}&=4\cdot7+5\cdot9+6\cdot11=28+45+66=139,\\
 C_{1,1}&=4\cdot8+5\cdot10+6\cdot12=32+50+72=154.
 \end{aligned}
+\tag{5}
 $$
 
 因此：
@@ -147,6 +152,7 @@ C=
 58&64\\
 139&154
 \end{bmatrix}.
+\tag{6}
 $$
 
 例如计算 $C_{0,0}$ 时，内层循环读取 `a.data[0]`、`a.data[1]`、`a.data[2]`，以及 `b.data[0]`、`b.data[2]`、`b.data[4]`，将三组乘积累加为 $58$。这正对应“左矩阵的一行”与“右矩阵的一列”做点积。测试还用行向量和列向量验证点积：$[2,3]$ 与 $[4,5]$ 的乘积和为 $2\cdot4+3\cdot5=23$。
@@ -159,6 +165,7 @@ $$
 
 $$
 (A^\mathsf{T})_{c,r}=A_{r,c}.
+\tag{7}
 $$
 
 源码把输入的 `input[row * input->columns + column]` 写到输出的 `output[column * output->columns + row]`。因为输入与输出的 `data` 不能相同，循环不会覆盖后面仍需读取的输入元素。对当前数据：
@@ -170,6 +177,7 @@ A^\mathsf{T}=
 2&5\\
 3&6
 \end{bmatrix}.
+\tag{8}
 $$
 
 ### 逐元素加法：形状必须相同
@@ -178,6 +186,7 @@ $$
 
 $$
 S_{r,c}=A_{r,c}+B_{r,c}.
+\tag{9}
 $$
 
 这里 $S$ 是结果矩阵，$r$ 和 $c$ 分别为行、列下标；与乘法不同，这里没有沿共享维度做乘积累加，也没有广播。本例调用 `matrix_add(&a, &a, &sum)`，所以：
@@ -188,6 +197,7 @@ A+A=
 2&4&6\\
 8&10&12
 \end{bmatrix}.
+\tag{10}
 $$
 
 逐元素相加允许输出与某个输入完全同址；每次读写只涉及同一下标，不影响其他元素。测试专门检查 `matrix_add(&a, &a, &a)` 的原地结果。部分重叠缓冲区不在接口保证范围内。
@@ -206,12 +216,14 @@ p=w_0x_0+w_1x_1+b,
 e=p-y,
 \qquad
 L=e^2.
+\tag{11}
 $$
 
 这里 $p$ 是预测，$e$ 是有符号误差，$L$ 是单样本损失。代码中的 `step.prediction`、`step.error`、`step.loss` 依次保存这些值；源码 [`linear_step`](../src/ml/05_numeric_foundations.c#L183) 按这个顺序计算。对 $N$ 个样本的均方误差通常是：
 
 $$
 \operatorname{MSE}=\frac{1}{N}\sum_{j=0}^{N-1}(p_j-y_j)^2.
+\tag{12}
 $$
 
 这里 $N$ 是样本数，$j$ 是样本下标，$p_j$ 与 $y_j$ 分别是第 $j$ 个样本的预测和目标。本例只有一个样本，即 $N=1$，所以 `step.loss` 就是平方误差。代码没有在损失前乘 $\frac{1}{2}$，因此后面的导数会出现系数 $2$。它也没有实现批量平均、激活函数或隐藏层。
@@ -239,6 +251,7 @@ p&=0.5\cdot1+(-0.25)\cdot2+0.1=0.5-0.5+0.1=0.1,\\
 e&=p-y=0.1-1=-0.9,\\
 L&=e^2=(-0.9)^2=0.81.
 \end{aligned}
+\tag{13}
 $$
 
 因此程序打印预测 $0.1000$、误差 $-0.9000$ 和损失 $0.8100$。预测比目标小，所以误差为负；梯度下降会沿负梯度方向增加相关参数。
@@ -249,6 +262,7 @@ $$
 
 $$
 \frac{\partial L}{\partial p}=2(p-y)=2e.
+\tag{14}
 $$
 
 这里 $L=(p-y)^2$，$p$ 是预测，$y$ 是目标，$e=p-y$。模型预测对特征权重的偏导数是：
@@ -257,6 +271,7 @@ $$
 \frac{\partial p}{\partial w_i}=x_i\quad(i\in\{0,1\}),
 \qquad
 \frac{\partial p}{\partial b}=1.
+\tag{15}
 $$
 
 其中 $i$ 是两个特征的下标。将两段导数相乘，得到实际需要的参数梯度：
@@ -265,6 +280,7 @@ $$
 \frac{\partial L}{\partial w_i}=2e x_i\quad(i\in\{0,1\}),
 \qquad
 \frac{\partial L}{\partial b}=2e.
+\tag{16}
 $$
 
 [`linear_step`](../src/ml/05_numeric_foundations.c#L189) 把 `upstream` 设为 $2e$，再依次写入 `gradients[0]`、`gradients[1]` 和 `gradients[2]`。代入 $e=-0.9$、$x_0=1$、$x_1=2$：
@@ -281,6 +297,7 @@ $$
 w_i^{\text{new}}=w_i^{\text{old}}-\eta\frac{\partial L}{\partial w_i},
 \qquad
 b^{\text{new}}=b^{\text{old}}-\eta\frac{\partial L}{\partial b}.
+\tag{17}
 $$
 
 这里 $\eta$ 是正学习率，`old` 和 `new` 分别表示更新前后的参数。[`linear_update`](../src/ml/05_numeric_foundations.c#L203) 逐项使用 `step.gradients` 修改模型。因为梯度已经保存在 `LinearStep` 中，先更新 `weights[0]` 不会改变其余梯度；所有参数使用同一轮旧模型计算出的梯度。
@@ -301,6 +318,7 @@ w_0^{\text{new}}&=0.5-0.05(-1.8)=0.59,\\
 w_1^{\text{new}}&=-0.25-0.05(-3.6)=-0.07,\\
 b^{\text{new}}&=0.1-0.05(-1.8)=0.19.
 \end{aligned}
+\tag{18}
 $$
 
 重新前向计算：
@@ -311,6 +329,7 @@ p^{\text{new}}=0.59\cdot1+(-0.07)\cdot2+0.19=0.64,
 e^{\text{new}}=0.64-1=-0.36,
 \qquad
 L^{\text{new}}=(-0.36)^2=0.1296.
+\tag{19}
 $$
 
 损失从 $0.81$ 降到 $0.1296$，说明对这个固定样本和学习率，这一步更新方向有效。测试在[参数更新后断言](../src/ml/05_numeric_foundations.c#L296)检查三个参数，并在[再次前向检查](../src/ml/05_numeric_foundations.c#L299)和[损失断言](../src/ml/05_numeric_foundations.c#L301)核对新结果。一个样本不能证明参数能预测未见数据，也不能唯一确定一个真实任务的模型。
@@ -323,6 +342,7 @@ $$
 g_i^{\text{num}}
 =
 \frac{L(\theta_i+\epsilon)-L(\theta_i-\epsilon)}{2\epsilon}.
+\tag{20}
 $$
 
 这里 $\theta_i$ 是当前选中的一个权重或偏置，$\epsilon=10^{-5}$ 是小扰动，单位与被扰动参数 $\theta_i$ 相同，$g_i^{\text{num}}$ 是数值近似梯度。代码复制当前 `LinearModel` 为 `plus`、`minus`，只改一个参数，然后调用 `linear_step` 计算两边损失；它把这个近似与解析梯度以及手算值比较，容差为 $10^{-8}$。测试用双精度的固定小数，因此断言另外为手算梯度采用 $10^{-12}$ 的阈值。
@@ -337,6 +357,7 @@ g_0^{\text{num}}
 &=\frac{0.8099820001-0.8100180001}{2\cdot10^{-5}}
 =-1.8.
 \end{aligned}
+\tag{21}
 $$
 
 这是一个可直接核对的完整数值：解析结果为 $\frac{\partial L}{\partial w_0}=-1.8$，中心差分也约为 $-1.8$。同理，扰动 $w_1$ 时预测变化量是 $2\epsilon$，所以近似梯度约为 $-3.6$；扰动偏置时变化量是 $\epsilon$，所以约为 $-1.8$。
@@ -361,6 +382,7 @@ $$
 w_i'=w_i-2\eta e x_i,
 \qquad
 b'=b-2\eta e.
+\tag{22}
 $$
 
 这里撇号表示同一次梯度下降后的参数。代入新的参数计算预测，并利用 $e=p-y$：
@@ -371,12 +393,14 @@ e'
 &=\left(\sum_{i=0}^{1}(w_i-2\eta e x_i)x_i+b-2\eta e\right)-y\\
 &=\left[1-2\eta\left(\sum_{i=0}^{1}x_i^2+1\right)\right]e.
 \end{aligned}
+\tag{23}
 $$
 
 其中 $i$ 是特征下标，求和中的 $1$ 来自偏置 $b$ 的梯度。对本例，$x_0^2+x_1^2+1=1^2+2^2+1=6$，所以：
 
 $$
 e'=(1-12\eta)e.
+\tag{24}
 $$
 
 设每轮误差倍率 $q=1-12\eta$，初始误差 $e_0=-0.9$，则第 $t$ 次更新后的误差满足 $e_t=q^t e_0$。源码在[六步循环](../src/ml/05_numeric_foundations.c#L320)先打印更新前误差，再更新参数，并由[误差倍率断言](../src/ml/05_numeric_foundations.c#L327)核对下一步；六个打印值分别是 $e_0$ 到 $e_5$：

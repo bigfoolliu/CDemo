@@ -46,6 +46,7 @@ y_i=\begin{cases}
 -1,&i\bmod2=0\\
 +1,&i\bmod2=1
 \end{cases}
+\tag{1}
 $$
 
 这里 $i$ 是从 $0$ 开始的样本下标，所以 $i=0$ 时标签是 $-1$；每个数据集因此恰好各有一半正类和负类。伪随机数由 $32$ 位状态 $S_t$ 生成：
@@ -53,6 +54,7 @@ $$
 $$
 S_{t+1}=(1664525S_t+1013904223)\bmod 2^{32},\qquad
 r_t=\frac{\lfloor S_{t+1}/2^8\rfloor}{2^{24}}
+\tag{2}
 $$
 
 这里 $t$ 是随机数调用次序，$r_t\in[0,1)$；无符号整数回绕实现模 $2^{32}$。开发集、测试集和折分分别使用固定种子 $20261015$、$20261016$、$4567$，因此同一实现会得到可重复数据和折编号。这个线性同余生成器只用于教学复现，不是安全随机数。
@@ -63,10 +65,12 @@ $$
 
 $$
 u_i=0.65y_i+1.1(2r_{i,1}-1),\qquad q_i=2r_{i,2}-1
+\tag{3}
 $$
 
 $$
 x_{i,1}=12u_i+3q_i,\qquad x_{i,2}=0.03u_i+0.012q_i
+\tag{4}
 $$
 
 下标 $i$ 从 $0$ 开始；$x_{i,1}$、$x_{i,2}$ 分别对应 `Sample.features[0]` 和 `Sample.features[1]`。第一列的数值尺度远大于第二列，训练前若不缩放，梯度更新会受到特征单位影响。
@@ -80,10 +84,12 @@ $$
 $$
 \mu_j=\frac{1}{n_{\mathrm{train}}}\sum_{i\in T}x_{i,j},\qquad
 \sigma_j=\sqrt{\frac{1}{n_{\mathrm{train}}}\sum_{i\in T}(x_{i,j}-\mu_j)^2}
+\tag{5}
 $$
 
 $$
 z_{i,j}=\frac{x_{i,j}-\mu_j}{\sigma_j}
+\tag{6}
 $$
 
 其中 $T$ 是当前折的训练样本下标集合，$n_{\mathrm{train}}=|T|$，$j\in\{1,2\}$；$\mu_j$ 和 $\sigma_j$ 对应 `Standardizer.mean[j]` 与 `Standardizer.scale[j]`，$z_{i,j}$ 是交给模型的标准化特征。分母使用 $n_{\mathrm{train}}$，因此这是总体标准差，不是分母为 $n_{\mathrm{train}}-1$ 的样本标准差。
@@ -93,6 +99,7 @@ $$
 $$
 z_{0,1}=\frac{-8.590998-(-0.048170)}{12.009447}\approx-0.711342,\qquad
 z_{0,2}=\frac{-0.020352-(-0.000621)}{0.030959}\approx-0.637322
+\tag{7}
 $$
 
 验证样本也使用这组均值和标准差变换，但不会参与它们的计算。若先用完整开发集计算标准差，验证样本的信息会泄漏到训练过程；若在最终重训时继续使用某个折的统计量，也会丢弃开发集其余样本的信息。因此代码在交叉验证后重新用全部开发集拟合一套最终参数。
@@ -107,6 +114,7 @@ $$
 s_i=\mathbf{w}^{\mathsf T}\mathbf{z}_i+b,\qquad
 p_i=\operatorname{sigmoid}(s_i)=\frac{1}{1+\exp(-s_i)},\qquad
 a_i=\frac{y_i+1}{2}
+\tag{8}
 $$
 
 这里 $y_i=-1$ 对应 $a_i=0$，$y_i=+1$ 对应 $a_i=1$；`logistic_fit` 中的 `score`、`sigmoid(score)` 和 `target` 分别对应 $s_i$、$p_i$ 和 $a_i$。$p_i$ 是模型给出的正类概率，决策边界为 $s_i=0$，即 $p_i=0.5$。
@@ -117,12 +125,14 @@ $$
 \ell_i=-a_i\ln p_i-(1-a_i)\ln(1-p_i),\qquad
 J(\mathbf{w},b)=\frac{1}{n_{\mathrm{train}}}\sum_{i\in T}\ell_i+
 \frac{\lambda}{2}\lVert\mathbf{w}\rVert_2^2
+\tag{9}
 $$
 
 其中 $\lambda$ 是候选正则系数，$\lVert\mathbf{w}\rVert_2^2=w_1^2+w_2^2$ 是权重向量的平方欧几里得范数；偏置 $b$ 不受惩罚。所有模型都从 $\mathbf{w}=\mathbf{0}$、$b=0$ 初始化，此时任意样本的 $p_i=0.5$，所以初始目标值为：
 
 $$
 J(\mathbf{0},0)=\frac{1}{n_{\mathrm{train}}}\sum_{i\in T}\ln2+0=\ln2\approx0.693147
+\tag{10}
 $$
 
 令 $p_i=\operatorname{sigmoid}(s_i)$，链式法则和 $\operatorname{sigmoid}'(s_i)=p_i(1-p_i)$ 给出交叉熵对分数的导数：
@@ -130,6 +140,7 @@ $$
 $$
 \frac{\partial\ell_i}{\partial s_i}=
 -a_i(1-p_i)+(1-a_i)p_i=p_i-a_i
+\tag{11}
 $$
 
 再乘以 $\partial s_i/\partial\mathbf{w}=\mathbf{z}_i$ 或 $\partial s_i/\partial b=1$，并对训练样本求平均、加入权重惩罚的导数，可得到：
@@ -137,6 +148,7 @@ $$
 $$
 \nabla_{\mathbf{w}}J=\frac{1}{n_{\mathrm{train}}}\sum_{i\in T}(p_i-a_i)\mathbf{z}_i+\lambda\mathbf{w},\qquad
 \frac{\partial J}{\partial b}=\frac{1}{n_{\mathrm{train}}}\sum_{i\in T}(p_i-a_i)
+\tag{12}
 $$
 
 源码每个 epoch 都先把全部训练样本的梯度累加，再除以样本数更新一次参数；这是一轮一次的全批量梯度下降，不是逐样本 SGD。学习率按 epoch $e$ 衰减为 $\alpha_e=0.2/(1+0.003e)$，其中 $e=0,1,\ldots,599$。权重和偏置按 $\mathbf{w}\leftarrow\mathbf{w}-\alpha_e\nabla_{\mathbf{w}}J$、$b\leftarrow b-\alpha_e\partial J/\partial b$ 更新。
@@ -159,6 +171,7 @@ bias_gradient += error;
 $$
 (p_0-a_0)\mathbf{z}_0=0.5(-0.711342,-0.637322)
 \approx(-0.355671,-0.318661)
+\tag{13}
 $$
 
 全部 $90$ 条训练样本累加并取平均后，临时探针按源码计算得到权重梯度 $(-0.376060,-0.375503)$。偏置梯度为 $0$，因为正负类数量相等，初始概率相同，正类的误差 $-0.5$ 与负类的误差 $+0.5$ 相互抵消。此时 sigmoid 的导数也是 $0.5(1-0.5)=0.25$；交叉熵链式求导后，分数梯度简化为 $p_i-a_i$。初始权重为零，所以正则梯度 $\lambda\mathbf{w}$ 也为零。首轮学习率 $\alpha_0=0.2$，第一次完整更新为：
@@ -166,6 +179,7 @@ $$
 $$
 \mathbf{w}^{(1)}=\mathbf{0}-0.2(-0.376060,-0.375503)
 \approx(0.075212,0.075101),\qquad b^{(1)}=0
+\tag{14}
 $$
 
 这里上标 $(1)$ 表示第一次更新后的参数，不是幂。下一 epoch 会用新权重重新计算所有 $90$ 个分数和概率，梯度也会改变；此时正则梯度已是 $\lambda\mathbf{w}^{(1)}$。模型经过 $600$ 次全批量更新后才用于该折的验证样本。
@@ -174,11 +188,13 @@ $$
 
 $$
 s_9=1.710304(0.755979)+1.683632(0.683623)+0.186232\approx2.630156
+\tag{15}
 $$
 
 $$
 p_9=\operatorname{sigmoid}(2.630156)\approx0.932777,\qquad
 \ell_9=-\ln(0.932777)\approx0.069589
+\tag{16}
 $$
 
 因为真实目标为 $1$，交叉熵使用 $-\ln p_9$。`evaluate_indices` 对该折全部 $30$ 条验证损失求平均，得到该候选在第 $0$ 折的 log-loss，输出约为 $0.4942$；其他三折用各自独立的标准化参数和模型重复同一过程。
@@ -198,6 +214,7 @@ $$
 
 $$
 \bar L(\lambda)=\frac{1}{K}\sum_{k=0}^{K-1}L_k(\lambda)
+\tag{17}
 $$
 
 其中 $K=4$，$L_k(\lambda)$ 是候选 $\lambda$ 在第 $k$ 折的平均 log-loss。本例每折验证样本数都是 $30$，所以折平均也等于合并全部 $120$ 个折外预测后的样本平均；如果折大小不相同，当前实现仍等权平均折分数，而不是按每折样本数加权。

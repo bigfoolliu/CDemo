@@ -1,0 +1,337 @@
+/* 瑞士风笔记：只影响 Markdown 阅读和编辑区域，保留当前界面主题。 */
+.theme-light .markdown-reading-view,
+.theme-light .markdown-source-view.mod-cm6 {
+    --swiss-paper: rgba(250, 249, 245, 0.9);
+    --swiss-panel: rgba(255, 254, 250, 0.95);
+    --swiss-text: #20201e;
+    --swiss-rule: #cec9bf;
+    --swiss-soft: rgba(232, 231, 224, 0.88);
+    --swiss-math: rgba(231, 238, 235, 0.64);
+    --swiss-callout: rgba(224, 236, 229, 0.86);
+    --swiss-accent: #a35148;
+    --swiss-table-head: rgba(223, 232, 228, 0.96);
+    --swiss-table-head-text: #243f49;
+    --swiss-table-grid: #858b81;
+    --swiss-table-alt: rgba(241, 243, 239, 0.94);
+    --swiss-table-hover: rgba(233, 239, 235, 0.96);
+    --swiss-h1: #315367;
+    --swiss-h2: #93483f;
+    --swiss-h3: #3f6c63;
+    --swiss-h4: #795b3f;
+    --swiss-h5: #5b6673;
+    --swiss-h6: #6d6270;
+}
+
+.theme-dark .markdown-reading-view,
+.theme-dark .markdown-source-view.mod-cm6 {
+    --swiss-paper: rgba(48, 51, 47, 0.82);
+    --swiss-panel: rgba(61, 67, 61, 0.9);
+    --swiss-text: #f2f0ea;
+    --swiss-rule: #656961;
+    --swiss-soft: rgba(69, 75, 68, 0.9);
+    --swiss-math: rgba(59, 79, 73, 0.72);
+    --swiss-callout: rgba(66, 88, 78, 0.86);
+    --swiss-accent: #e5a092;
+    --swiss-table-head: rgba(75, 98, 91, 0.96);
+    --swiss-table-head-text: #f7f5ed;
+    --swiss-table-grid: #aab5a9;
+    --swiss-table-alt: rgba(68, 74, 67, 0.94);
+    --swiss-table-hover: rgba(80, 88, 78, 0.96);
+    --swiss-h1: #afd3df;
+    --swiss-h2: #eda99c;
+    --swiss-h3: #a9d6c3;
+    --swiss-h4: #e2c5a0;
+    --swiss-h5: #b8c9d3;
+    --swiss-h6: #cbbdce;
+}
+
+.markdown-reading-view,
+.markdown-source-view.mod-cm6 {
+    --file-line-width: 1120px;
+    --font-text-theme: "Helvetica Neue", Helvetica, Arial, "PingFang SC",
+        "Microsoft YaHei", sans-serif;
+    --font-monospace-theme: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    background-color: var(--swiss-paper);
+    color: var(--swiss-text);
+}
+
+.markdown-reading-view .markdown-preview-sizer,
+.markdown-source-view.mod-cm6 .cm-sizer {
+    padding-inline: clamp(24px, 4vw, 56px);
+}
+
+.markdown-reading-view .markdown-rendered,
+.markdown-source-view.mod-cm6 .cm-content {
+    color: var(--swiss-text);
+    font-family: var(--font-text-theme);
+    font-size: 17px;
+    line-height: 1.8;
+    letter-spacing: 0.005em;
+}
+
+.markdown-reading-view .inline-title,
+.markdown-source-view.mod-cm6 .inline-title {
+    color: var(--swiss-h1);
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.2;
+}
+
+.markdown-reading-view .markdown-rendered h1,
+.markdown-source-view.mod-cm6 .HyperMD-header-1 {
+    color: var(--swiss-h1);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+}
+
+.markdown-reading-view .markdown-rendered h2,
+.markdown-source-view.mod-cm6 .HyperMD-header-2 {
+    color: var(--swiss-h2);
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-top: 2em;
+    margin-bottom: 0.75em;
+    border-left: 3px solid var(--swiss-accent);
+    padding-left: 0.6em;
+}
+
+.markdown-reading-view .markdown-rendered h3,
+.markdown-source-view.mod-cm6 .HyperMD-header-3 {
+    color: var(--swiss-h3);
+    font-size: 1.18rem;
+    font-weight: 700;
+}
+
+.markdown-reading-view .markdown-rendered h4,
+.markdown-source-view.mod-cm6 .HyperMD-header-4 {
+    color: var(--swiss-h4);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 2em;
+    margin-bottom: 0.8em;
+}
+
+.markdown-reading-view .markdown-rendered h5,
+.markdown-source-view.mod-cm6 .HyperMD-header-5 {
+    color: var(--swiss-h5);
+    font-weight: 700;
+}
+
+.markdown-reading-view .markdown-rendered h6,
+.markdown-source-view.mod-cm6 .HyperMD-header-6 {
+    color: var(--swiss-h6);
+    font-weight: 700;
+}
+
+/* 相邻说明段落共用一个细框，公式块自然切断段落组。 */
+.markdown-reading-view .markdown-rendered .el-p {
+    background-color: var(--swiss-panel);
+    border: 1px solid var(--swiss-accent);
+    border-radius: 0;
+    margin-block: 1.4em;
+    padding: 0.95em 1.15em;
+}
+
+.markdown-reading-view .markdown-rendered .el-p > p {
+    margin: 0;
+}
+
+.markdown-reading-view .markdown-rendered .el-p:has(+ .el-p) {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0.35em;
+}
+
+.markdown-reading-view .markdown-rendered .el-p + .el-p {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0.35em;
+}
+
+/* 图片、列表和提示框保留各自的边界，避免出现双层细框。 */
+.markdown-reading-view .markdown-rendered :is(li, blockquote, .callout) .el-p,
+.markdown-reading-view .markdown-rendered .el-p:has(> p > :is(img, .image-embed):only-child) {
+    background: none;
+    border: 0;
+    margin-block: 1em;
+    padding: 0;
+}
+
+.markdown-reading-view .markdown-rendered .el-p:has(+ .el-p > p > :is(img, .image-embed):only-child) {
+    border-bottom: 1px solid var(--swiss-accent);
+    margin-bottom: 1.4em;
+    padding-bottom: 0.95em;
+}
+
+.markdown-reading-view .markdown-rendered .el-p:has(> p > :is(img, .image-embed):only-child) + .el-p {
+    border-top: 1px solid var(--swiss-accent);
+    margin-top: 1.4em;
+    padding-top: 0.95em;
+}
+
+.markdown-reading-view .markdown-rendered :is(a, .internal-link),
+.markdown-source-view.mod-cm6 :is(.cm-link, .cm-url, .cm-hmd-internal-link) {
+    color: var(--swiss-accent);
+    text-decoration-color: currentColor;
+    text-underline-offset: 0.18em;
+}
+
+.markdown-reading-view .markdown-rendered :is(blockquote, .callout) {
+    border: 1px solid var(--swiss-h3);
+    border-left-width: 3px;
+    border-radius: 0;
+    background-color: var(--swiss-callout);
+    color: var(--swiss-text);
+    padding: 0.65em 1em;
+}
+
+.markdown-source-view.mod-cm6 .HyperMD-quote {
+    border-left: 3px solid var(--swiss-h3);
+    background-color: var(--swiss-callout);
+    color: var(--swiss-text);
+}
+
+.markdown-reading-view .markdown-rendered :is(.el-table, .table-wrapper) {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.markdown-reading-view .markdown-rendered table {
+    --table-background: var(--swiss-panel);
+    --table-border-color: var(--swiss-table-grid);
+    --table-border-width: 1.5px;
+    --table-header-background: var(--swiss-table-head);
+    --table-header-border-color: var(--swiss-accent);
+    --table-header-border-width: 2px;
+    --table-header-color: var(--swiss-table-head-text);
+    --table-header-size: 1em;
+    --table-header-weight: 700;
+    --table-row-alt-background: var(--swiss-table-alt);
+    --table-text-color: var(--swiss-text);
+    --table-text-size: 1em;
+    --table-white-space: normal;
+    border-collapse: collapse;
+    border: 1.5px solid var(--swiss-table-grid);
+    border-top: 3px solid var(--swiss-accent);
+    background-color: var(--swiss-panel);
+    color: var(--swiss-text);
+    font-size: 1em;
+    line-height: 1.6;
+}
+
+.markdown-reading-view .markdown-rendered th {
+    background-color: var(--swiss-table-head);
+    color: var(--swiss-table-head-text);
+    font-weight: 700;
+}
+
+.markdown-reading-view .markdown-rendered thead th {
+    border-bottom: 2px solid var(--swiss-accent);
+}
+
+.markdown-reading-view .markdown-rendered th .katex {
+    color: var(--swiss-table-head-text);
+}
+
+.markdown-reading-view .markdown-rendered :is(th, td) {
+    border: 1.5px solid var(--swiss-table-grid);
+    font-size: 1em;
+    padding: 0.68em 0.95em;
+    vertical-align: middle;
+    white-space: normal;
+}
+
+.markdown-reading-view .markdown-rendered tbody td {
+    background-color: var(--swiss-panel);
+    color: var(--swiss-text);
+}
+
+.markdown-reading-view .markdown-rendered td .katex {
+    color: var(--swiss-text);
+}
+
+.markdown-reading-view .markdown-rendered tbody tr:nth-child(even) td {
+    background-color: var(--swiss-table-alt);
+}
+
+.markdown-reading-view .markdown-rendered tbody tr:hover td {
+    background-color: var(--swiss-table-hover);
+}
+
+.markdown-reading-view .markdown-rendered pre {
+    background-color: var(--swiss-soft);
+    color: var(--swiss-text);
+    border: 1px solid var(--swiss-rule);
+    border-left: 3px solid var(--swiss-accent);
+    border-radius: 0;
+}
+
+.markdown-source-view.mod-cm6 .HyperMD-codeblock {
+    background-color: var(--swiss-soft);
+    color: var(--swiss-text);
+}
+
+.markdown-reading-view .markdown-rendered :not(pre) > code,
+.markdown-source-view.mod-cm6 .cm-inline-code {
+    background-color: var(--swiss-soft);
+    color: var(--swiss-text);
+    border-radius: 0;
+}
+
+.markdown-reading-view .markdown-rendered :is(pre, code),
+.markdown-source-view.mod-cm6 :is(.HyperMD-codeblock, .cm-inline-code) {
+    font-family: var(--font-monospace-theme);
+    letter-spacing: 0;
+}
+
+.markdown-reading-view .markdown-rendered img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    border: 1px solid var(--swiss-rule);
+    background-color: var(--swiss-panel);
+    padding: 0.45em;
+    margin-inline: auto;
+}
+
+.markdown-reading-view .markdown-rendered .math-block {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-block: 1.6em;
+    padding: 0.6em 1em;
+    background-color: var(--swiss-math);
+    border-block: 1px solid var(--swiss-rule);
+}
+
+@media (max-width: 600px) {
+    .markdown-reading-view .markdown-rendered table {
+        min-width: max-content;
+    }
+
+    .markdown-reading-view .markdown-rendered :is(th, td) {
+        white-space: nowrap;
+    }
+
+    .markdown-reading-view .markdown-preview-sizer,
+    .markdown-source-view.mod-cm6 .cm-sizer {
+        padding-inline: 18px;
+    }
+
+    .markdown-reading-view .markdown-rendered,
+    .markdown-source-view.mod-cm6 .cm-content {
+        font-size: 15px;
+    }
+
+    .markdown-reading-view .markdown-rendered .el-p {
+        padding: 0.75em 0.85em;
+    }
+}

@@ -28,6 +28,7 @@
 $$
 R_{m+1}=(1664525R_m+1013904223)\bmod2^{32},\qquad
 u_m=\frac{\lfloor R_{m+1}/2^8\rfloor}{2^{24}}
+\tag{1}
 $$
 
 例如种子 $42$ 时，$R_0=42$，第一次更新得 $R_1=1664525(42)+1013904223=1083814273$，代入输出式得到 $u_0=\lfloor1083814273/2^8\rfloor/2^{24}\approx0.25234514$；随后两个输出约为 $0.08812499$ 和 $0.57728118$。对样本 $i$，代码令类别 $y_i=i\bmod3$，然后依次抽取水平中心、竖直中心、亮度，再为每个像素抽取噪声：
@@ -36,6 +37,7 @@ $$
 c_{x,i}=2.5+3u_{i,0},\qquad
 c_{y,i}=2.5+3u_{i,1},\qquad
 b_i=0.75+0.25u_{i,2}
+\tag{2}
 $$
 
 其中 $c_{x,i}$、$c_{y,i}$ 是线条中心，$b_i$ 是亮线亮度，$u_{i,k}$ 表示该样本依次取得的随机数。像素位置 $(r,c)$ 的局部坐标为 $\xi=c-c_{x,i}$、$\upsilon=r-c_{y,i}$；类别 $0$、$1$、$2$ 分别画竖线、横线和斜线：
@@ -46,6 +48,7 @@ $$
 |\upsilon|\le0.75,&y_i=1\\
 |\xi-\upsilon|\le0.85,&y_i=2
 \end{cases}
+\tag{3}
 $$
 
 令 $v_{i,r,c}$ 为像素噪声对应的随机数，则送入网络的像素是：
@@ -54,6 +57,7 @@ $$
 X_i[r,c]=\operatorname{clamp}\left(
 \begin{cases}b_i,&\operatorname{inside}_{i,r,c}\\0.05,&\text{otherwise}\end{cases}
 +0.08(v_{i,r,c}-0.5),\ 0,\ 1\right)
+\tag{4}
 $$
 
 `clamp` 将灰度限制在 $[0,1]$。每张图像使用自己的线条位置和亮度，背景也有小幅噪声；标签仍由类别编号确定，没有标签翻转。样本数必须是 $3$ 的倍数、不能为 $0$，且不能超过固定容量 $120$；生成先写局部 `Dataset`，通过检查后才整体替换输出。
@@ -66,12 +70,14 @@ c_{x,0}&=2.5+3(0.25234514)\approx3.257035,\\
 c_{y,0}&=2.5+3(0.08812499)\approx2.764375,\\
 b_0&=0.75+0.25(0.57728118)\approx0.894320
 \end{aligned}
+\tag{5}
 $$
 
 因此这是竖线图。对像素 $(r,c)=(3,3)$，$\xi=3-3.257035=-0.257035$，满足 $|\xi|\le0.75$，该像素在线上。这个像素实际噪声随机数约为 $0.02245522$，所以：
 
 $$
 X_0[3,3]=0.894320+0.08(0.02245522-0.5)\approx0.856117
+\tag{6}
 $$
 
 图像按行优先存储，`pixels[27]` 就是 $X_0[3,3]$；代码中的卷积张量则按 `[channel][row][column]` 排列。
@@ -84,6 +90,7 @@ $$
 F(S)=\operatorname{Conv}_2(\operatorname{ReLU}(\operatorname{Conv}_1(S))),\qquad
 H_{\mathrm{ResNet}}=\operatorname{ReLU}(S+F(S)),\qquad
 H_{\mathrm{CNN}}=\operatorname{ReLU}(F(S))
+\tag{7}
 $$
 
 `residual_merge` 的 `skip` 参数决定是否加捷径：传入 stem 张量时得到 ResNet；传 `nullptr` 时普通 CNN 只对分支结果执行 ReLU。两种结构共用相同的卷积层和分类头，不为恒等捷径新增参数。
@@ -107,6 +114,7 @@ $$
 
 $$
 W_{\mathrm{stem},0}=\sqrt{6/10}\,(2\cdot0.19010729-1)\approx-0.480084
+\tag{8}
 $$
 
 卷积偏置按通道依次设为 $0.03,0.06$、$0.04,0.08$ 和 $0.05,0.10$；分类头偏置从零开始。每次实验先初始化 CNN，再执行 `resnet = cnn`，所以两者从完全相同的 $105$ 个参数起步。
@@ -120,6 +128,7 @@ $$
 $$
 Z_{o,r,c}=b_o+\sum_{d=0}^{C_{\mathrm{in}}-1}\sum_{\alpha=0}^{2}\sum_{\beta=0}^{2}
 K_{o,d,\alpha,\beta}\,\widetilde X_{d,r+\alpha-1,c+\beta-1}
+\tag{9}
 $$
 
 其中 $\widetilde X$ 表示带零填充的输入。步长为 $1$，因此空间大小仍是 $8\times8$。实现按输出通道、行、列遍历，再累加输入通道和核位置；严格说，这个核遍历是深度学习里常称“卷积”的互相关计算，权重没有翻转。`weight_index` 实现 $[out][in][ky][kx]$ 布局，`input_index` 实现通道优先布局。
@@ -131,6 +140,7 @@ X_0[2\!:\!5,2\!:\!5]\approx
 \begin{bmatrix}0.024441&0.898327&0.875038\\0.014856&0.856117&0.897303\\0.065712&0.911230&0.911810\end{bmatrix},\qquad
 K_{0,0}\approx
 \begin{bmatrix}-0.480084&0.165687&-0.590796\\-0.303047&0.320604&0.123934\\0.205179&0.593758&-0.078264\end{bmatrix}
+\tag{10}
 $$
 
 把 $9$ 个逐项乘积和偏置相加，可复现源码中的 `stem_pre[27]`：
@@ -141,6 +151,7 @@ $$
 &+0.274474+0.111207+0.013483+0.541049-0.071362\\
 &\approx0.514488
 \end{aligned}
+\tag{11}
 $$
 
 Stem 后执行 $\operatorname{ReLU}(z)=\max(0,z)$，所以该位置的 `stem[27]` 仍为 $0.514488$。对第一张训练样本，两个通道的若干真实中间值如下：
@@ -160,12 +171,14 @@ Stem 后执行 $\operatorname{ReLU}(z)=\max(0,z)$，所以该位置的 `stem[27]
 
 $$
 q_d=\frac{1}{64}\sum_{r=0}^{7}\sum_{c=0}^{7}H_{d,r,c}
+\tag{12}
 $$
 
 对这一张图，两个通道的池化分别为 $q_0=6.044776/64\approx0.094450$、$q_1=45.934408/64\approx0.717725$。分类头对类别 $j\in\{0,1,2\}$ 计算 logit $z_j$，其中 $W^{\mathrm{head}}_{j,d}$ 和 $b^{\mathrm{head}}_j$ 分别是分类权重与偏置：
 
 $$
 z_j=b^{\mathrm{head}}_j+\sum_{d=0}^{1}W^{\mathrm{head}}_{j,d}q_d
+\tag{13}
 $$
 
 例如类别 $0$ 的偏置为 $0$，权重约为 $(-0.987017,1.134688)$，所以 $z_0=(-0.987017)(0.094450)+(1.134688)(0.717725)\approx-0.093223+0.814394=0.721171$。三个 logit 分别为 $(0.721171,-0.380009,-0.731992)$。
@@ -175,6 +188,7 @@ $$
 $$
 p_j=\frac{\exp(z_j-z_{\max})}{\sum_{k=0}^{2}\exp(z_k-z_{\max})},\qquad
 z_{\max}=\max_{k\in\{0,1,2\}}z_k
+\tag{14}
 $$
 
 本例的最大值 $z_{\max}=0.721171$，移位指数约为 $(1,0.332479,0.233830)$，总和为 $1.566308$，故 $\mathbf p\approx(0.638444,0.212269,0.149287)$。它们相加为 $1$；最大概率类别为 $0$，预测正确。
@@ -183,6 +197,7 @@ $$
 
 $$
 \ell_i=z_{\max}-z_{y_i}+\ln\left(\sum_{j=0}^{2}\exp(z_j-z_{\max})\right)
+\tag{15}
 $$
 
 本例 $y_0=0$，因此 $\ell_0=0.721171-0.721171+\ln(1.566308)\approx0.448721$。`sample_backward` 计算单个样本损失；`loss_and_gradient` 对批次中 $N$ 个样本取平均，得到 $L=\frac{1}{N}\sum_{i=0}^{N-1}\ell_i$。
@@ -197,6 +212,7 @@ $$
 \frac{\partial\ell_i}{\partial z_j}=\delta_j=p_j-t_j,\qquad
 \frac{\partial\ell_i}{\partial W^{\mathrm{head}}_{j,d}}=\delta_jq_d,\qquad
 \frac{\partial\ell_i}{\partial b^{\mathrm{head}}_j}=\delta_j
+\tag{16}
 $$
 
 本例 $\mathbf t=(1,0,0)$，所以 $\boldsymbol\delta\approx(-0.361556,0.212269,0.149287)$。分类头中类别 $0$、通道 $0$ 权重的单样本梯度为 $(-0.361556)(0.094450)\approx-0.034149$。
@@ -206,6 +222,7 @@ $$
 $$
 \frac{\partial\ell_i}{\partial H_{d,r,c}}=
 \frac{1}{64}\sum_{j=0}^{2}\delta_jW^{\mathrm{head}}_{j,d}
+\tag{17}
 $$
 
 在通道 $0$、位置 $27$，三个类别的乘积和约为 $0.356862-0.225923-0.081882=0.049058$；除以 $64$ 后是 $0.000766524$。由于该处 ResNet 的 `block_pre` 为正，块末 ReLU 的导数为 $1$，这个梯度会同时进入主分支和恒等捷径。
@@ -217,6 +234,7 @@ $$
 $$
 g^{\mathrm{merge}}_n=\chi_n g_n,\qquad
 \nabla_S \ell_i=\boldsymbol{\chi}\odot\mathbf g+J_F(S)^{\mathsf T}(\boldsymbol{\chi}\odot\mathbf g)
+\tag{18}
 $$
 
 第一项是恒等捷径的直接梯度，第二项是穿过两层卷积和中间 ReLU 的主分支梯度。`residual_merge_backward` 把 $\chi_n g_n$ 写入 `branch_gradient[i]`，并在有捷径时加到 `skip_gradient[i]`；随后卷积反传生成主分支对 stem 的梯度，代码将两者相加，再乘 stem 自身的 ReLU 掩码。普通 CNN 没有第一项。
@@ -259,6 +277,7 @@ $$
 \frac{\partial\ell_i}{\partial K_{o,d,\alpha,\beta}}=
 \sum_{(r,c)\,\mathrm{valid}}\Delta_{o,r,c}X_{d,r+\alpha-1,c+\beta-1},\qquad
 \frac{\partial\ell_i}{\partial b_o}=\sum_{r,c}\Delta_{o,r,c}
+\tag{19}
 $$
 
 输入梯度则把所有能影响该输入位置的输出贡献加起来：
@@ -266,6 +285,7 @@ $$
 $$
 \frac{\partial\ell_i}{\partial X_{d,r,c}}=
 \sum_{o,\alpha,\beta\,\mathrm{valid}}\Delta_{o,r-\alpha+1,c-\beta+1}K_{o,d,\alpha,\beta}
+\tag{20}
 $$
 
 这里的 `valid` 表示对应输出位置仍在特征图范围内。`convolution_backward` 按前向相同的核索引遍历，将贡献累加到 `weight_gradient`、`bias_gradient` 和 `input_gradient`；调用者在第一次累加前清零这些数组。ReLU 反向只保留前向线性值大于 $0$ 的梯度。
@@ -274,12 +294,14 @@ $$
 
 $$
 \boldsymbol{\theta}^{(e+1)}=\boldsymbol{\theta}^{(e)}-\eta\nabla_{\boldsymbol{\theta}} L
+\tag{21}
 $$
 
 以训练种子 $42$ 的 ResNet 为例，初始训练集平均损失为 $1.329633539$；第一个 stem 权重为 $-0.480083728$，整批梯度为 $0.002528058$。第一次更新得到：
 
 $$
 W_{\mathrm{stem},0}^{(1)}=-0.480083728-0.08(0.002528058)\approx-0.480285973
+\tag{22}
 $$
 
 源码 [`train`](../src/ml/22_resnet.c#L491) 对每个参数执行的核心更新是 `updated = network->parameters[p] - learning_rate * gradient[p]`，再检查 `updated` 是否有限，最后写回网络。`gradient[p]` 已经是整批平均梯度，因此这里每个 epoch 只更新一次。
@@ -294,6 +316,7 @@ $$
 g_\kappa^{\mathrm{num}}=\frac{L(\boldsymbol\theta+\varepsilon\mathbf e_\kappa)-L(\boldsymbol\theta-\varepsilon\mathbf e_\kappa)}{2\varepsilon},\qquad
 E_\kappa=\frac{|g_\kappa^{\mathrm{num}}-g_\kappa^{\mathrm{analytic}}|}
 {\max(1,|g_\kappa^{\mathrm{num}}|,|g_\kappa^{\mathrm{analytic}}|)}
+\tag{23}
 $$
 
 测试中 `STEM_W` 第 $0$ 项的解析梯度约为 $0.000415608304$；扰动参数后的平均损失为 $L_+=1.170198151550$、$L_-=1.170198143238$，因此：
@@ -301,6 +324,7 @@ $$
 $$
 g_0^{\mathrm{num}}=\frac{1.170198151550-1.170198143238}{2\times10^{-5}}
 \approx0.0004156083
+\tag{24}
 $$
 
 各参数的归一化误差必须不超过 $2\times10^{-5}$。测试还对第一张图的像素下标 $17$ 做输入梯度检查。`sample_backward` 给出单样本梯度，而数值差分来自 $3$ 张图的平均损失，所以代码把数值差分乘以 $3$ 后比较；本次解析值约为 $0.000755729855$，缩放后的数值值约为 $0.000755729879$。

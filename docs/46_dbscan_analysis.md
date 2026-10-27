@@ -26,6 +26,7 @@ DBSCAN 不需要预先指定簇的数量。它由两个参数定义“足够密�
 
 $$
 N_{\varepsilon}(i)=\left\{j\mid \lVert\mathbf{x}_i-\mathbf{x}_j\rVert_2\leq\varepsilon\right\}.
+\tag{1}
 $$
 
 $N_{\varepsilon}(i)$ 是邻域下标集合，$j$ 遍历所有输入点；$\lVert\cdot\rVert_2$ 表示欧氏距离。因为距离使用小于等于，恰好落在半径上的点也算邻居。又因为一个点到自己的距离为 $0$，$i$ 自身属于 $N_{\varepsilon}(i)$。代码的 `region_query` 使用 `hypot(dx, dy)` 计算欧氏距离，并以 `distance <= epsilon` 实现闭边界。
@@ -34,6 +35,7 @@ $N_{\varepsilon}(i)$ 是邻域下标集合，$j$ 遍历所有输入点；$\lVert
 
 $$
 \lvert N_{\varepsilon}(i)\rvert\geq M.
+\tag{2}
 $$
 
 这里 $\lvert N_{\varepsilon}(i)\rvert$ 是集合大小；在 C 中对应 `initial_count` 或 `candidate_count`。不足 $M$ 个邻居的点，若能从某个核心点的邻域到达，就是边界点；否则是噪声点。边界点自己不负责继续扩张簇，因为它周围不够密集。
@@ -46,6 +48,7 @@ $$
 
 $$
 N_{0.9}(A)=\{A,C\},\qquad \lvert N_{0.9}(A)\rvert=2<4.
+\tag{3}
 $$
 
 `dbscan_cluster` 将它暂时标为噪声。接着访问 $B$，它的邻域包含 $B,C,D,E$：$B$ 到 $C$ 的距离是 $0.70$，到 $D$、$E$ 的距离都是 $\sqrt{0.35^2+0.60^2}\approx0.695$。加上自身刚好有四个点，因此 $B$ 是核心点，启动簇 $0$。

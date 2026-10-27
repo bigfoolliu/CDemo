@@ -18,6 +18,7 @@ $$
 N_{r,c}^{\mathrm{train}}=\frac{3}{4}n_{r,c},
 \qquad
 N_{r,c}^{\mathrm{validation}}=\frac{1}{4}n_{r,c}.
+\tag{1}
 $$
 
 本例每类有 $16$ 条开发样本，所以每轮每类训练 $12$ 条、验证 $4$ 条；固定测试集另有 $8$ 条。$r$ 是重复划分编号，$N_{r,c}^{\mathrm{train}}$ 和 $N_{r,c}^{\mathrm{validation}}$ 是相应数量，不是模型输出。
@@ -51,6 +52,7 @@ $$
 s_j=\sqrt{\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathrm{train}}(x_{i,j}-\mu_j)^2},
 \qquad
 z_{i,j}=\frac{x_{i,j}-\mu_j}{s_j}.
+\tag{2}
 $$
 
 $N_{\mathrm{train}}$ 是本轮训练样本数；$j$ 取两个特征编号；$\mu_j$、$s_j$ 只从训练行计算。`standardizer_fit` 使用总体方差分母 $N_{\mathrm{train}}$，遇到零方差特征会失败。`standardize_sample` 用同一组统计量变换训练、验证或测试样本，不会重新拟合。
@@ -63,6 +65,7 @@ $$
 a_i=b+\sum_jw_jz_{i,j},
 \qquad
 p_i=\sigma(a_i)=\frac{1}{1+e^{-a_i}}.
+\tag{3}
 $$
 
 平均二元交叉熵 $J$ 是训练目标；$N_{\mathrm{train}}$ 是当前训练行数，$\eta$ 是候选学习率，$\ln$ 表示自然对数。对单样本损失 $\ell_i$，先有 $\partial\ell_i/\partial a_i=p_i-y_i$；又因为 $\partial a_i/\partial w_j=z_{i,j}$、$\partial a_i/\partial b=1$，链式法则得到平均损失梯度：
@@ -73,6 +76,7 @@ $$
 J=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathrm{train}}\ell_i,
 \qquad
 \frac{\partial\ell_i}{\partial a_i}=p_i-y_i.
+\tag{4}
 $$
 
 例如正类标签 $y_i=1$ 且预测概率 $p_i=0.8$ 时，单样本损失为 $-\ln(0.8)\approx0.2231$；若 $y_i=0$，同样的预测会产生 $-\ln(0.2)\approx1.6094$ 的损失。模型对真实负类过度自信地预测正类，因而受到更大惩罚。
@@ -85,12 +89,14 @@ $$
 \qquad
 \frac{\partial J}{\partial b}=
 \frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathrm{train}}(p_i-y_i),
+\tag{5}
 $$
 
 $$
 w_j\leftarrow w_j-\eta\frac{\partial J}{\partial w_j},
 \qquad
 b\leftarrow b-\eta\frac{\partial J}{\partial b}.
+\tag{6}
 $$
 
 `logistic_fit` 从零权重开始，训练 $500$ 轮。代码先用 `standardize_sample` 产生 $z_{i,j}$，再计算 `probability` 与 `error = probability - label`；各轮参数更新只读取 `SPLIT_TRAIN`。验证集只在训练结束后用于比较三个学习率。
@@ -99,6 +105,7 @@ K 近邻不学习一组权重，而是保存本轮训练行。查询点编号为
 
 $$
 d^2(q,i)=\sum_j(z_{q,j}-z_{i,j})^2.
+\tag{7}
 $$
 
 平方根不会改变距离次序，因此 `knn_predict` 直接排序平方距离。距离相同时再按 CSV 行索引排序，保证结果可复现；前 $k$ 个邻居中正类票数严格过半才预测 $1$。$k$ 候选为 $1$、$3$、$5$，验证集平衡准确率相同时保留列表中较早的配置。
@@ -109,6 +116,7 @@ $$
 G=1-\sum_{c\in\{0,1\}}p_c^2,
 \qquad
 G_{\mathrm{split}}(t)=\frac{N_L}{N}G_L+\frac{N_R}{N}G_R.
+\tag{8}
 $$
 
 程序只从训练特征的相邻不同值中构造中点阈值，选择加权不纯度最低的一个；左右叶分别预测训练多数类，平票预测 $0$。在 `seed=11` 的最佳阈值下，左右叶各有 $12$ 个纯样本，因此 $G_L=1-(12/12)^2-(0/12)^2=0$、$G_R=0$，加权值是 $12/24\cdot0+12/24\cdot0=0$。这里的“树桩”是用于比较的深度一决策树，不等同于完整的深层 CART 实现。
@@ -120,6 +128,7 @@ $$
 $$
 c^*=\operatorname*{arg\,max}_{c\in\mathcal{C}}
 \mathrm{BA}_{\mathrm{validation}}(c).
+\tag{9}
 $$
 
 逻辑回归的 $\mathcal{C}$ 是三个学习率，K 近邻的 $\mathcal{C}$ 是三个 $k$；树桩的阈值由训练集拟合，不能因为验证结果更高就改动树结构；多数类基线也没有超参数。
@@ -130,6 +139,7 @@ $$
 \mathrm{Accuracy}=\frac{TN+TP}{N},
 \qquad
 \mathrm{BA}=\frac{1}{2}\left(\frac{TN}{TN+FP}+\frac{TP}{TP+FN}\right),
+\tag{10}
 $$
 
 $$
@@ -139,6 +149,7 @@ $$
 \qquad
 \mathrm{F1}=\frac{2\,\mathrm{Precision}\,\mathrm{Recall}}
 {\mathrm{Precision}+\mathrm{Recall}}.
+\tag{11}
 $$
 
 若某个分母为零，代码把精确率或 F1 定义为 $0$；若评估划分缺少任一真实类别，`metrics_finish` 返回失败。逻辑回归有概率输出，但 K 近邻和树桩输出类别，所以本比较统一报告硬分类指标，不把未经校准的分数混成概率损失。
@@ -151,6 +162,7 @@ $$
 z_1=\frac{2.4-5.508333}{2.503817}\approx-1.241438,
 \qquad
 z_2=\frac{25-62.041667}{28.784370}\approx-1.286867.
+\tag{12}
 $$
 
 初始 $w_1=w_2=b=0$，所以所有训练行都有 $p_i=0.5$。本轮训练集两类各 $12$ 条，因此偏置梯度为 $0$；把训练数据代入权重梯度公式，得到 $\partial J/\partial w_1\approx-0.426016$、$\partial J/\partial w_2\approx-0.426302$。学习率取 $\eta=0.03$ 时，第一次更新为 $w_1\approx0.012780$、$w_2\approx0.012789$、$b=0$。这就是 `logistic_fit` 在一次 epoch 中先累计、后更新的过程。最终测试点的 $y_i=0$、$p_i\approx0.016520$，对应单样本交叉熵 $-\ln(1-0.016520)\approx0.01666$。
@@ -160,10 +172,12 @@ $$
 $$
 a_i=0.104481+1.657040(-1.241438)+1.658198(-1.286867)
 \approx-4.086513,
+\tag{13}
 $$
 
 $$
 p_i=\frac{1}{1+e^{-a_i}}\approx0.016520.
+\tag{14}
 $$
 
 阈值规则 `probability >= 0.5` 因而预测类别 $0$，与该行标签相同。此种子上，逻辑回归的三个学习率在验证集平衡准确率依次为 $1.000$、$0.875$、$0.875$，所以只按验证集选中 $0.03$。该轮逻辑回归在测试集得到 $TN=4$、$TP=4$、$FP=FN=0$，因此准确率、平衡准确率、精确率、召回率和 F1 都为 $1$。
@@ -178,6 +192,7 @@ $$
 \bar m=\frac{1}{R}\sum_{r=1}^{R}m_r,
 \qquad
 s_m=\sqrt{\frac{1}{R}\sum_{r=1}^{R}(m_r-\bar m)^2}.
+\tag{15}
 $$
 
 这里的 $m_r$ 可以是准确率、平衡准确率、精确率、召回率或 F1；$\operatorname{SD}(m)$ 是这五个固定划分结果的总体标准差，不是置信区间。五轮始终复用同一组 $8$ 个测试样本，标准差只反映开发集重新划分及选参带来的结果变化，不能视为五份独立测试集。

@@ -36,6 +36,7 @@ $$
 k\sim\operatorname{Uniform}\{0,\ldots,7\},
 \quad
 \boldsymbol{\epsilon}\sim\mathcal{N}(\mathbf{0},I_2).
+\tag{1}
 $$
 
 这里 $\mathbf{x}\in\mathbb{R}^2$ 是无量纲真实坐标，$I_2$ 是二维单位矩阵；模式索引 $k$ 与噪声向量 $\boldsymbol{\epsilon}$ 独立，噪声的两个分量也相互独立且服从标准正态分布。系数 $0.08$ 是每个坐标方向的标准差，所以每个模式是一个小而圆的二维高斯簇。`sample_real` 每次都重新抽取模式和噪声，没有固定训练文件或逐点标签需要记忆，见 [`mode_center` 与 `sample_real`](../src/ml/14_gan_2d.c#L112-L133)。
@@ -46,6 +47,7 @@ $$
 \mathbf{z}\sim\mathcal{N}(\mathbf{0},I_2),
 \qquad
 \mathbf{y}=G_{\theta}(\mathbf{z})\in\mathbb{R}^2.
+\tag{2}
 $$
 
 $\mathbf{z}$ 是潜在噪声，$\mathbf{y}$ 是生成坐标，$\theta$ 表示生成器参数。生成器不接收真实点作为配对目标；不同噪声可以映射到同一模式，训练目标是让整体生成分布接近真实分布。
@@ -58,6 +60,7 @@ $$
 s_{n+1}=(1664525s_n+1013904223)\bmod 2^{32},
 \qquad
 U_n=\frac{\lfloor s_{n+1}/2^8\rfloor+0.5}{2^{24}}.
+\tag{3}
 $$
 
 $s_n$ 是伪随机状态，$U_n\in(0,1)$。`sample_normal` 用 Box–Muller 将两个均匀数 $U_1,U_2$ 变成两个标准正态数：
@@ -70,6 +73,7 @@ r=\sqrt{-2\ln U_1},
 \epsilon_0=r\cos\vartheta,
 \quad
 \epsilon_1=r\sin\vartheta.
+\tag{4}
 $$
 
 例如真实数据随机状态从 $s_0=2025$ 开始，源码首轮抽到模式选择数 $U=0.020861655474$，因此 $k=\lfloor8U\rfloor=0$。接着 $U_1=0.953691393137$、$U_2=0.353785246611$，得到 $\boldsymbol{\epsilon}\approx(-0.186879174209,0.244757979516)$。因为 $\mathbf{c}_0=(2,0)$，第一个真实点是
@@ -77,6 +81,7 @@ $$
 $$
 \mathbf{x}=(2,0)+0.08(-0.186879174209,0.244757979516)
 \approx(1.985049666063,0.019580638361).
+\tag{5}
 $$
 
 这些值对应 `sample_real` 和 `sample_normal` 的实际伪随机序列；随机数只为教学实验提供可复现输入，不适用于安全用途。真实样本流、判别器噪声流和生成器噪声流各用独立状态；Box–Muller 在同一个状态中连续取两个均匀数。
@@ -114,6 +119,7 @@ $$
 \mathbf{a}^{(1)}=W^{(1)}\mathbf{q}+\mathbf{b}^{(1)},
 \qquad
 \mathbf{h}^{(1)}=\tanh(\mathbf{a}^{(1)}),
+\tag{6}
 $$
 
 $$
@@ -122,6 +128,7 @@ $$
 \mathbf{h}^{(2)}=\tanh(\mathbf{a}^{(2)}),
 \qquad
 \mathbf{o}=W^{(3)}\mathbf{h}^{(2)}+\mathbf{b}^{(3)}.
+\tag{7}
 $$
 
 上标 $(1),(2),(3)$ 表示层号，不是乘方；$\mathbf{a}$ 是激活函数前的值，$\mathbf{h}$ 是隐藏层激活，$\mathbf{o}$ 是线性输出。生成器的 $\mathbf{q}=\mathbf{z}$ 且 $\mathbf{o}=\mathbf{y}$ 有两个坐标；判别器的 $\mathbf{q}=\mathbf{x}$ 或 $\mathbf{y}$，输出只有一个 logit $a_D$。`network_forward` 将隐藏值保存在 `Forward.first`、`Forward.second`，线性值保存在 `Forward.output`，便于反向重用。矩阵元素通过 `W1 + i * inputs + j` 这样的索引读取。
@@ -132,6 +139,7 @@ $$
 W_{ij}\sim\operatorname{Uniform}(-\alpha_{\mathrm{init}},\alpha_{\mathrm{init}}),
 \qquad
 \alpha_{\mathrm{init}}=\sqrt{\frac{6}{n_{\mathrm{in}}+n_{\mathrm{out}}}}.
+\tag{8}
 $$
 
 这里 $i$、$j$ 分别索引输出单元和输入单元；两者从 $0$ 开始，分别小于本层输出维数和输入维数。`random_unit` 产生 $U\in(0,1)$ 后，代码用 $\alpha_{\mathrm{init}}(2U-1)$ 映射到该范围；C 局部变量 `scale` 保存 $\alpha_{\mathrm{init}}$，偏置不随机。初始化种子分别为生成器 $42$ 和判别器 $43$。以生成器第一层为例，$n_{\mathrm{in}}=2$、$n_{\mathrm{out}}=16$，所以 $\alpha_{\mathrm{init}}=\sqrt{6/18}\approx0.577350269$；固定种子下首个权重为 $-0.285967160278$，确实落在初始化范围内。连续均匀分布是数学概括；实际初始化值由 `random_unit` 的 $24$ 位网格离散化。
@@ -144,16 +152,19 @@ $$
 a^{(1)}_0=(-0.285967160278)(0.7)+(-0.475592260844)(-0.4)+0
 =-0.200177012195+0.190236904338
 =-0.009940107857,
+\tag{9}
 $$
 
 $$
 h^{(1)}_0=\tanh(-0.009940107857)=-0.009939780490.
+\tag{10}
 $$
 
 完整 $16$ 维隐藏层继续计算后，第二层第 $0$ 个单元为 $a^{(2)}_0=-0.025791219140$、$h^{(2)}_0=-0.025785502000$。输出层再把全部 $16$ 个第二层激活乘以对应权重并求和，得到
 
 $$
 \mathbf{y}=G(0.7,-0.4)=(-0.154483973954,0.107332626517).
+\tag{11}
 $$
 
 这个算例对应代码的两层 `tanh` 循环和线性输出循环。它也说明生成坐标没有 sigmoid 或裁切，可能落在训练簇附近、簇间区域，甚至绘图范围以外。
@@ -170,6 +181,7 @@ $$
 \end{cases}
 \qquad
 p=D(\mathbf{x})=\sigma(a_D(\mathbf{x})).
+\tag{12}
 $$
 
 符号 $D(\mathbf{x})$ 表示判别器认为输入是真实点的概率，并不是数据分布的概率密度。按符号切换等价形式，可避免对很大的正数计算 $e^{|a|}$；实现见 [`sigmoid`](../src/ml/14_gan_2d.c#L236-L243)。
@@ -179,12 +191,14 @@ $$
 $$
 \ell(a,y)=-y\ln\sigma(a)-(1-y)\ln(1-\sigma(a))
 =\operatorname{softplus}(a)-ya.
+\tag{13}
 $$
 
 其中 $a$ 是未经过 sigmoid 的分数，$y\in\{0,1\}$ 是目标标签，$\operatorname{softplus}(a)=\ln(1+e^a)$。当 $y=1$，损失为 $-\ln\sigma(a)$；当 $y=0$，损失为 $-\ln(1-\sigma(a))$。直接计算这两个概率对极端值可能遇到 `log(0)`，所以代码用等价稳定式：
 
 $$
 \ell(a,y)=\max(a,0)-ya+\ln(1+e^{-|a|}).
+\tag{14}
 $$
 
 源码对应 `fmax(logit, 0) - target * logit + log1p(exp(-fabs(logit)))`；`log1p(v)` 稳定计算 $\ln(1+v)$。对 logit 求导时，sigmoid 导数与概率分母抵消：
@@ -196,6 +210,7 @@ $$
 &=-y(1-p)+(1-y)p\\
 &=p-y=\sigma(a)-y.
 \end{aligned}
+\tag{15}
 $$
 
 这就是 `train` 里 `delta = (sigmoid(logit) - target) / BATCH_SIZE` 的来源。若真实样本的 $p=0.514179609378$，则 $y=1$ 时 $\partial\ell/\partial a=-0.485820390622$，梯度下降会增大 logit；若同一个点被当作假样本，$y=0$ 时导数为 $0.514179609378$，梯度下降会减小 logit。
@@ -208,6 +223,7 @@ $$
 \min_G\max_D V(D,G)
 =\mathbb{E}_{\mathbf{x}\sim p_{\mathrm{data}}}[\ln D(\mathbf{x})]
 +\mathbb{E}_{\mathbf{z}\sim p_{\mathbf{z}}}[\ln(1-D(G(\mathbf{z})))].
+\tag{16}
 $$
 
 $p_{\mathrm{data}}$ 是上文的八簇真实分布，$p_{\mathbf{z}}$ 是标准二维正态分布。判别器最大化此值，等价于最小化真实和生成两类的 BCE 之和。源码每步使用批量 $B=32$，目标是
@@ -216,6 +232,7 @@ $$
 \mathcal{L}_D=
 \frac{1}{B}\sum_{b=1}^{B}\ell(a_D(\mathbf{x}_b),1)
 +\frac{1}{B}\sum_{b=1}^{B}\ell(a_D(G(\mathbf{z}_b)),0).
+\tag{17}
 $$
 
 $b$ 是当前批次中的样本索引，$\mathbf{x}_b$ 是实时抽样的真实点，$\mathbf{z}_b$ 是判别器阶段使用的噪声。注意源码将两组均值相加，没有再除以 $2$；当真实和生成概率都恰为 $0.5$ 时，参考判别损失为 $2\ln2\approx1.386294$。
@@ -225,6 +242,7 @@ $b$ 是当前批次中的样本索引，$\mathbf{x}_b$ 是实时抽样的真实�
 $$
 \mathcal{L}_G=\frac{1}{B}\sum_{b=1}^{B}\ell(a_D(G(\tilde{\mathbf{z}}_b)),1)
 =-\frac{1}{B}\sum_{b=1}^{B}\ln D(G(\tilde{\mathbf{z}}_b)).
+\tag{18}
 $$
 
 $\tilde{\mathbf{z}}_b$ 是生成器阶段重新抽取的噪声，不与判别器阶段的 $\mathbf{z}_b$ 配对。损失目标 $1$ 表示生成器要让判别器把生成点判真；这不是把真实数据当成生成器的逐点答案。
@@ -235,6 +253,7 @@ $$
 \frac{\partial\ln(1-\sigma(a))}{\partial a}=-\sigma(a),
 \qquad
 \frac{\partial[-\ln\sigma(a)]}{\partial a}=\sigma(a)-1.
+\tag{19}
 $$
 
 若判别器对假样本很确信，$a\ll0$、$\sigma(a)\approx0$，原始目标的导数 $-\sigma(a)$ 接近 $0$，生成器学习信号容易变弱；非饱和目标导数接近 $-1$，仍推动 logit 增大。代码的 `binary_loss(logit, 1)` 正是 $-\ln\sigma(a)$ 的稳定形式。判别器在自己的更新阶段把假样本标为 $0$，而生成器更新阶段把同一类输出的期望方向设为 $1$；这是对抗双方不同的优化目标。
@@ -257,6 +276,7 @@ $$
 \nabla_{W^{(1)}}\mathcal{L}&=\boldsymbol{\delta}^{(1)}\mathbf{q}^{\mathsf T},\\
 \frac{\partial\mathcal{L}}{\partial\mathbf{q}}&=(W^{(1)})^{\mathsf T}\boldsymbol{\delta}^{(1)}.
 \end{aligned}
+\tag{20}
 $$
 
 这里 $\odot$ 表示逐元素乘法，$\mathbf{1}$ 是与隐藏向量同长度的全 $1$ 向量，$\mathsf T$ 表示矩阵转置；平方也逐元素计算。偏置梯度等于误差向量。`network_backward` 的 `upstream` 是 $\boldsymbol{\delta}^{(3)}$，局部数组 `second`、`first` 依次保存 $\mathbf{r}^{(2)}$、$\mathbf{r}^{(1)}$，局部变量 `delta` 保存对应的隐藏层误差。参数梯度使用 `+=` 累加，`input_gradient` 每次先清零，再覆盖成网络输入的梯度。
@@ -267,6 +287,7 @@ $$
 
 $$
 \delta_D=\sigma(a_D(\mathbf{y}))-1.
+\tag{21}
 $$
 
 把这一个梯度传入判别器的 `network_backward`，可得到判别器输入坐标的梯度 $\partial\mathcal{L}_G/\partial\mathbf{y}$。随后把该向量作为生成器反向传播的 `upstream`，继续得到 $\partial\mathcal{L}_G/\partial\theta$ 和 $\partial\mathcal{L}_G/\partial\mathbf{z}$。按链式法则：
@@ -276,6 +297,7 @@ $$
 =\left(\frac{\partial G_{\theta}}{\partial\mathbf{z}}\right)^{\mathsf T}
 \left(\frac{\partial D_{\psi}^{\mathrm{logit}}}{\partial\mathbf{y}}\right)^{\mathsf T}
 \left(\sigma(a_D(\mathbf{y}))-1\right).
+\tag{22}
 $$
 
 $\psi$ 表示判别器参数，$D_{\psi}^{\mathrm{logit}}$ 表示 sigmoid 之前的判别器 logit。反传只读取 $\psi$ 来计算坐标导数，不意味着更新 $\psi$。`generator_backward` 把判别器参数梯度写入名为 `discarded` 的临时数组并丢弃，保留 `point_gradient` 作为生成器输出梯度；之后才调用生成器的 `network_backward`。若跳过判别器对输入的梯度，生成器就无法知道应往哪个方向移动点。
@@ -290,6 +312,7 @@ $\psi$ 表示判别器参数，$D_{\psi}^{\mathrm{logit}}$ 表示 sigmoid 之前
 
 $$
 p=\sigma(a)=0.514179609378.
+\tag{23}
 $$
 
 真实标签 $y=1$ 的 BCE 和 logit 梯度分别为
@@ -298,6 +321,7 @@ $$
 \ell(a,1)=-\ln(0.514179609378)=0.665182639978,
 \qquad
 \frac{\partial\ell}{\partial a}=0.514179609378-1=-0.485820390622.
+\tag{24}
 $$
 
 把标签改为假样本 $y=0$，同一 logit 的损失为 $-\ln(1-p)=0.721916290009$，导数为 $p-0=0.514179609378$。对应的输入坐标导数在真实标签测试中是 $(-0.054044897509,-0.053368570237)$；输出偏置梯度等于 logit 梯度。数值都来自 `network_forward`、`binary_loss` 和 `network_backward` 的实际调用。
@@ -311,6 +335,7 @@ $$
 \mathcal{L}_G=-\ln(0.496472321889)=0.700227543497,
 \qquad
 \delta_D=0.496472321889-1=-0.503527678111.
+\tag{25}
 $$
 
 判别器将这一个标量梯度反传到二维坐标，得到
@@ -318,6 +343,7 @@ $$
 $$
 \frac{\partial\mathcal{L}_G}{\partial\mathbf{y}}
 =(-0.067063434728,-0.032453019050).
+\tag{26}
 $$
 
 生成器输出层的偏置梯度正好等于这两个分量。对于第 $0$ 个输出、第 $0$ 个隐藏输入，权重梯度是输出误差乘以第二层第 $0$ 个激活：
@@ -326,6 +352,7 @@ $$
 \frac{\partial\mathcal{L}_G}{\partial W^{(3)}_{0,0}}
 =(-0.067063434728)(-0.025785502000)
 =0.001729264330.
+\tag{27}
 $$
 
 两个因子都为负，所以乘积为正。这对应 `gradient[W3 + i * WIDTH + j] += upstream[i] * forward->second[j]`。再继续穿过生成器两层 `tanh`，得到潜在噪声梯度
@@ -333,6 +360,7 @@ $$
 $$
 \frac{\partial\mathcal{L}_G}{\partial\mathbf{z}}
 =(0.001717780203,-0.012000672188).
+\tag{28}
 $$
 
 这条链从判别器的“判真”方向开始，经判别器输入导数抵达生成坐标，再经生成器反向抵达潜在输入和生成器参数。**参数优化实际使用的是对生成器参数的梯度；噪声梯度是为了说明链式法则和验证反向实现而保留的诊断量。**
@@ -348,6 +376,7 @@ $$
 \nabla_{\psi}\ell(a_D(\mathbf{x}_b),1)
 +\nabla_{\psi}\ell(a_D(G_{\theta}(\mathbf{z}_b)),0)
 \right].
+\tag{29}
 $$
 
 源码把每个样本的 logit 梯度先除以 `BATCH_SIZE`，再将梯度累加进 `dg`；循环结束后只调用一次 `adam_update` 更新 $D$。例如固定夹具中真实标签的单样本导数为 $-0.485820390622$，若只把它作为批量中的一项，除以 $B=32$ 后对该输出的贡献是 $-0.015181887207$；它不是完整批量梯度。生成器在此阶段保持不变，并通过 `memcmp` 断言验证。
@@ -360,6 +389,7 @@ $$
 \nabla_{\theta}\ell(a_D(G_{\theta}(\tilde{\mathbf{z}}_b)),1),
 \qquad
 \psi\text{ 在此阶段固定}.
+\tag{30}
 $$
 
 每个样本的生成器梯度先放在局部 `gradient` 中，再除以 $B$ 加入批量数组 `gg`。全部样本完成后只更新一次生成器；判别器参数在这一阶段必须保持不变，代码再次用 `memcmp` 检查。真实点和两组潜在噪声使用各自独立的随机状态。
@@ -375,6 +405,7 @@ c=\begin{cases}
 5/\lVert\mathbf{g}\rVert_2,&\lVert\mathbf{g}\rVert_2>5,\\
 1,&\lVert\mathbf{g}\rVert_2\le5.
 \end{cases}
+\tag{31}
 $$
 
 零梯度时采用第二个分支，不会除以零。Adam 对每个参数保存一阶矩 $m_t$、二阶矩 $v_t$，并进行偏差修正：
@@ -388,6 +419,7 @@ v_t&=\beta_2v_{t-1}+(1-\beta_2)(g'_t)^2,\\
 \widehat{v}_t=\frac{v_t}{1-\beta_2^t},\\
 w_t&=w_{t-1}-\eta\frac{\widehat{m}_t}{\sqrt{\widehat{v}_t}+\epsilon_{\mathrm{Adam}}}.
 \end{aligned}
+\tag{32}
 $$
 
 这里 $t$ 是对应网络从 $1$ 开始的更新次数，$w_t$ 是某个参数，$g'_t$ 是裁剪后的该参数梯度；本例 $\eta=0.001$、$\beta_1=0.5$、$\beta_2=0.999$、$\epsilon_{\mathrm{Adam}}=10^{-8}$。`Adam.first`、`Adam.second` 保存 $m_t$、$v_t$，`beta1_power`、`beta2_power` 逐次保存衰减幂。生成器与判别器使用完全独立的优化器状态。
@@ -415,6 +447,7 @@ $$
 
 $$
 \bar{d}=\frac{1}{1024}\sum_{i=1}^{1024}\min_{0\le k<8}\lVert\mathbf{y}_i-\mathbf{c}_k\rVert_2.
+\tag{33}
 $$
 
 距离不超过 $0.3$ 的点算作有效点；有效比例记为 $r_{\mathrm{valid}}$，其最近中心对应的簇计数记为 $n_k$。覆盖数的规则是
@@ -423,6 +456,7 @@ $$
 r_{\mathrm{valid}}=\frac{\#\{i:\min_k\lVert\mathbf{y}_i-\mathbf{c}_k\rVert_2\le0.3\}}{1024},
 \qquad
 C=\sum_{k=0}^{7}\mathbf{1}[n_k\ge8].
+\tag{34}
 $$
 
 $\mathbf{1}[\cdot]$ 在条件为真时取 $1$，否则取 $0$。簇间过渡点不会增加任何簇计数。评估还报告真实点和生成点上的 $D$ 平均判真概率，但该数值不是概率密度。
@@ -436,6 +470,7 @@ $\mathbf{1}[\cdot]$ 在条件为真时取 $1$，否则取 $0$。簇间过渡点�
 $$
 g_i^{\mathrm{numeric}}
 =\frac{\mathcal{L}(v_i+10^{-5})-\mathcal{L}(v_i-10^{-5})}{2\cdot10^{-5}}.
+\tag{35}
 $$
 
 判定条件为
@@ -443,6 +478,7 @@ $$
 $$
 \left|g_i^{\mathrm{numeric}}-g_i^{\mathrm{analytic}}\right|
 <2\cdot10^{-6}+2\cdot10^{-4}\left|g_i^{\mathrm{numeric}}\right|.
+\tag{36}
 $$
 
 判别器分别用目标 $0$ 和 $1$ 检查全部参数槽与两个输入坐标；生成器检查全部参数和两个固定噪声分量。每次正负扰动都固定其他输入和网络。梯度检查验证代码导数与当前离散实现一致，不证明训练一定稳定或对新分布泛化。

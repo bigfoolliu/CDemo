@@ -33,6 +33,7 @@
 
 $$
 \pi=\frac{40}{360+40}=0.1=10\%.
+\tag{1}
 $$
 
 这里 $\pi$ 表示正类先验比例。负类特征分别来自区间 $[-1,1)$；正类的两个特征分别在这个范围上平移。固定随机种子 `20261021` 让样本与输出可重复。源码先分别打乱两个类别，再为每一类按 $60\%/20\%/20\%$ 划分训练、验证、测试数据，因此每个划分保留同样的类别比例：
@@ -49,6 +50,7 @@ $$
 
 $$
 \tilde{x}_{ij}=\frac{x_{ij}-\mu_j}{s_j}.
+\tag{2}
 $$
 
 $i$ 是从 $0$ 开始的样本下标，$j\in\{0,1\}$ 是两个特征的下标，$x_{ij}$ 是原始特征，$\mu_j$ 和 $s_j$ 分别对应 `Standardizer.mean[j]`、`Standardizer.scale[j]`，$\tilde{x}_{ij}$ 是标准化结果。训练、验证、测试都复用同一组训练统计量，避免测试信息泄漏。
@@ -66,6 +68,7 @@ $i$ 是从 $0$ 开始的样本下标，$j\in\{0,1\}$ 是两个特征的下标，
 
 $$
 \mathrm{Accuracy}=\frac{TP+TN}{TP+TN+FP+FN}.
+\tag{3}
 $$
 
 精确率回答“预测成正类的样本里有多少是真的正类”；召回率回答“所有真实正类中找回了多少”：
@@ -74,6 +77,7 @@ $$
 \mathrm{Precision}=\frac{TP}{TP+FP},
 \qquad
 \mathrm{Recall}=\frac{TP}{TP+FN}.
+\tag{4}
 $$
 
 F1 是精确率和召回率的调和平均；平衡准确率把正类召回率与负类召回率（特异度）同等看待：
@@ -84,6 +88,7 @@ $$
 \qquad
 \mathrm{BalancedAccuracy}=\frac{1}{2}
 \left(\frac{TP}{TP+FN}+\frac{TN}{TN+FP}\right).
+\tag{5}
 $$
 
 例如测试集有 $72$ 个负类和 $8$ 个正类。始终预测负类的多数类基线得到 $TN=72$、$FN=8$、$FP=0$、$TP=0$。因此：
@@ -94,6 +99,7 @@ $$
 \mathrm{Recall}=\frac{0}{8}=0,
 \qquad
 \mathrm{BalancedAccuracy}=\frac{0+1}{2}=0.5.
+\tag{6}
 $$
 
 它看起来有 $90\%$ 准确率，却没有找到任何正例。源码对零分母统一返回 $0$：没有预测正类时精确率为 $0$，没有真实正类时召回率为 $0$；这样可以避免 `NaN`，但使用者仍应结合混淆矩阵解释指标。
@@ -104,6 +110,7 @@ $$
 
 $$
 \alpha_c=\frac{N_{\mathrm{train}}}{2N_c}.
+\tag{7}
 $$
 
 $N_{\mathrm{train}}=240$ 是训练样本总数，$N_c$ 是训练集中类别 $c$ 的样本数，$\alpha_c$ 对应 `class_weights[c]`。代入 $N_0=216$、$N_1=24$：
@@ -112,6 +119,7 @@ $$
 \alpha_0=\frac{240}{2\times216}=\frac{5}{9}\approx0.556,
 \qquad
 \alpha_1=\frac{240}{2\times24}=5.
+\tag{8}
 $$
 
 所以单个正例在损失中约相当于 $9$ 个负例。源码的 `balance_classes` 为 `false` 时两类权重都是 $1$，为 `true` 时使用上式；两次训练共用同一批训练样本、标准化参数和 $1200$ 轮全批量梯度下降。
@@ -123,6 +131,7 @@ $$
 \qquad
 L=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}
 \alpha_{y_i}\ell_i.
+\tag{9}
 $$
 
 这里 $\mathcal{I}_{\mathrm{train}}$ 是训练样本下标集合，$w_j$ 和 $b$ 是模型权重与偏置，$\sigma$ 是 sigmoid。下面梯度中的求和都遍历训练样本。对 sigmoid 与交叉熵求导，logit 梯度化简成 $p_i-y_i$，类别权重再乘到误差上：
@@ -136,6 +145,7 @@ $$
 \qquad
 \frac{\partial L}{\partial b}
 =\frac{1}{N_{\mathrm{train}}}\sum_i\alpha_{y_i}(p_i-y_i).
+\tag{10}
 $$
 
 源码对应 `error`、`weight_gradients`、`bias_gradient` 以及后面的参数更新，见 [`model_train`](../src/ml/24_reliability_assessment.c#L370)。为手算一次单样本的局部梯度，假设初始化时 $z=0$、因此 $p=0.5$；样本标签 $y=1$，类别权重 $\alpha_1=5$，第 $0$ 个标准化特征为 $\tilde{x}_0=0.5$。这个样本给权重梯度和偏置梯度的未平均贡献是：
@@ -144,6 +154,7 @@ $$
 g_{w_0}^{(i)}=5(0.5-1)(0.5)=-1.25,
 \qquad
 g_b^{(i)}=5(0.5-1)=-2.5.
+\tag{11}
 $$
 
 上标 $(i)$ 表示第 $i$ 个样本贡献，不是乘方。完整批次先累加所有贡献并除以 $N_{\mathrm{train}}$，再用学习率 $\eta=0.1$ 更新参数：
@@ -154,6 +165,7 @@ w_j\leftarrow w_j-\eta\frac{1}{N_{\mathrm{train}}}
 \qquad
 b\leftarrow b-\eta\frac{1}{N_{\mathrm{train}}}
 \sum_i\alpha_{y_i}(p_i-y_i).
+\tag{12}
 $$
 
 只看上述一个样本在 $w_0$ 上的平均梯度份额是 $-1.25/240\approx-0.005208$；若只考虑该份额，它使 $w_0$ 增加约 $0.000521$。实际程序会使用整个训练批次的梯度。该代入说明了权重机制：相同预测错误的正类对梯度影响更大。固定种子下，测试集的加权模型在阈值 $0.5$ 时得到 $TP=4$、$FP=6$、$FN=4$、$TN=66$，召回率从多数类基线的 $0$ 增至 $0.5$，但准确率从 $0.9$ 降到 $0.875$。类别加权是精确率/召回率权衡手段，不保证每项指标同时上升。
@@ -168,6 +180,7 @@ $$
 1,&p_i\geq\tau,\\
 0,&p_i<\tau.
 \end{cases}
+\tag{13}
 $$
 
 $\hat{y}_i$ 是预测类别，$\tau$ 对应 `classification_metrics` 的 `threshold`。阈值增大时更难预测成正类，通常会减少假阳性并可能增加假阴性。`select_threshold` 在验证概率上扫描 $0.05$ 到 $0.95$、步长 $0.01$ 的候选值，先最大化 F1；F1 平局时优先平衡准确率，再平局则取较高阈值。固定种子的验证集选择出原始阈值 $\tau_{\mathrm{raw}}=0.84$，验证集 F1 为 $0.545$。在测试集上该阈值得到 $TP=2$、$FP=0$、$FN=6$、$TN=72$：
@@ -178,6 +191,7 @@ $$
 \mathrm{Recall}=\frac{2}{2+6}=0.25,
 \qquad
 \mathrm{F1}=\frac{2\times1\times0.25}{1+0.25}=0.4.
+\tag{14}
 $$
 
 不能根据这组测试结果再调低阈值；那会把测试集变成调参数据。阈值选择还依赖业务中误报和漏报的代价。本案例用 F1 做教学目标，并不表示它是所有应用的正确指标。
@@ -188,6 +202,7 @@ $$
 
 $$
 q_i=\sigma(a z_i+c).
+\tag{15}
 $$
 
 $z_i$ 是原始模型 logit，$q_i$ 是校准概率，$a$ 对应 `CalibrationMap.slope`，$c$ 对应 `CalibrationMap.intercept`。拟合时最小化验证集平均二元交叉熵。令 $r_i=a z_i+c$，单个验证样本的误差项为 $\sigma(r_i)-y_i$，链式法则得到：
@@ -198,6 +213,7 @@ $$
 \qquad
 \frac{\partial L_{\mathrm{val}}}{\partial c}
 =\frac{1}{N_{\mathrm{val}}}\sum_i(\sigma(a z_i+c)-y_i).
+\tag{16}
 $$
 
 $L_{\mathrm{val}}$ 是验证集平均交叉熵，$N_{\mathrm{val}}=80$ 是验证样本数。`calibrator_fit` 从 $a=1,c=0$ 开始做 $2000$ 轮梯度下降，学习率为 $0.03$；梯度按验证样本数取平均。固定种子拟合出 $a\approx1.0225$、$c\approx-1.9313$。验证集 BCE 从 $0.4088$ 降至 $0.2303$。映射拟合完成后，`calibrator_apply` 才将同一组参数应用到测试 logits。
@@ -208,6 +224,7 @@ $$
 r=1.0225\times0.0335-1.9313\approx-1.8971,
 \qquad
 q=\sigma(-1.8971)\approx0.1304.
+\tag{17}
 $$
 
 这个单个正例的校准概率变低，不代表映射失效：校准优化的是整组验证样本的概率与频率关系，不是强迫每个正样本都给高分。测试集的正类比例是 $10\%$，映射会把加权训练导致的整体偏高概率往低处调整。概率校准关注概率质量；它不会自动提高分类准确率。
@@ -218,6 +235,7 @@ $$
 \tau_p=\sigma\left(\frac{\operatorname{logit}(\tau_q)-c}{a}\right),
 \qquad
 \operatorname{logit}(u)=\log\frac{u}{1-u}.
+\tag{18}
 $$
 
 将 $\tau_q=0.46$、$a=1.0225$、$c=-1.9313$ 代入，得到 $\tau_p\approx0.85$，与网格选择的 $0.84$ 很接近。因此两个阈值在此数据上划分出相同类别；校准改变的是概率刻度，而不是样本排序。
@@ -228,6 +246,7 @@ Brier 分数是概率与二元标签之间的均方误差。分数越低表示�
 
 $$
 \mathrm{Brier}=\frac{1}{N}\sum_{i=1}^{N}(p_i-y_i)^2.
+\tag{19}
 $$
 
 这里 $N$ 是待评估划分的样本数，$p_i$ 是当前概率；校准前 $p_i$ 是 `Prediction.probability`，校准后是 $q_i$。源码通过 logit $z_i$ 计算 BCE，校准后 $z_i$ 表示 $a z_i+c$。平均 BCE 与稳定的单样本表达式为：
@@ -236,6 +255,7 @@ $$
 \mathrm{BCE}=\frac{1}{N}\sum_{i=1}^{N}\ell_i,
 \qquad
 \ell_i=\max(z_i,0)-y_i z_i+\log\left(1+e^{-|z_i|}\right).
+\tag{20}
 $$
 
 这个形式避免直接计算概率接近 $0$ 或 $1$ 时的 $\log(0)$，见 [`binary_cross_entropy`](../src/ml/24_reliability_assessment.c#L319)。例如前文的测试正例 $y=1$，校准前 $p=0.5084$，单样本 Brier 贡献约为 $(0.5084-1)^2=0.2417$；校准后 $q=0.1304$，该正例贡献变成 $(0.1304-1)^2\approx0.7562$。单个样本变差而整体测试集 Brier 从 $0.1129$ 降至 $0.0735$ 并不矛盾，校准比较的是一组样本的总体概率误差。
@@ -245,6 +265,7 @@ $$
 $$
 \mathrm{ECE}=\sum_{b=1}^{10}\frac{n_b}{N}
 \left|\bar{p}_b-o_b\right|.
+\tag{21}
 $$
 
 以测试集校准前 $[0.0,0.1)$ 区间为例，程序统计 $n_b=32$、$\bar{p}_b\approx0.033$、$o_b\approx0.062$。该箱对 ECE 的贡献约为：
@@ -252,6 +273,7 @@ $$
 $$
 \frac{32}{80}\left|0.033-0.062\right|
 =0.4\times0.029\approx0.0116.
+\tag{22}
 $$
 
 其余非空箱按相同方式累加。`ReliabilityBin` 记录样本数、概率和与正例数；输出表格直接显示每箱平均概率与实际正例率。ASCII 图上的 `.` 是理想对角线，`o` 是每个非空箱的观测点，重合时用 `*`。

@@ -46,6 +46,7 @@
 $$
 z^{(l)}=W^{(l)}a^{(l-1)}+b^{(l)},\qquad
 a^{(l)}=\phi\!\left(z^{(l)}\right)
+\tag{1}
 $$
 
 读作“第 $l$ 层先把上一层输出乘权重并加偏置，得到激活前值 $z^{(l)}$；再应用激活函数 $\phi$，得到本层输出 $a^{(l)}$”。这里括号上标 $(l)$ 是层编号。教程也常用 $x$ 直接表示网络输入，用 $h$ 表示隐藏状态或隐藏层输出；$g$ 常表示梯度，$\delta$ 常表示反向传播中的误差信号。
@@ -55,6 +56,7 @@ Adam 公式里的 $m$、$v$ 不是模型输入，而是优化器保存的历史�
 $$
 m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad
 v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2
+\tag{2}
 $$
 
 $m_t$ 读作“第 $t$ 次更新的一阶矩”，近似保存梯度的移动平均；$v_t$ 是梯度平方的移动平均。带帽子的 $\hat m_t$、$\hat v_t$ 是偏差修正后的量，$\beta_1$、$\beta_2$ 是衰减系数，$\eta$ 是学习率，$\epsilon$ 通常用于数值稳定。不同教程可能用 $t$ 或 $n$ 表示更新次数；序列模型里的 $t$ 则通常是字符或时间位置。
@@ -67,6 +69,7 @@ $$
 Z_{q,r,s}=b_q^{\mathrm{conv}}+
 \sum_{a=0}^{K_h-1}\sum_{b=0}^{K_w-1}K_{q,a,b}X_{r+a,s+b},\qquad
 A_{q,r,s}=\max(0,Z_{q,r,s})
+\tag{3}
 $$
 
 $q$ 是输出通道，$(r,s)$ 是输出像素位置，$(a,b)$ 是卷积核内部位置；$K_h,K_w$ 是卷积核的高和宽，$K_{q,a,b}$ 是对应权重，$Z$ 是激活前值，$A$ 是 ReLU 后的值。式中的求和读作“把窗口里每个像素乘对应权重，再全部相加”。符号 $K$ 在 K 近邻里表示邻居数，在 Transformer 里表示键（Key），在 CNN 里表示卷积核，须看上下文判断。
@@ -76,6 +79,7 @@ LayerNorm 对同一序列位置的特征做归一化，再用可学习参数调�
 $$
 \hat{x}_{t,i}=\frac{x_{t,i}-\mu_t}{\sqrt{\sigma_t^2+\epsilon}},\qquad
 u_{t,i}=\gamma_i\hat{x}_{t,i}+\beta_i
+\tag{4}
 $$
 
 $t$ 是位置，$i$ 是特征编号；$\mu_t$、$\sigma_t^2$ 是该位置所有特征的均值和方差。$\gamma_i$ 缩放标准化结果，$\beta_i$ 平移结果；这里的 $\beta_i$ 是模型参数，与 Adam 的衰减系数 $\beta_1,\beta_2$ 不同。
@@ -156,6 +160,7 @@ $$
 \hat{y}=\mathbf{w}^{\mathsf T}\mathbf{x}+b,
 \qquad
 L=\frac{1}{N}\sum_{i=1}^{N}(y_i-\hat{y}_i)^2
+\tag{5}
 $$
 
 第一式读作“预测值等于权重向量与输入向量的内积，再加偏置”。第二式读作“平均损失等于每个样本的真实值减预测值之差的平方，再对 $N$ 个样本取平均”。这里 $\mathbf{x}$ 是输入、$\mathbf{w}$ 是权重、$b$ 是偏置、$y_i$ 是目标值、$N$ 是样本数。平方误差是线性回归教程中的例子；其他分类任务会使用交叉熵或 hinge 损失。
@@ -166,6 +171,7 @@ $$
 p_k=\frac{\exp(z_k)}{\sum_j\exp(z_j)},
 \qquad
 \ell=-\ln p_y
+\tag{6}
 $$
 
 第一式读作“类别 $k$ 的概率等于它的分数指数，除以所有类别分数指数的总和”；第二式读作“目标类别概率的负自然对数”。$z_k$ 是类别分数，$p_k$ 是概率，$y$ 是目标类别。实现中常先从所有 $z_k$ 减去最大值，避免指数溢出；这不改变归一化后的概率。
@@ -177,6 +183,7 @@ $$
 =\boldsymbol{\theta}_{\mathrm{old}}-\eta\nabla_{\boldsymbol{\theta}}L,
 \qquad
 J=L_{\mathrm{data}}+\frac{\lambda}{2}\lVert\mathbf{w}\rVert_2^2
+\tag{7}
 $$
 
 第一式读作“新参数等于旧参数减去学习率乘损失梯度”，所以沿负梯度方向更新。第二式读作“优化目标等于数据损失加上权重平方和的惩罚”；$\lambda$ 控制惩罚强度，$\mathbf{w}$ 的范数项不会自动包含偏置，是否惩罚偏置要看实现。
@@ -217,6 +224,7 @@ $$
 \qquad
 \mathrm{F1}=\frac{2\,\mathrm{Precision}\,\mathrm{Recall}}
 {\mathrm{Precision}+\mathrm{Recall}}.
+\tag{8}
 $$
 
 平衡准确率是正类召回率与负类召回率的平均，避免负类很多时仅看准确率造成误解：
@@ -224,6 +232,7 @@ $$
 $$
 \mathrm{BalancedAccuracy}=\frac{1}{2}
 \left(\frac{TP}{TP+FN}+\frac{TN}{TN+FP}\right).
+\tag{9}
 $$
 
 $\tau$（陶）是把概率变成类别的阈值，$\hat{y}_i$ 是预测类别，$p_i$ 是正类概率：
@@ -233,6 +242,7 @@ $$
 1,&p_i\geq\tau,\\
 0,&p_i<\tau.
 \end{cases}
+\tag{10}
 $$
 
 $\tau$ 增大通常会减少预测正类的数量。
@@ -244,6 +254,7 @@ $$
 \qquad
 L=\frac{1}{N_{\mathrm{train}}}
 \sum_{i\in\mathcal{I}_{\mathrm{train}}}\alpha_{y_i}\ell_i.
+\tag{11}
 $$
 
 $c$ 是类别编号，$N_c$ 是训练集里类别 $c$ 的样本数，$N_{\mathrm{train}}$ 是训练样本总数，$\alpha_c$ 是类别权重，$\mathcal{I}_{\mathrm{train}}$ 是训练样本下标集合，$y_i$ 是第 $i$ 个真实标签，$\ell_i$ 是该样本损失。分母中的 $2$ 是类别数；多类别案例通常需重新定义权重。
@@ -257,18 +268,21 @@ $$
 \frac{\partial L}{\partial w_j}
 =\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}
 \alpha_{y_i}(p_i-y_i)\tilde{x}_{ij}.
+\tag{12}
 $$
 
 稳定的 logit BCE 可读作“取 logit 与零的较大值，减去标签乘 logit，再加上指数项的对数”：
 
 $$
 \ell_i=\max(z_i,0)-y_i z_i+\log\left(1+e^{-|z_i|}\right).
+\tag{13}
 $$
 
 Platt 校准把原始 logit 做一次仿射变换，再经 sigmoid 变为校准概率：
 
 $$
 q_i=\sigma(a z_i+c).
+\tag{14}
 $$
 
 $z_i$ 是原分类器的 logit，$a$ 是校准斜率，$c$ 是截距，$q_i$ 是校准后概率。这里的 $c$ 是映射偏置，不是类别编号；若 $a>0$，映射保持概率排序。校准调整概率刻度，不等于重新训练分类器。
@@ -280,6 +294,7 @@ $$
 \qquad
 \mathrm{ECE}=\sum_{b=1}^{B}\frac{n_b}{N}
 \left|\bar{p}_b-o_b\right|.
+\tag{15}
 $$
 
 $N$ 是评估样本数，$p_i$ 是预测概率，$y_i\in\{0,1\}$ 是标签；$B$ 是概率箱数，$b$ 是箱编号，$n_b$ 是第 $b$ 箱样本数，$\bar{p}_b$ 是该箱平均预测概率，$o_b$ 是该箱实际正例比例。ECE 会随箱数和边界变化，少样本时尤其不稳定。
@@ -288,12 +303,14 @@ $N$ 是评估样本数，$p_i$ 是预测概率，$y_i\in\{0,1\}$ 是标签；$B$
 
 $$
 h_{t+1}=\tanh(W_xx_t+W_hh_t+b_h)
+\tag{16}
 $$
 
 读作“下一时刻的隐藏状态，等于输入权重乘当前输入，加上循环权重乘旧状态，再加偏置，最后逐分量应用 tanh”。$x_t$ 是当前输入，$h_t$ 是当前隐藏状态，$W_x,W_h$ 是两组权重。GRU 会再引入更新门 $z_t$、重置门 $r_t$ 和候选状态 $n_t$；本项目的状态混合式为：
 
 $$
 h_{t+1}=z_t\odot h_t+(1-z_t)\odot n_t
+\tag{17}
 $$
 
 这里 $z_t$ 是保留旧状态的比例，$r_t$ 控制候选状态读取旧状态的程度；$\odot$ 表示逐元素相乘。
@@ -303,6 +320,7 @@ $$
 +\exp\!\left(\tfrac12\boldsymbol{\ell}(\mathbf{x})\right)\odot\boldsymbol{\epsilon},
 \qquad
 \boldsymbol{\epsilon}\sim\mathcal{N}(\mathbf{0},I)
+\tag{18}
 $$
 
 这是 VAE 的重参数化式，读作“潜变量样本等于均值，加上标准差逐元素乘标准正态噪声”。$\boldsymbol{\ell}$ 是对数方差，所以 $\exp(\boldsymbol{\ell}/2)$ 是标准差；$I$ 是单位协方差矩阵。这样写可以把随机噪声 $\boldsymbol{\epsilon}$ 与可学习的均值、方差参数分开。
@@ -316,6 +334,7 @@ ResNet 的捷径可以用 $H=\operatorname{ReLU}(S+F(S))$ 表示，读作“主�
 $$
 \operatorname{Attention}(Q,K,V)
 =\operatorname{softmax}\left(\frac{QK^{\mathsf T}}{\sqrt{d_k}}\right)V
+\tag{19}
 $$
 
 读作“先用查询 $Q$ 与键 $K$ 的转置做相似度，再除以键的特征宽度平方根，经过 softmax 变成权重，最后对值 $V$ 加权”。$d_k$ 是键向量维度；本项目的 Transformer 教程将每头的这个维度写作 $d_h$。因果掩码等限制由具体实现另行施加。
@@ -326,6 +345,7 @@ y_t=
 r_t,&\text{terminal},\\
 r_t+\gamma\max_{a'}Q_{\theta^-}(x_{t+1},a'),&\text{otherwise}
 \end{cases}
+\tag{20}
 $$
 
 读作“若本步终止，学习目标就是即时奖励；否则，再加上折扣后的下一状态最大动作价值”。$x_t$ 是观测，$a'$ 是下一步候选动作，$r_t$ 是即时奖励，$\gamma$ 是折扣率，$Q_{\theta^-}$ 是目标网络估计的动作价值。这个目标用于 Snake DQN；其他教程中的 $y_t$ 可能是普通监督标签。

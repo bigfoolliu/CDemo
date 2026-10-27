@@ -31,6 +31,7 @@
 
 $$
 z_{i,c}=b_c+\sum_{f=0}^{1}w_{c,f}x_{i,f}.
+\tag{1}
 $$
 
 这里 $z_{i,c}$ 是样本 $i$ 属于类别 $c$ 的未归一化分数。源码在 `model_predict` 中先将 `logits[class_index]` 设为偏置，再逐特征累加 `weight * feature`。
@@ -41,6 +42,7 @@ Softmax 把三个分数转成和为 $1$ 的概率。为了计算稳定，先令 
 
 $$
 p_{i,c}=\frac{\exp(z_{i,c}-m_i)}{\sum_{k=0}^{2}\exp(z_{i,k}-m_i)}.
+\tag{2}
 $$
 
 $p_{i,c}$ 是类别 $c$ 的预测概率，$k$ 是分母中的类别求和下标。减去同一个最大值不会改变概率，因为分子、分母都乘上了相同因子 $\exp(-m_i)$；它能避免直接对很大的正数取指数。`softmax` 用 `maximum` 保存 $m_i$，把指数暂存在 `values`，再用 `denominator` 归一化。
@@ -51,6 +53,7 @@ $p_{i,c}$ 是类别 $c$ 的预测概率，$k$ 是分母中的类别求和下标�
 
 $$
 \ell_i=-\ln p_{i,y_i}.
+\tag{3}
 $$
 
 若上述手算样本的真实类别是 $1$，损失为 $-\ln(2/6)=\ln 3\approx1.0986$。源码以 `-log(fmax(probability, DBL_MIN))` 保护对数输入，避免概率下溢为零后调用 `log(0)`。
@@ -61,6 +64,7 @@ $$
 
 $$
 L=-\frac{1}{N}\sum_{i=1}^{N}\ln p_{i,y_i}.
+\tag{4}
 $$
 
 $N=2$ 时，若两个样本的真实类别概率分别为 $1/2$ 和 $1/4$，则平均交叉熵为 $-[\ln(1/2)+\ln(1/4)]/2=3\ln2/2\approx1.0397$。这是用于理解平均方式的算术例子；程序中的 `evaluate` 会累计指定划分的样本损失，再除以 `metrics.count`。
@@ -69,6 +73,7 @@ $L$ 是优化目标，$N$ 是训练样本数。把 Softmax 与交叉熵对线性
 
 $$
 \frac{\partial L}{\partial z_{i,c}}=\frac{1}{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right).
+\tag{5}
 $$
 
 $\mathbb{1}[y_i=c]$ 在真实类别等于 $c$ 时为 $1$，否则为 $0$。再用链式法则，因 $z_{i,c}$ 对 $w_{c,f}$ 的导数是 $x_{i,f}$，对 $b_c$ 的导数是 $1$：
@@ -77,6 +82,7 @@ $$
 \frac{\partial L}{\partial w_{c,f}}=\frac{1}{N}\sum_{i=1}^{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right)x_{i,f},
 \qquad
 \frac{\partial L}{\partial b_c}=\frac{1}{N}\sum_{i=1}^{N}\left(p_{i,c}-\mathbb{1}[y_i=c]\right).
+\tag{6}
 $$
 
 参数使用学习率 $\eta$ 做梯度下降：
@@ -85,6 +91,7 @@ $$
 w_{c,f}\leftarrow w_{c,f}-\eta\frac{\partial L}{\partial w_{c,f}},
 \qquad
 b_c\leftarrow b_c-\eta\frac{\partial L}{\partial b_c}.
+\tag{7}
 $$
 
 在 `model_train_epoch` 中，`error` 保存 $p_{i,c}-\mathbb{1}[y_i=c]$；`weight_gradients[c][f]` 累加误差乘特征，`bias_gradients[c]` 累加误差。循环结束后除以 `training_count`，再按学习率更新。`updated` 是临时模型；只有全部参数更新仍为有限数时，源码才用 `*model = updated` 提交更改。

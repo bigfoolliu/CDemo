@@ -27,12 +27,14 @@
 
 $$
 \ell_i(F)=\frac{1}{2}\left(y_i-F(x_i)\right)^2.
+\tag{1}
 $$
 
 半平方误差与普通平方误差只差常数因子，不改变最佳预测值。对当前预测求导得到 $F(x_i)-y_i$，其负梯度是 $y_i-F(x_i)$，也就是残差：
 
 $$
 r_{i,m}=y_i-F_{m-1}(x_i).
+\tag{2}
 $$
 
 在代码中，`samples[index].target` 是 $y_i$，`prediction` 是 $F_{m-1}(x_i)$，`residuals[residual_count]` 保存 $r_{i,m}$。源码直接拟合残差，不必显式构造损失梯度数组。对于平方误差，残差恰好指向降低损失的方向。
@@ -41,6 +43,7 @@ $$
 
 $$
 F_0(x)=\bar{y}_{\mathrm{train}}=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathrm{train}}y_i.
+\tag{3}
 $$
 
 $N_{\mathrm{train}}$ 是训练样本数，$\bar{y}_{\mathrm{train}}$ 是训练目标的平均值。常数均值能最小化训练集上的平方误差。它对应 `model_train` 中的 `target_sum / training_count`，存入 `BoostedModel.base_value`。
@@ -54,6 +57,7 @@ h_m(x)=\begin{cases}
 c_{m,L}, & x\leq s_m,\\
 c_{m,R}, & x>s_m.
 \end{cases}
+\tag{4}
 $$
 
 $s_m$ 是第 $m$ 轮的阈值，$c_{m,L}$、$c_{m,R}$ 是左右叶子对残差的预测。对于固定阈值，每个叶子都用本组残差均值使平方误差最小。若左组有 $n_L$ 个样本、右组有 $n_R$ 个样本，则：
@@ -62,6 +66,7 @@ $$
 c_{m,L}=\frac{1}{n_L}\sum_{i:x_i\leq s_m}r_{i,m},
 \qquad
 c_{m,R}=\frac{1}{n_R}\sum_{i:x_i>s_m}r_{i,m}.
+\tag{5}
 $$
 
 $n_L,n_R$ 是左右样本数；空叶子不能计算均值，所以 `stump_fit` 跳过空分组。它先建立排好序的不同特征值，再只考察相邻不同值之间的候选阈值。每个候选的叶子值算出后，重新累计残差平方误差，保留最小者。特征没有不同取值时，`has_split` 保持为 false，整棵树桩退化为一个常数叶子。
@@ -70,6 +75,7 @@ $n_L,n_R$ 是左右样本数；空叶子不能计算均值，所以 `stump_fit` 
 
 $$
 \sum_{i=0}^{3}(r_i-h(x_i))^2=(0-0)^2+(0-0)^2+(2-2)^2+(2-2)^2=0.
+\tag{6}
 $$
 
 这也是 `test_stump_fit_by_hand` 逐项断言阈值、叶值和边界预测的依据。`stump_predict` 使用 `feature > threshold` 选择右叶，因此恰好等于阈值的 $x=1.5$ 属于左叶。
@@ -80,6 +86,7 @@ $$
 
 $$
 F_m(x)=F_{m-1}(x)+\eta h_m(x),\qquad 0<\eta\leq1.
+\tag{7}
 $$
 
 本例固定 $\eta=0.5$。`model_train` 先用 `stump_fit` 得到左右残差均值，再将它们乘以 `learning_rate` 并写回 `stump.left_value` 和 `stump.right_value`。所以模型中保存的是已经缩放的贡献，`model_predict` 只需从 `base_value` 开始逐棵相加。

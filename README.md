@@ -26,6 +26,12 @@ make stdlib    # 构建并运行常用标准库示例
 
 Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接受标准选项并不代表完整实现 C23。示例使用真正的新语法，缺少支持时会编译失败，以便明确识别工具链限制。macOS 上名为 `gcc` 的命令也可能实际是 Apple Clang。
 
+## Obsidian 笔记样式
+
+仓库的 Obsidian 外观固定为浅色，并启用 `.obsidian/snippets/swiss-notes.css` 瑞士风笔记样式。阅读和编辑区使用浅色半透明背景；阅读视图中相邻说明段落共用细框，公式使用淡色底与上下细线，提示框和代码使用不同的底色，表格采用高对比网格线与醒目的表头，各级标题用协调的颜色区分。窄屏表格可横向滑动。样式只调整 Markdown 区域，保留 Catppuccin 界面主题；如果手动切换回深色模式，笔记也有对应配色。若样式未出现，在 Obsidian 的“设置 → 外观 → CSS 代码片段”中点击重新加载，并启用 `swiss-notes`。
+
+`docs/` 中的 `$$...$$` 行间公式在 Markdown 源文件中使用 `\tag{编号}`，每篇文档从 `(1)` 开始，因此 Obsidian 实时预览与阅读视图使用相同编号；`$...$` 行内公式不编号。增删行间公式后，运行 `python3 scripts/number_equations.py` 顺序更新编号，或用 `--check` 只检查。
+
 ## VS Code 开发
 
 仓库提供扩展推荐、clangd 代码提示、Make 构建任务、CodeLLDB 调试入口及 `.clang-format`。首次打开后安装推荐扩展，按 `Cmd+Shift+B` 构建，在“运行和调试”选择示例并按 F5。

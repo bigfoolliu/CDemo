@@ -41,6 +41,7 @@ q_{\phi}(\mathbf{z}\mid\mathbf{x}) =
 \mathcal{N}\!\left(\boldsymbol{\mu}(\mathbf{x}),
 \operatorname{diag}\!\left(\exp(\boldsymbol{\ell}(\mathbf{x}))\right)\right),
 \qquad \ell_k = \log \sigma_k^2.
+\tag{1}
 $$
 
 两个输出分支都可学习；$\ell_k$ 表示方差的对数，不是标准差的对数 $\log\sigma_k$。
@@ -55,6 +56,7 @@ $$
 &\longrightarrow \mathbf{h}^{(d)}\in\mathbb{R}^{32}
 \longrightarrow \hat{\mathbf{x}}\in[0,1]^{256}.
 \end{aligned}
+\tag{2}
 $$
 
 其中两个隐藏向量都使用 $\tanh$，输出向量使用 sigmoid。
@@ -69,6 +71,7 @@ $$
 s_{n+1}=(1664525s_n+1013904223)\bmod 2^{32},
 \qquad
 U=\frac{(s_{n+1}\mathbin{\texttt{>>}}8)+0.5}{2^{24}}.
+\tag{3}
 $$
 
 其中 $s_n$ 是第 $n$ 次状态，$U$ 是均匀随机数。给定两个独立的 $U_1,U_2$，Box–Muller 变换为
@@ -76,6 +79,7 @@ $$
 $$
 \rho=\sqrt{-2\log U_1},\qquad \vartheta=2\pi U_2,
 \qquad \epsilon_0=\rho\cos\vartheta,\quad \epsilon_1=\rho\sin\vartheta.
+\tag{4}
 $$
 
 其中 $\rho$ 是标准正态样本的半径，$\vartheta$ 是角度。
@@ -88,6 +92,7 @@ $$
 $$
 \mathbf{z}=\boldsymbol{\mu}+\boldsymbol{\sigma}\odot\boldsymbol{\epsilon},
 \qquad \boldsymbol{\epsilon}\sim\mathcal{N}(\mathbf{0},I)
+\tag{5}
 $$
 
 后，将随机性放在独立的 $\boldsymbol{\epsilon}$ 中，网络仍通过确定的运算接收导数。
@@ -98,6 +103,7 @@ $$
 
 $$
 \ell=6\tanh(r/6),\qquad |\ell|<6\quad\text{(实数运算)}.
+\tag{6}
 $$
 
 其中 $r$ 是方差分支的原始线性输出。它限制了可表示的后验方差，也可能在饱和处使导数变小；不是没有影响的兼容技巧。浮点计算可能把极端输入舍入到 $\ell=\pm6$，所以代码边界测试采用闭区间 $[-6,6]$。反向必须乘
@@ -120,6 +126,7 @@ $$
 \mathcal{J}
 &=\mathcal{R}+\mathcal{K}.
 \end{aligned}
+\tag{7}
 $$
 
 这里 $\mathcal{R}$ 是重建负对数似然，$\mathcal{K}$ 是 KL 惩罚，$\mathcal{J}$ 是待最小化的负 ELBO。
@@ -147,6 +154,7 @@ $$
 \frac{\partial\mathcal{J}}{\partial\epsilon_k}
 &=g_{z_k}\sigma_k.
 \end{aligned}
+\tag{8}
 $$
 
 其中 $r_k$ 是方差头经线性层得到、再传入有界参数化的原始值；$u_j$ 则是解码器输出像素的 logit。
@@ -167,6 +175,7 @@ MSE 的含义可以用两个像素快速核算：若目标是 $(1,0)$，预测�
 
 $$
 \operatorname{MSE}=\frac{(1-0.8)^2+(0-0.2)^2}{2}=0.04.
+\tag{9}
 $$
 
 本例把分母换成像素数 256，并对整张均值重建计算；这个指标与 BCE 重建 NLL 的单位和用途不同。
@@ -225,6 +234,7 @@ c_x=6.75+1.5U_1,\qquad
 c_y=6.75+1.5U_2,\qquad
 R=3+U_3,
 \qquad U_1,U_2,U_3\in(0,1).
+\tag{10}
 $$
 
 像素坐标 $(c,v)\in\{0,\ldots,15\}^2$ 对应 C 变量 `column` 和 `row`；偏移为 $d_x=c-c_x$、$d_y=v-c_y$。圆形条件是 $d_x^2+d_y^2\leq R^2$，方形条件是 $|d_x|\leq R$ 且 $|d_y|\leq R$，三角形条件是 $-R\leq d_y\leq R$ 且 $|d_x|\leq(d_y+R)/2$。例如令三个随机数都为 $0.5$，则中心为 $(7.5,7.5)$、半径为 $3.5$；像素 $(7,7)$ 的偏移为 $(-0.5,-0.5)$，满足圆内条件 $0.5\leq12.25$。因为样本类别按索引循环、每组用独立固定种子生成，训练、验证、测试图像不同，但共享相同的三类分布。
@@ -235,6 +245,7 @@ $$
 s=\sqrt{\frac{6}{n_{\mathrm{in}}+n_{\mathrm{out}}}},
 \qquad W_{ij}\sim\operatorname{Uniform}(-s,s),
 \qquad b_i=0.
+\tag{11}
 $$
 
 例如第一层 $n_{\mathrm{in}}=256$、$n_{\mathrm{out}}=32$，所以 $s=\sqrt{6/288}=0.144337567$。此范围控制不同层激活和梯度的初始尺度；随机种子 42 使权重序列可重复。
@@ -259,6 +270,7 @@ P={}&(256\cdot32+32)
 +(32\cdot256+256)\\
 ={}&16900.
 \end{aligned}
+\tag{12}
 $$
 
 ## 10. 从概率模型推导训练目标
@@ -269,6 +281,7 @@ $$
 q_{\phi}(\mathbf{z}\mid\mathbf{x})
 =\mathcal{N}\!\left(\boldsymbol{\mu},
 \operatorname{diag}(\boldsymbol{\sigma}^2)\right).
+\tag{13}
 $$
 
 图像的边缘概率要对所有潜变量积分，直接计算通常不可行。引入近似后验并使用 Jensen 不等式：
@@ -284,6 +297,7 @@ $$
   -D_{\mathrm{KL}}\!\left(q_{\phi}(\mathbf{z}\mid\mathbf{x})\,\|\,p(\mathbf{z})\right)
   =\mathcal{E}(\mathbf{x}).
 \end{aligned}
+\tag{14}
 $$
 
 $\mathcal{E}$ 是证据下界 ELBO。最大化它等价于最小化负 ELBO：
@@ -293,6 +307,7 @@ $$
 =\mathbb{E}_{q_{\phi}}[-\log p_{\theta}(\mathbf{x}\mid\mathbf{z})]
 +\beta_{\mathrm{KL}}D_{\mathrm{KL}}(q_{\phi}\|p),
 \qquad \beta_{\mathrm{KL}}=1.
+\tag{15}
 $$
 
 给定 $\mathbf{z}$ 后，解码器假设每个像素条件独立，并输出像素为 1 的概率 $\hat{x}_j=\operatorname{sigmoid}(u_j)$：
@@ -300,6 +315,7 @@ $$
 $$
 p_{\theta}(\mathbf{x}\mid\mathbf{z})
 =\prod_{j=0}^{255}\hat{x}_j^{x_j}(1-\hat{x}_j)^{1-x_j}.
+\tag{16}
 $$
 
 因此负对数似然可逐像素相加：
@@ -307,6 +323,7 @@ $$
 $$
 -\log p_{\theta}(\mathbf{x}\mid\mathbf{z})
 =\sum_{j=0}^{255}\left[-x_j\log\hat{x}_j-(1-x_j)\log(1-\hat{x}_j)\right].
+\tag{17}
 $$
 
 sigmoid 与 Bernoulli 负对数似然可以先化简，再实现稳定计算。因为
@@ -315,6 +332,7 @@ $$
 \log\operatorname{sigmoid}(u)=u-\operatorname{softplus}(u),
 \qquad
 \log(1-\operatorname{sigmoid}(u))=-\operatorname{softplus}(u),
+\tag{18}
 $$
 
 代入 Bernoulli 负对数似然后，得到
@@ -322,6 +340,7 @@ $$
 $$
 -x\log\hat{x}-(1-x)\log(1-\hat{x})
 =\operatorname{softplus}(u)-xu.
+\tag{19}
 $$
 
 代码直接从 logit $u_j$ 计算等价的稳定形式，而不先算概率再取对数：
@@ -329,6 +348,7 @@ $$
 $$
 \operatorname{BCE}(x_j,u_j)
 =\max(u_j,0)-x_j u_j+\log(1+e^{-|u_j|}).
+\tag{20}
 $$
 
 这对应 `decode` 中的 `fmax(value, 0) - target[i] * value + log1p(exp(-fabs(value)))`。`value` 是输出 logit，`target[i]` 是像素目标；此处 `log1p` 能更准确地计算接近零的 $\log(1+y)$。
@@ -343,6 +363,7 @@ D_{\mathrm{KL}}(q_k\|p_k)
 &=\frac12\left(\mu_k^2+e^{\ell_k}-1-\ell_k\right),
 \qquad \ell_k=\log\sigma_k^2.
 \end{aligned}
+\tag{21}
 $$
 
 推导中用到正态分布的两个矩：$\mathbb{E}_{q_k}[(z_k-\mu_k)^2]=\sigma_k^2$，$\mathbb{E}_{q_k}[z_k^2]=\mu_k^2+\sigma_k^2$。将它们代入
@@ -350,6 +371,7 @@ $$
 $$
 D_{\mathrm{KL}}(q_k\|p_k)
 =\mathbb{E}_{q_k}[\log q_k(z_k)-\log p_k(z_k)]
+\tag{22}
 $$
 
 即可消去积分。以数值例中的第 0 维为例，代入 $\mu_0=0.404191760556$、$e^{\ell_0}=0.487129466705$ 和 $\ell_0=-0.719225345840$：
@@ -358,6 +380,7 @@ $$
 \mathcal{K}_0
 =\frac12\left(0.404191760556^2+0.487129466705-1+0.719225345840\right)
 =0.184862895923.
+\tag{23}
 $$
 
 总 KL 对两个维度求和。源码使用 `expm1(ell) - ell`，因为 `expm1(ell)` 计算 $e^{\ell}-1$，在 $\ell$ 接近零时比先算指数再减 1 更能保留有效数字。训练时重建项用一次随机 $\mathbf{z}$ 估计期望，KL 则是解析值；所以优化目标是 Monte Carlo 估计的负 ELBO。
@@ -399,6 +422,7 @@ $$
 a^{(e)}_0=b^{(e)}_0+\sum_{j=0}^{255}W^{(e)}_{0j}x_j
 =0.513931232880,
 \qquad h^{(e)}_0=\tanh(a^{(e)}_0)=0.473002560852.
+\tag{24}
 $$
 
 这里 $a^{(e)}_0$ 是编码器预激活值，$b^{(e)}_0$ 和 $W^{(e)}_{0j}$ 分别是该单元偏置和第 $j$ 个输入权重。源码的内层循环正是将每项 $W^{(e)}_{0j}x_j$ 累加到 `value`，见 [`network_forward` 第 233-239 行](../src/ml/13_vae_shapes.c#L233-L239)。
@@ -414,6 +438,7 @@ r_0&=b^{(\ell)}_0+\sum_{i=0}^{31}W^{(\ell)}_{0i}h^{(e)}_i
 \ell_0&=6\tanh(r_0/6)=-0.719225345840,\\
 \sigma_0&=e^{\ell_0/2}=e^{-0.359612672920}=0.697946607346.
 \end{aligned}
+\tag{25}
 $$
 
 将固定噪声代入重参数化：
@@ -422,6 +447,7 @@ $$
 z_0=\mu_0+\sigma_0\epsilon_0
 =0.404191760556+0.697946607346\cdot0.7
 =0.892754385698.
+\tag{26}
 $$
 
 第二维同理：$\mu_1=-0.264211385525$、$\ell_1=0.833225257646$、$\sigma_1=1.516814828771$、$\epsilon_1=-0.4$，于是 $z_1=-0.870937317034$。注意标准差可以大于 1；KL 项会惩罚它偏离先验的单位标准差。
@@ -436,12 +462,14 @@ $$
 a^{(d)}_0=b^{(d)}_0+W^{(d)}_{00}z_0+W^{(d)}_{01}z_1
 =0.004399731509,
 \qquad h^{(d)}_0=\tanh(a^{(d)}_0)=0.004399703120.
+\tag{27}
 $$
 
 经过全部 32 个解码单元后，像素 0 的输出 logit 是 $u_0=0.078081186751$，所以
 
 $$
 \hat{x}_0=\operatorname{sigmoid}(u_0)=0.519510385327.
+\tag{28}
 $$
 
 目标像素是 $x_0=0.1$，这一个像素的 BCE 为
@@ -454,6 +482,7 @@ $$
   +\log(1+e^{-0.078081186751})\\
 &=0.725141545714.
 \end{aligned}
+\tag{29}
 $$
 
 其余 255 个像素按同一公式累加，得到重建 NLL $\mathcal{R}=179.814382408349$。两个 KL 分量分别是 $\mathcal{K}_0=0.184862895923$ 和 $\mathcal{K}_1=0.268654811687$，因此
@@ -461,6 +490,7 @@ $$
 $$
 \mathcal{K}=\mathcal{K}_0+\mathcal{K}_1=0.453517707611,
 \qquad \mathcal{J}=\mathcal{R}+\mathcal{K}=180.267900115960.
+\tag{30}
 $$
 
 这是单张灰度夹具、单个固定噪声下的损失，不能和验证集每图平均 NLL 直接比较。训练图像是 0/1 值，而此夹具的灰度输入特意用来让有限差分扰动保持在合法区间。
@@ -473,6 +503,7 @@ $$
 \delta^{(o)}_j
 =\frac{\partial\mathcal{R}}{\partial u_j}
 =\hat{x}_j-x_j.
+\tag{31}
 $$
 
 这项抵消可以逐步核对。sigmoid 导数为
@@ -481,6 +512,7 @@ $\mathrm{d}\hat{x}_j/\mathrm{d}u_j=\hat{x}_j(1-\hat{x}_j)$，而 BCE 对概率�
 $$
 \frac{\partial\operatorname{BCE}}{\partial\hat{x}_j}
 =-\frac{x_j}{\hat{x}_j}+\frac{1-x_j}{1-\hat{x}_j}.
+\tag{32}
 $$
 
 两者相乘后，$-x_j(1-\hat{x}_j)+(1-x_j)\hat{x}_j=\hat{x}_j-x_j$。这也是直接对 logit 算稳定 BCE 的优点：反向传播不需要显式除以接近 0 的概率。
@@ -491,6 +523,7 @@ $$
 \qquad
 \frac{\partial\mathcal{J}}{\partial OW_{0,0}}
 =\delta^{(o)}_0h^{(d)}_0=0.001845721151.
+\tag{33}
 $$
 
 这对应 [`network_backward` 第 276-294 行](../src/ml/13_vae_shapes.c#L276-L294) 中的输出残差、`gradient[OW + ...]` 和解码器梯度累加。`OW` 的第 0 行属于像素 0，第 0 列连到解码器第 0 个单元。
@@ -511,6 +544,7 @@ $$
 &=\mathbf{g}_{\mathbf{h}^{(e)}}\odot\left(\mathbf{1}-(\mathbf{h}^{(e)})^2\right),\\
 \nabla_{W^{(e)}}\mathcal{J}&=\boldsymbol{\delta}^{(e)}\mathbf{x}^{\mathsf T}.
 \end{aligned}
+\tag{34}
 $$
 
 这里 $\mathsf T$ 表示转置，$\odot$ 表示逐元素乘法，$\mathbf{1}$ 是全 1 向量；隐藏层 tanh 的导数为 $1-h_i^2$。均值头和方差头权重梯度分别为 $\mathbf{g}_{\boldsymbol{\mu}}(\mathbf{h}^{(e)})^{\mathsf T}$ 与 $\mathbf{g}_{\mathbf{r}}(\mathbf{h}^{(e)})^{\mathsf T}$。这些矩阵乘法在 C 中由嵌套循环展开，和 [`network_backward`](../src/ml/13_vae_shapes.c#L270-L320) 中的索引式一一对应。
@@ -536,6 +570,7 @@ $$
 \frac{\partial\mathcal{J}}{\partial\epsilon_0}
 &=g_{z_0}\sigma_0=0.939882599637.
 \end{aligned}
+\tag{35}
 $$
 
 第二行中的第一项来自 $z_0$ 对 $\ell_0$ 的影响，第二项来自解析 KL；这解释了为什么方差头的梯度可能出现两项相互抵消。代码将 $\partial\mathcal{J}/\partial\mu_0$ 写入 `gradient[MB]`，将 $\partial\mathcal{J}/\partial r_0$ 写入 `gradient[LB]`，中间的 $\partial\mathcal{J}/\partial\ell_0$ 则只存于局部变量 `dlv`。均值头首权重的梯度为
@@ -544,6 +579,7 @@ $$
 \frac{\partial\mathcal{J}}{\partial MW_{0,0}}
 =1.750831445806\cdot0.473002560852
 =0.828147757486,
+\tag{36}
 $$
 
 方差头首权重的梯度为 $\partial\mathcal{J}/\partial LW_{0,0}=0.071481548784\cdot0.473002560852=0.033810955628$。这两项分别对应 [`network_backward` 第 297-310 行](../src/ml/13_vae_shapes.c#L297-L310)。
@@ -555,6 +591,7 @@ $$
 =\underbrace{-u_0}_{\text{目标值变化}}
 +\underbrace{0.027242988513}_{\text{编码器路径}}
 =-0.050838198238.
+\tag{37}
 $$
 
 若目标固定、只扰动编码器输入，导数会少掉 $-u_0$ 这一项。源码在 [`network_backward` 第 279-285 行](../src/ml/13_vae_shapes.c#L279-L285) 先写入目标路径 `-logit`，再在第 312-318 行叠加编码器路径。
@@ -566,6 +603,7 @@ $$
 $$
 \mathbf{g}_{B}=\frac1{B}\sum_{s=1}^{B}\nabla_{\mathbf{w}}\mathcal{J}_s,
 \qquad B=8,
+\tag{38}
 $$
 
 其中 $\mathbf{w}\in\mathbb{R}^{16900}$ 是全部网络参数，$s$ 是当前批次内的样本索引。然后计算全局二范数
@@ -577,6 +615,7 @@ G=\sqrt{\sum_{i=0}^{16899}g_{B,i}^{2}},
 \mathbf{g}_{B},&G\leq5,\\
 \frac{5}{G}\mathbf{g}_{B},&G>5.
 \end{cases}
+\tag{39}
 $$
 
 裁剪只缩放梯度，不改变方向。`clip_gradient` 使用 `hypot` 累计范数，避免直接平方求和更容易溢出；发现非有限梯度时会在改动数组前返回失败。
@@ -591,6 +630,7 @@ v_t&=0.999v_{t-1}+0.001(g'_t)^2,\\
 \widehat v_t&=\frac{v_t}{1-0.999^t},\\
 w_t&=w_{t-1}-0.003\frac{\widehat m_t}{\sqrt{\widehat v_t}+10^{-8}}.
 \end{aligned}
+\tag{40}
 $$
 
 源码把 $\beta_1^t$、$\beta_2^t$ 分别保存在 `beta1_power`、`beta2_power` 中，每个批次乘一次衰减率。`adam_update` 先在局部副本中计算全部新参数及矩估计，确认有限后才一起写回；某个数值溢出不会留下半更新模型。
@@ -602,6 +642,7 @@ m_1=0.008407536744,\qquad
 v_1=0.000007068667,\qquad
 \widehat m_1=0.084075367440,\qquad
 \widehat v_1=0.007068667\;.
+\tag{41}
 $$
 
 代入学习率后，`OB[0]` 从 $0$ 更新到约 $-0.003$（实测 $-0.002999999643$）。这只是便于手算的单样本更新；实际训练先平均 8 张图的梯度，所以实际首批更新值不同。
@@ -615,6 +656,7 @@ $$
 $$
 \operatorname{MSE}
 =\frac1{256}\sum_{j=0}^{255}(x_j-\hat{x}_j)^2,
+\tag{42}
 $$
 
 它只用于可读的重建比较，不参与训练，也不代表随机后验解码的期望误差。检查点依据验证集平均负 ELBO 选择；训练结束时会恢复最佳轮次的完整参数副本。
@@ -639,6 +681,7 @@ $$
 $$
 g_i^{\mathrm{numeric}}
 =\frac{\mathcal{J}(v_i+10^{-5})-\mathcal{J}(v_i-10^{-5})}{2\cdot10^{-5}}
+\tag{43}
 $$
 
 逐一核对全部 16900 个参数、256 个输入和 2 个噪声分量。这里 $v_i$ 表示当前被微扰的一个标量；$g_i^{\mathrm{analytic}}$ 是反向传播算出的对应导数。以输出偏置 `OB[0]` 为例，固定 $\boldsymbol{\epsilon}$ 后，实测正向损失为 $180.267904311076$，负向损失为 $180.267895920869$，所以数值导数为 $0.419510385541$，解析导数为 $0.419510385327$。比较条件是
@@ -646,6 +689,7 @@ $$
 $$
 |g_i^{\mathrm{numeric}}-g_i^{\mathrm{analytic}}|
 <2\cdot10^{-6}+2\cdot10^{-4}|g_i^{\mathrm{numeric}}|.
+\tag{44}
 $$
 
 正负扰动始终复用同一个 $\boldsymbol{\epsilon}$，否则两次前向的差异会混入重新采样的随机误差。边界测试另验证零均值/单位方差时 KL 为零、均值非零的解析 KL、$\ell$ 上下界、极端 logit 的有限损失、随机序列可复现、梯度裁剪以及 Adam 遇到非有限值时不部分更新，见 [`test_boundaries`](../src/ml/13_vae_shapes.c#L540-L579)。

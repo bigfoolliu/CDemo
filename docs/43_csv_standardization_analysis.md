@@ -42,12 +42,14 @@
 
 $$
 \mu_j=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}x_{ij}.
+\tag{1}
 $$
 
 标准差 `scale[j]` 使用总体标准差，分母是训练样本数，而不是样本数减一：
 
 $$
 s_j=\sqrt{\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(x_{ij}-\mu_j)^2}.
+\tag{2}
 $$
 
 这里 $\mu_j$ 和 $s_j$ 分别对应 `Standardizer.mean[j]` 与 `Standardizer.scale[j]`。源代码先累加训练样本，再除以训练样本数；第二遍累加平方差后再开平方，见 [`standardizer_fit`](../src/ml/23_csv_standardization.c#L329)。若某列标准差小于或等于 `DBL_EPSILON`，函数返回失败，不覆盖调用者的旧参数。
@@ -65,6 +67,7 @@ $$
 
 $$
 \tilde{x}_{ij}=\frac{x_{ij}-\mu_j}{s_j}.
+\tag{3}
 $$
 
 $\tilde{x}_{ij}$ 是无量纲的标准化特征。以 CSV 第 37 行的测试样本 $(5.3,58)$ 为例：
@@ -73,6 +76,7 @@ $$
 \tilde{x}_{i0}=\frac{5.3-5.275}{2.47070334}\approx0.010119,
 \qquad
 \tilde{x}_{i1}=\frac{58-59.45833333}{29.05021395}\approx-0.050200.
+\tag{4}
 $$
 
 验证集和测试集只能调用 `standardize_sample` 使用这些既定参数，不能参与重新计算 $\mu_j$ 或 $s_j$。测试代码特意构造训练特征 $(2,10)$、$(4,14)$，验证特征 $(100,1000)$ 和测试特征 $(200,2000)$；结果仍是训练均值 $(3,12)$、标准差 $(1,2)$。验证样本变换成 $(97,494)$。这项断言直接检查统计量没有从验证或测试数据“偷看”答案，见 [`test_training_only_standardization`](../tests/csv_standardization_test.c#L24)。
@@ -85,6 +89,7 @@ $$
 a_i=b+\sum_{j=0}^{1}w_j\tilde{x}_{ij},
 \qquad
 p_i=\operatorname{sigmoid}(a_i)=\frac{1}{1+e^{-a_i}}.
+\tag{5}
 $$
 
 `LogisticModel.weights[j]` 对应 $w_j$，`LogisticModel.bias` 对应 $b$。`sigmoid` 对 $a_i\geq0$ 和 $a_i<0$ 使用不同等价表达式，避免对大正数直接求 $e^{-a_i}$ 时发生溢出。预测阈值固定为 $0.5$：若 $p_i\geq0.5$，预测标签为 $1$；否则为 $0$。
@@ -93,12 +98,14 @@ $$
 
 $$
 \ell_i=-y_i\log p_i-(1-y_i)\log(1-p_i).
+\tag{6}
 $$
 
 为避免极端概率下直接计算 $\log(0)$，源码改用等价的 logit 形式：
 
 $$
 \ell_i=\max(a_i,0)-y_i a_i+\log\left(1+e^{-|a_i|}\right).
+\tag{7}
 $$
 
 其中 $\ell_i$ 是样本损失，$y_i$ 是真实标签，$|a_i|$ 是分数绝对值。该式对应 [`binary_cross_entropy`](../src/ml/23_csv_standardization.c#L476)。某个数据划分的 BCE 是该划分内各样本损失的算术平均。
@@ -109,6 +116,7 @@ $$
 
 $$
 \frac{\partial\ell_i}{\partial a_i}=p_i-y_i.
+\tag{8}
 $$
 
 因为 $a_i=b+\sum_jw_j\tilde{x}_{ij}$，权重和偏置的平均梯度是：
@@ -117,6 +125,7 @@ $$
 g_{w_j}=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(p_i-y_i)\tilde{x}_{ij},
 \qquad
 g_b=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(p_i-y_i).
+\tag{9}
 $$
 
 $g_{w_j}$ 和 $g_b$ 分别对应 `weight_gradients[j] / training_count` 与 `bias_gradient / training_count`。代码在 [`model_train` 的训练循环](../src/ml/23_csv_standardization.c#L553)中逐行累加，随后执行梯度下降：
@@ -127,12 +136,14 @@ w_j\leftarrow w_j-\eta g_{w_j},
 b\leftarrow b-\eta g_b,
 \qquad
 \eta=0.2.
+\tag{10}
 $$
 
 $\eta$ 是固定学习率。训练集有 $12$ 个标签 $0$ 和 $12$ 个标签 $1$，所以初始偏置梯度 $g_b=0$。第一条训练样本为 $(1,12)$、标签 $0$，标准化后约为 $(-1.730277,-1.633666)$。它对平均权重梯度的贡献是：
 
 $$
 \frac{0.5}{24}(-1.730277,-1.633666)\approx(-0.036047,-0.034035).
+\tag{11}
 $$
 
 将训练集中全部 $24$ 条样本贡献相加后，第一轮的平均梯度为 $g_w\approx(-0.426667,-0.422401)$、$g_b=0$。从 $w=(0,0)$ 开始，第一次更新得到：
@@ -141,6 +152,7 @@ $$
 w\approx(0.085333,0.084480),
 \qquad
 b=0.
+\tag{12}
 $$
 
 这说明更新方向不是凭经验给定：正类样本的误差为 $0.5-1=-0.5$，负类样本的误差为 $0.5-0=0.5$；乘上各自标准化特征并求平均后，梯度指出应该如何调整权重。运行过程中模型参数会继续变化，程序没有把第一次更新误当作最终模型。
@@ -157,6 +169,7 @@ $$
 a_i=0.40497958+5.16922914(0.01011858)+4.66285991(-0.05020043)\approx0.22320723,
 \qquad
 p_i=\frac{1}{1+e^{-0.22320723}}\approx0.555571.
+\tag{13}
 $$
 
 因 $p_i>0.5$，预测为 $1$，但真实标签是 $0$，所以这是一个假正例。它的单样本损失约为 $-\log(1-0.555571)\approx0.810966$。完整测试集有 $8$ 个样本，混淆矩阵为：

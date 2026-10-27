@@ -39,6 +39,7 @@ VS Code 选择 `C: ml/10_char_rnn.c` 后按 F5。入口先运行梯度与边界�
 
 $$
 x_0=a\to y_0=a,\qquad x_1=a\to y_1=b,\qquad x_2=b\to y_2=a.
+\tag{1}
 $$
 
 这里 $x_t$ 表示时间步输入字符，$y_t$ 表示目标字符；源码用整数 token 代替实际 one-hot 向量。编码要求字符串非空、长度在 $2$ 到 $49$ 之间，字符必须属于表中四个字符。`sequence_encode` 先写入临时 `Sequence encoded`，全部验证通过后才赋给调用者，因此失败不会破坏原序列，见 [`sequence_encode`](../src/ml/10_char_rnn.c#L106)。
@@ -79,11 +80,13 @@ $$
 
 $$
 h_{t+1}=\tanh(W_xx_t+W_hh_t+b_h),
+\tag{2}
 $$
 
 $$
 o_t=W_yh_{t+1}+b_y,\qquad
 p_{t,k}=\frac{e^{o_{t,k}}}{\sum_{k'=0}^{V-1}e^{o_{t,k'}}}.
+\tag{3}
 $$
 
 $o_{t,k}$ 是预测字符 $k$ 的 logit，$p_{t,k}$ 是对应概率；$k'$ 是 softmax 分母中遍历候选字符的索引。代码缓存 `h[0]` 为初始状态，读完第 $t$ 个输入后的状态写入 `h[t+1]`。输出层直接使用这个新状态，所以标签和输出时间没有错一位。
@@ -98,12 +101,14 @@ $$
 q_t=M_t+\log\left(\sum_{k'=0}^{V-1}e^{o_{t,k'}-M_t}\right),
 \qquad
 p_{t,k}=e^{o_{t,k}-q_t}.
+\tag{4}
 $$
 
 $M_t=\max_k o_{t,k}$ 是当前时间步的最大 logit，$k'$ 是分母中遍历候选字符的哑索引；$q_t$ 对应 `forward_step` 返回的 `log_sum`。减去最大 logit 不改变 softmax，因为所有指数都乘上同一个因子后会在分子分母相消。本文 $\log$ 表示自然对数；真实目标是 $y_t$，单步交叉熵是
 
 $$
 \ell_t=q_t-o_{t,y_t}=-\log p_{t,y_t}.
+\tag{5}
 $$
 
 整条序列按预测字符数平均，若序列共有 $T$ 个输入/目标对，则
@@ -111,6 +116,7 @@ $$
 $$
 \mathcal{L}=\frac{1}{T}\sum_{t=0}^{T-1}\ell_t
 =\frac{1}{T}\sum_{t=0}^{T-1}(q_t-o_{t,y_t}).
+\tag{6}
 $$
 
 这正对应 `network_forward` 中累加 `log_sum - probability[target]`、最后除以 `sequence->steps` 的实现。该缓冲起初暂存 logits，完成 log-sum-exp 后才原地转成概率，见 [`network_forward`](../src/ml/10_char_rnn.c#L197)。因此代码没有对已经下溢为零的 $p_{t,y_t}$ 直接取对数。
@@ -133,10 +139,12 @@ $$
 z_{0,0}=b_{h,0}+W_{x,0,a}+\sum_{j=0}^{H-1}W_{h,0,j}h_{0,j}
 =0-0.198123884201-0.074141913891
 =-0.272265798092,
+\tag{7}
 $$
 
 $$
 h_{1,0}=\tanh(z_{0,0})\approx-0.265731902806.
+\tag{8}
 $$
 
 这里 $z_{0,0}$ 是读入第一个 `a` 时隐藏单元 $0$ 的激活前值；$W_{x,0,a}$ 是输入权重矩阵对应字符 `a` 的列；求和项是全部 $16$ 个前一状态分量的循环影响。随后 $W_yh_1+b_y$ 产生四个 logits，稳定 softmax 得到 $p(a)=0.327110701$，真实目标是 `a`，故该步损失为 $-\log(0.327110701)\approx1.117456631$。
@@ -147,6 +155,7 @@ $$
 \mathcal{L}
 =\frac{1.117456631+1.573763953+0.937207670}{3}
 \approx1.209476085.
+\tag{9}
 $$
 
 这个例子不是人为捏造的数字：它逐项来自源码梯度测试所用的初始化种子、序列编码和非零初始状态。对应测试设置见 [`test_gradients`](../src/ml/10_char_rnn.c#L504)。
@@ -160,6 +169,7 @@ $$
 $$
 \frac{\partial\mathcal{L}}{\partial o_{t,k}}
 =\frac{p_{t,k}-\mathbf{1}[k=y_t]}{T},
+\tag{10}
 $$
 
 其中 $\mathbf{1}[k=y_t]$ 在预测类别等于目标时取 $1$，否则取 $0$；$T$ 是该序列的预测步数。推导来自 $\ell_t=q_t-o_{t,y_t}$：$q_t$ 对 logit 的导数是 softmax 概率 $p_{t,k}$，而 $o_{t,y_t}$ 对目标类别 logit 的导数是 $1$。序列平均再带来因子 $1/T$。
@@ -170,6 +180,7 @@ $$
 \left(\frac{0.327110701-1}{3},\frac{0.237495265}{3},
 \frac{0.173265933}{3},\frac{0.262128101}{3}\right)
 \approx(-0.224296433,0.079165088,0.057755311,0.087376034).
+\tag{11}
 $$
 
 目标字符 `a` 的 logit 梯度为负，梯度下降会提高它；其他类别的导数为正，梯度下降会降低它们。`network_backward` 对应语句是 `probability - (k == target)`，随后除以 `sequence->steps`。权重和偏置梯度由
@@ -180,6 +191,7 @@ $$
 \qquad
 \frac{\partial\mathcal{L}}{\partial b_{y,k}}
 =\sum_{t=0}^{T-1}\delta_{t,k}
+\tag{12}
 $$
 
 给出，其中 $\delta_{t,k}=\partial\mathcal{L}/\partial o_{t,k}$，$i$ 是隐藏单元索引。代码用 `+=` 累加，是因为同一输出参数在每个时间步都被重复使用。
@@ -194,10 +206,12 @@ $$
 d_t=W_y^{\mathsf T}e_t+f_{t+1},
 \qquad
 r_t=d_t\odot(1-h_{t+1}\odot h_{t+1}),
+\tag{13}
 $$
 
 $$
 f_t=W_h^{\mathsf T}r_t.
+\tag{14}
 $$
 
 $\mathsf T$ 表示矩阵转置，$\odot$ 表示逐元素相乘；$d_t$ 对应代码局部数组 `dh`，$r_t$ 对应 `da`，$f_{t+1}$ 和 $f_t$ 分别对应进入、离开当前时间步时的 `future`。最后一步之后没有未来损失，故初始 `future` 为零。源码从 $t=T-1$ 递减到 $0$，每步先加上当前输出梯度，再乘 tanh 导数，最后经 $W_h^{\mathsf T}$ 送回前一状态，见 [`network_backward`](../src/ml/10_char_rnn.c#L225)。
@@ -208,6 +222,7 @@ $$
 r_{2,0}=d_{2,0}(1-h_{3,0}^2)
 =0.073901834348\bigl(1-(-0.443249480105)^2\bigr)
 \approx0.059382333444.
+\tag{15}
 $$
 
 这就是表中本步对输入权重及循环权重贡献的起点。
@@ -219,6 +234,7 @@ $$
 =\sum_{t=0}^{T-1}r_tx_t^{\mathsf T},\qquad
 \frac{\partial\mathcal{L}}{\partial W_h}
 =\sum_{t=0}^{T-1}r_th_t^{\mathsf T},
+\tag{16}
 $$
 
 $$
@@ -226,6 +242,7 @@ $$
 =\sum_{t=0}^{T-1}r_t,
 \qquad
 \frac{\partial\mathcal{L}}{\partial h_0}=f_0.
+\tag{17}
 $$
 
 $W_x$、$W_h$ 和 $b_h$ 在每个时间步都出现，所以梯度是所有时刻贡献的和。由于 $x_t$ 是 one-hot，$r_tx_t^{\mathsf T}$ 只会更新 $W_x$ 的一个字符列；代码用 `gradient[WX + i * VOCAB + sequence->input[t]] += da` 完成这个列更新。`initial_gradient` 保存的是损失对序列初始隐藏状态的导数，它用于梯度检查，不是一个可学习的网络参数。
@@ -246,6 +263,7 @@ $$
 \frac{\partial\mathcal{L}}{\partial W_{x,0,a}}
 =0.070025251685-0.033414005901
 =0.036611245784.
+\tag{18}
 $$
 
 循环权重则累积三个时间步的贡献：
@@ -254,6 +272,7 @@ $$
 \frac{\partial\mathcal{L}}{\partial W_{h,0,0}}
 =-0.017062767180+0.008879167368+0.000700252517
 =-0.007483347295.
+\tag{19}
 $$
 
 完成 $t=0$ 后的 `future[0]` 是 $\partial\mathcal{L}/\partial h_{0,0}=0.022796636022$。这也是为什么即使输出头直接连接每个 $h_{t+1}$，早期状态梯度仍包含所有更晚输出的影响。
@@ -265,6 +284,7 @@ $$
 $$
 g^{\mathrm{num}}_j
 =\frac{\mathcal{L}(\theta_j+\epsilon)-\mathcal{L}(\theta_j-\epsilon)}{2\epsilon}.
+\tag{20}
 $$
 
 在 `aaba` 测试中，对 `WX[0,a]` 得到
@@ -272,11 +292,13 @@ $$
 $$
 \mathcal{L}(\theta_j+\epsilon)=1.209476450794,\qquad
 \mathcal{L}(\theta_j-\epsilon)=1.209475718569,
+\tag{21}
 $$
 
 $$
 g^{\mathrm{num}}_j=0.036611245791,\qquad
 g^{\mathrm{BPTT}}_j=0.036611245784.
+\tag{22}
 $$
 
 两者绝对差约为 $6.78\times10^{-12}$。源码逐一检查 $404$ 个网络参数和 $16$ 个 $h_0$ 分量，并要求差值小于 $10^{-7}+10^{-4}|g^{\mathrm{num}}_j|$。输入字符本身是离散 token，不对它作连续梯度检查；这里检查的是模型参数和连续初始状态。数值检查在梯度裁剪之前进行，因此验证的是原始损失的解析导数。
@@ -290,6 +312,7 @@ $$
 $$
 g^{\mathrm{corpus}}_j
 =\frac{\sum_{s=0}^{S-1}T_sg_{s,j}}{\sum_{s=0}^{S-1}T_s}.
+\tag{23}
 $$
 
 $S$ 是训练序列数；在本例微型语料里 $S=8$、每条 $T_s=29$，总计 $232$ 个预测字符。`train` 中的 `batch[i] += gradient[i] * sequence.steps` 和后续 `batch[i] /= tokens` 正好实现该加权平均。它对每个 epoch 的全部训练序列计算一次完整梯度，不做 mini-batch，也不在序列之间传递隐藏状态。
@@ -300,6 +323,7 @@ $S$ 是训练序列数；在本例微型语料里 $S=8$、每条 $T_s=29$，总�
 
 $$
 G=\lVert g\rVert_2=\sqrt{\sum_{j=0}^{P-1}g_j^2}.
+\tag{24}
 $$
 
 阈值为 $c=1$。若 $G>c$，统一缩放所有分量；否则原样通过：
@@ -309,6 +333,7 @@ g'_j=\begin{cases}
 (c/G)g_j,&G>c,\\
 g_j,&G\le c.
 \end{cases}
+\tag{25}
 $$
 
 缩放所有分量保留梯度方向，只限制整体长度。代码用反复调用 `hypot` 计算范数，避免直接对很大数平方；遇到非法阈值、非有限分量或不可表示的范数时，返回失败且不修改梯度。内置测试用向量 $(3,4)$ 验证：$G=5$，缩放因子为 $1/5=0.2$，裁剪结果为 $(0.6,0.8)$，见 [`clip_gradient`](../src/ml/10_char_rnn.c#L267)。
@@ -322,12 +347,14 @@ $$
 $$
 m_{\tau,j}=\beta_1m_{\tau-1,j}+(1-\beta_1)g_{\tau,j},\qquad
 v_{\tau,j}=\beta_2v_{\tau-1,j}+(1-\beta_2)g_{\tau,j}^2,
+\tag{26}
 $$
 
 $$
 \hat{m}_{\tau,j}=\frac{m_{\tau,j}}{1-\beta_1^\tau},\qquad
 \hat{v}_{\tau,j}=\frac{v_{\tau,j}}{1-\beta_2^\tau},\qquad
 \theta_{\tau+1,j}=\theta_{\tau,j}-\eta\frac{\hat{m}_{\tau,j}}{\sqrt{\hat{v}_{\tau,j}}+\varepsilon}.
+\tag{27}
 $$
 
 $\tau$ 是训练更新序号，$j$ 是扁平参数索引；$\theta_{\tau,j}$ 是更新前参数。偏差修正补偿初始矩为零造成的早期低估。`Adam.first`、`Adam.second` 保存 $m,v$；`beta1_power`、`beta2_power` 逐步保存 $\beta_1^\tau$、$\beta_2^\tau$。本实现把 $\varepsilon$ 加在平方根外，这一点应与其他实现逐项核对。
@@ -339,12 +366,14 @@ $\tau$ 是训练更新序号，$j$ 是扁平参数索引；$\theta_{\tau,j}$ 是
 $$
 m_1=0.1g=-0.000230237250,\qquad
 v_1=0.001g^2\approx5.3009191\times10^{-9},
+\tag{28}
 $$
 
 $$
 \hat{m}_1=\frac{m_1}{1-0.9}=g,
 \qquad
 \hat{v}_1=\frac{v_1}{1-0.999}=g^2.
+\tag{29}
 $$
 
 这里 $m_1$、$v_1$ 是首步矩估计，$\hat{m}_1$、$\hat{v}_1$ 是偏差修正后的值。源码固定使用 $\beta_1=0.9$、$\beta_2=0.999$、$\varepsilon=10^{-8}$，并把 $\varepsilon$ 放在平方根之外：
@@ -354,6 +383,7 @@ $$
 =\theta-\eta\frac{\hat{m}_1}{\sqrt{\hat{v}_1}+\varepsilon}
 =-0.198123884201-0.01\frac{-0.002302372496}{0.002302372496+10^{-8}}
 \approx-0.188123927634.
+\tag{30}
 $$
 
 负梯度使参数增大，更新量约为 $+0.009999956567$。同一批首步中，`WH[0,0]` 从 $-0.317621850967$ 更新到 $-0.327621837333$，因为它的平均梯度为正数 $0.007334210106$。相关参数与矩由 [`adam_update`](../src/ml/10_char_rnn.c#L299) 逐个更新。
@@ -380,6 +410,7 @@ $$
 
 $$
 P(j\mid i)=\frac{C_{i,j}}{\sum_{r=0}^{V-1}C_{i,r}}.
+\tag{31}
 $$
 
 这里 $i$ 是当前字符编号，$j$ 是候选下一字符编号，$r$ 遍历所有候选。bigram 只依赖最近一个字符；RNN 隐藏状态可以保留更早的上下文。这个基线只从训练文本计数，测试文本只用于最后评估，见 [`bigram_evaluate`](../src/ml/10_char_rnn.c#L463)。

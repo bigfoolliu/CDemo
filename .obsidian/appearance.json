@@ -1,3 +1,8 @@
 {
-  "cssTheme": "Catppuccin"
+  "cssTheme": "Catppuccin",
+  "translucency": false,
+  "theme": "light",
+  "enabledCssSnippets": [
+    "swiss-notes"
+  ]
 }

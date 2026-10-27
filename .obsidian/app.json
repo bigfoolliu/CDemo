@@ -1,3 +1,7 @@
 {
-  "showLineNumber": true
+  "cssSnippets": [
+    "swiss-notes"
+  ],
+  "showLineNumber": true,
+  "promptDelete": false
 }

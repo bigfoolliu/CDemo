@@ -27,6 +27,7 @@
 $$
 S_{m+1}=(1664525S_m+1013904223)\bmod2^{32},\qquad
 r_m=\frac{\lfloor S_{m+1}/2^8\rfloor}{2^{24}}
+\tag{1}
 $$
 
 每条样本的 $r_{i,k}$ 表示生成第 $i$ 条样本时第 $k$ 次随机调用的结果。令 $\theta_i$ 为角度、$\rho_i$ 为半径，则：
@@ -37,11 +38,13 @@ $$
 0.36\sqrt{r_{i,2}},&c_i=0\\
 0.62+0.30r_{i,2},&c_i=1
 \end{cases}
+\tag{2}
 $$
 
 $$
 x_{i,1}=\rho_i\cos\theta_i+0.08(2r_{i,3}-1),\qquad
 x_{i,2}=\rho_i\sin\theta_i+0.08(2r_{i,4}-1)
+\tag{3}
 $$
 
 这里 $r_{i,k}\in[0,1)$；$\theta_i$ 是弧度角，$\rho_i$ 是半径。内圆半径通过平方根变换，令圆盘内部面积分布均匀；外环半径在 $[0.62,0.92)$ 内变化。两个坐标都再加上 $[-0.08,0.08)$ 的噪声。坐标生成后，代码再以概率 $p_{\mathrm{flip}}$ 翻转标签：
@@ -51,6 +54,7 @@ y_i=\begin{cases}
 1-c_i,&r_{i,5}<p_{\mathrm{flip}}\\
 c_i,&r_{i,5}\ge p_{\mathrm{flip}}
 \end{cases}
+\tag{4}
 $$
 
 其中 $p_{\mathrm{flip}}$ 对应 `flip_probability`；训练时为 $0.20$，验证和测试时为 $0$。因此训练标签可能与决定圆环位置的基础类别 $c_i$ 不同，但坐标不会随标签翻转而改变。
@@ -85,11 +89,13 @@ $$
 $$
 a_j=b^{(1)}_j+\sum_{k=0}^{1}W^{(1)}_{j,k}x_{i,k},\qquad
 h_j=\tanh(a_j)
+\tag{5}
 $$
 
 $$
 s=b^{(2)}+\sum_{j=0}^{23}W^{(2)}_jh_j,\qquad
 p=\operatorname{sigmoid}(s)=\frac{1}{1+\exp(-s)}
+\tag{6}
 $$
 
 一次 sigmoid 加权求和后，预测 $p\ge0.5$ 时归为外环类，否则归为内圆类。样本 $0$ 的实际 logit 代入后，$p=1/(1+\exp(0.00661339))\approx0.49834666$，因此预测为内圆类。`forward` 检查网络参数与样本特征都有限，并要求标签恰好为 $0$ 或 $1$；它先写局部 `result`，所有结果有效后才整体复制到输出，失败不会留下半份前向状态。
@@ -98,6 +104,7 @@ $$
 
 $$
 \ell_i=\max(s_i,0)+\ln\left(1+\exp(-|s_i|)\right)-y_i s_i
+\tag{7}
 $$
 
 其中 $i$ 是样本下标，$y_i$ 是该样本的二元目标。对于训练样本 $i=0$，本次实际前向得到 $s_0\approx-0.00661339$、$y_0=0$，所以 $\ell_0=\ln(1+\exp(-0.00661339))\approx0.689846$。稳定公式在这个负 logit 下将指数限制为 $\exp(-|s_0|)$，避免计算较大的正指数。
@@ -109,6 +116,7 @@ $$
 $$
 L_{\mathrm{data}}=\frac{1}{N}\sum_{i=0}^{N-1}\ell_i,\qquad
 J(\theta)=L_{\mathrm{data}}+\frac{\lambda}{2}\sum_{w\in\mathcal{W}}w^2
+\tag{8}
 $$
 
 这里 $\theta$ 是全部 $97$ 个网络参数，$\lambda\ge0$ 是 L2 系数，$N$ 是当前训练集大小；`Metrics.loss` 和 `data_loss` 只表示 $L_{\mathrm{data}}$，`objective` 表示完整的 $J$。例如初始网络在训练集上的 $L_{\mathrm{data}}\approx0.694126$，权重平方和约为 $5.902601$。取 $\lambda=0.003$ 时，惩罚值为 $0.003\cdot5.902601/2\approx0.008854$，所以 $J\approx0.694126+0.008854=0.702980$；偏置不贡献这项惩罚。
@@ -117,6 +125,7 @@ $$
 
 $$
 \frac{\partial\ell_i}{\partial s}=-y_i(1-p)+(1-y_i)p=p-y_i=\delta^{(2)}
+\tag{9}
 $$
 
 对样本 $0$，$y_0=0$、$p_0\approx0.49834666$，代入可得 $-0(1-0.49834666)+(1-0)0.49834666=0.49834666$，正好是代码里的 `output_delta`。这里的 $\delta^{(2)}$ 是单个样本的输出误差；批次梯度稍后才对所有样本求平均。
@@ -127,12 +136,14 @@ $$
 \delta^{(2)}=p-y_i,\qquad
 \frac{\partial\ell_i}{\partial W^{(2)}_j}=\delta^{(2)}h_j,\qquad
 \delta^{(1)}_j=\delta^{(2)}W^{(2)}_j(1-h_j^2)
+\tag{10}
 $$
 
 $$
 \frac{\partial\ell_i}{\partial W^{(1)}_{j,k}}=\delta^{(1)}_jx_{i,k},\qquad
 \frac{\partial\ell_i}{\partial b^{(1)}_j}=\delta^{(1)}_j,\qquad
 \frac{\partial\ell_i}{\partial b^{(2)}}=\delta^{(2)}
+\tag{11}
 $$
 
 对 $N$ 个样本的梯度先求平均。因为 $\frac{\partial}{\partial w}(\frac{\lambda}{2}w^2)=\lambda w$，所以只对权重增加 $\lambda w$：
@@ -141,6 +152,7 @@ $$
 \frac{\partial J}{\partial w}=\frac{1}{N}\sum_{i=0}^{N-1}\frac{\partial\ell_i}{\partial w}+\lambda w
 \quad(w\in\mathcal{W}),\qquad
 \frac{\partial J}{\partial b}=\frac{1}{N}\sum_{i=0}^{N-1}\frac{\partial\ell_i}{\partial b}
+\tag{12}
 $$
 
 这就是 L2 在代码中的位置：`loss_and_gradient` 先把每个样本的输出误差反传到两层，再将数据梯度累加在 `accumulated`。实现核心如下，`unit` 和 `feature` 分别是隐藏单元与输入特征下标：
@@ -165,10 +177,12 @@ accumulated[W1_OFFSET + unit * FEATURE_COUNT + feature] +=
 $$
 a_0=(-0.29773529)(0.01079033)+(0.10275502)(0.06246614)
 \approx-0.00321266+0.00641871=0.00320605
+\tag{13}
 $$
 
 $$
 h_0=\tanh(0.00320605)\approx0.00320604
+\tag{14}
 $$
 
 将 $24$ 个隐藏激活都乘以对应输出权重并加上输出偏置后，实际 logit 是 $s_0\approx-0.00661339$，概率 $p_0\approx0.49834666$。因为 $p_0<0.5$，预测为内圆类；本样本目标也是 $0$，所以预测正确，但 BCE 仍为约 $0.689846$，说明概率非常接近不确定状态。
@@ -178,27 +192,32 @@ $$
 $$
 \frac{\partial\ell_0}{\partial W^{(2)}_0}
 =0.49834666(0.00320604)\approx0.00159772
+\tag{15}
 $$
 
 隐藏单元 $0$ 的反向误差和输入到隐藏层第一个权重的样本梯度为：
 
 $$
 \delta^{(1)}_0=0.49834666(-0.35517696)(1-0.00320604^2)\approx-0.17699943
+\tag{16}
 $$
 
 $$
 \frac{\partial\ell_0}{\partial W^{(1)}_{0,0}}
 =(-0.17699943)(0.01079033)\approx-0.00190988
+\tag{17}
 $$
 
 一个样本只贡献整批梯度的一部分。把 $24$ 条训练样本的梯度平均后，$W^{(1)}_{0,0}$ 的数据梯度是 $0.01324287$。对 $\lambda=0.003$，该参数的正则梯度是 $\lambda W^{(1)}_{0,0}=0.003(-0.29773529)\approx-0.00089321$，所以完整梯度为 $0.01234967$。第一次更新分别为：
 
 $$
 W^{(1)}_{0,0}\big|_{\lambda=0}=-0.29773529-0.12(0.01324287)\approx-0.29932443
+\tag{18}
 $$
 
 $$
 W^{(1)}_{0,0}\big|_{\lambda=0.003}=-0.29773529-0.12(0.01234967)\approx-0.29921725
+\tag{19}
 $$
 
 因为该权重为负，正则梯度也为负，梯度下降会让更新比无正则时更靠近零。若权重为正，$\lambda w$ 会为正，也同样把更新拉向零。下一个 epoch 会基于新参数重新计算全部 $24$ 条样本的前向结果和梯度；这个过程重复 $7000$ 次。
@@ -236,6 +255,7 @@ $$
 g^{\mathrm{num}}_j=\frac{J(\boldsymbol{\theta}+\varepsilon\mathbf{e}_j)-J(\boldsymbol{\theta}-\varepsilon\mathbf{e}_j)}{2\varepsilon},\qquad
 E_j=\frac{|g^{\mathrm{num}}_j-g^{\mathrm{analytic}}_j|}
 {\max(1,|g^{\mathrm{num}}_j|,|g^{\mathrm{analytic}}_j|)}
+\tag{20}
 $$
 
 以测试中的第 $0$ 个参数为例（数据种子 $71$、网络种子 $17$），其解析梯度约为 $-0.028121220008$；将该参数分别加减 $10^{-5}$ 后，目标值约为 $J_+=0.858608983305$ 和 $J_-=0.858609545729$，所以数值梯度为 $(J_+-J_-)/(2\cdot10^{-5})\approx-0.028121220003$，与解析值一致。每个参数都要求 $E_j\le2\times10^{-6}$。测试另外确认 $\lambda=0$ 时总目标等于数据损失，并比较有无正则时两层偏置梯度不变，验证惩罚项确实只作用于权重。固定种子数据会逐项完全相同；奇数样本数、非有限特征和负正则系数会被拒绝，`loss_and_gradient` 失败时不覆盖调用者的梯度或损失输出。
