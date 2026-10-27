@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/42_神经网络正则化.md",
+                "file": "docs/71_机器学习深度学习大模型补充框架.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "42_神经网络正则化"
+              "title": "71_机器学习深度学习大模型补充框架"
             }
           }
         ]
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/42_神经网络正则化.md",
+                "file": "docs/71_机器学习深度学习大模型补充框架.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -210,8 +210,12 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "1f6c7206981f593c",
+  "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
+    "docs/74_现代Transformer组件对照.md",
+    "docs/73_数据增强与可靠性.md",
+    "docs/72_训练稳定性与归一化.md",
+    "docs/42_神经网络正则化.md",
     "docs/41_交叉验证.md",
     "docs/40_线性支持向量机.md",
     "docs/39_主成分分析.md",
@@ -246,11 +250,7 @@
     "docs/23_Python入门与项目约定.md",
     "docs/32_线性回归分析.md",
     "docs/46_DBSCAN密度聚类.md",
-    "docs/42_神经网络正则化.md",
     "docs/45_Softmax多分类回归.md",
-    "docs/14_迷宫生成与寻路.md",
-    "docs/13_康威生命游戏.md",
-    "docs/44_类别不平衡与概率校准.md",
     "未命名.canvas"
   ]
 }
