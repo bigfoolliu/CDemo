@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""从 Make 的预演输出生成 clangd 编译数据库；不执行构建或训练。"""
+"""从 make 预演输出生成 clangd 编译数据库；不执行构建或训练。"""
 
 import json
 from pathlib import Path

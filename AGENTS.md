@@ -2,7 +2,7 @@
 
 ## 1. 项目结构与模块组织
 
-本项目学习 C 基础语法和现代特性，以 C23（ISO/IEC 9899:2024）为目标。`src/` 根目录存放 C23 示例，`src/basics/` 存放基础示例，各自包含 `main` 并按编号命名。`src/modules/` 演示多文件链接，只有入口文件包含 `main`。`docs/00_文档阅读顺序.md` 是文档阅读路线索引，专题文档用两位数前缀标示建议顺序；`README.md` 是项目目录与运行指南。`Makefile` 管理构建，`build/` 存放不纳入版本控制的生成物。目前测试断言直接写在示例中。
+本仓库同时学习 C 与 Python。C 以 C23（ISO/IEC 9899:2024）为目标：`src/` 中的 `.c` 文件按主题组织，`src/basics/` 放基础示例，`src/modules/` 演示多文件链接。Python 教学示例位于 `src/python/`，维护脚本位于 `scripts/`，C 测试和 Python 集成脚本位于 `tests/`。C 用于实现和观察底层机制，Python 用于数据处理、实验、可视化及后续高层 AI 工作流；按主题选择语言，不要求机械地重复实现。`docs/00_文档阅读顺序.md` 是学习索引，`README.md` 是项目运行指南。`Makefile` 管理 C 构建与两种语言的常用命令，生成物位于 `build/`。
 
 ## 2. 文档组织与写作规范
 
@@ -46,7 +46,7 @@ BMP 编码位于 `src/graphics/bmp.h/c`，截图路径由 `bmp_capture.h/c` 管�
 
 深入示例放在 `src/advanced/`，对应讲解位于 `docs/04_C语言进阶.md`。新增示例需同步学习目录，并说明接口契约、所有权、不变量和失败行为。线程示例使用 POSIX API，须与 ISO C 特性明确区分。
 
-需要 C 编译器和 Make，无第三方依赖。在仓库根目录运行：
+需要 C 编译器、Make 和 Python 3；基础示例不依赖第三方库。在仓库根目录运行：
 
 - `make`：编译全部示例。
 - `make run`：按文件名顺序运行示例。
@@ -56,10 +56,30 @@ BMP 编码位于 `src/graphics/bmp.h/c`，截图路径由 `bmp_capture.h/c` 管�
 - `make advanced`：构建并运行深入示例。
 - `make ml`：运行 `src/ml/` 中的机器学习案例，数学库通过 `-lm` 链接。
 - `make sanitize`：用地址与未定义行为消毒器验证深入示例，生成物位于 `build/sanitize/`。
+- `make python`：运行 `src/python/` 中的独立 Python 学习示例。
+- `make lint-python`：用当前 Python 3 解释器检查仓库 Python 文件语法，不生成字节码缓存。
 
-用 `make CC=clang` 指定编译器；切换工具链或编译参数前执行 `make clean`。构建优先使用 `-std=c23`，不支持此名称时使用 `-std=c2x`。接受标准选项不代表完整实现全部特性。
+`make run` 运行 C 与 Python 示例；`make` 只构建 C 程序，因为 Python 无需编译。用 `make CC=clang` 指定 C 编译器；切换工具链或编译参数前执行 `make clean`。构建优先使用 `-std=c23`，不支持此名称时使用 `-std=c2x`。接受标准选项不代表完整实现全部特性。
 
 ## 4. 代码风格与命名规范
+
+### Python 代码
+
+Python 示例放在 `src/python/`，每个文件可独立运行并通过 `if __name__ == "__main__":` 启动；导入时不得开始训练、写文件或执行长任务。优先使用标准库，确需第三方依赖时在对应专题文档说明版本、安装步骤及用途；本地虚拟环境放在已忽略的 `.venv/`。使用四空格缩进、`snake_case` 函数与变量、`CapWords` 类名和 `UPPER_SNAKE_CASE` 常量。教学函数优先提供类型注解和简洁中文文档字符串。需要单元测试时使用标准库 `unittest`，放在 `tests/python/`，并说明运行命令；Python 语法检查使用 `make lint-python`。
+
+仓库内所有 `.py` 文件的模块、类、函数和方法 docstring 必须使用 reStructuredText（reST）风格，并使用三双引号。函数和方法的参数逐项写成 `:param name:`，返回值写成 `:return:`；无返回值时写“无”。有异常行为时用 `:raises ExceptionType:` 说明。参数名和说明直接写文本，不额外添加类型字段或 Markdown 反引号。禁止使用 `:type:`、`:rtype:`、`:returns:`、Google 风格的 `Args:`/`Returns:`/`Raises:` 区块和 NumPy 风格参数表。简短的模块、类或无参数函数说明可以只写描述句。
+
+```python
+def calculate_mean(values: List[float]) -> float:
+    """计算非空数值列表的平均值。
+
+    :param values: 至少包含一个数值的列表。
+    :return: 列表中所有数值的算术平均值。
+    :raises ValueError: values 为空时抛出。
+    """
+```
+
+### C 代码
 
 使用四个空格缩进，禁止 Tab，采用 UTF-8 编码并保留文件末尾换行。函数与变量使用 `snake_case`，宏使用 `UPPER_SNAKE_CASE`。代码面向学习阅读，生成时须遵守以下排版约束：
 
@@ -111,7 +131,7 @@ static bool move_point(Point *point)
 
 `src/common/logger.h` 提供单线程双输出日志记录器；线性回归默认追加写入 `logs/linear_regression.log`。每行包含本地毫秒时间戳、调用源码文件名和行号，多行消息逐行加前缀。`make test-logger` 验证双输出一致、调用位置、多行、追加行为及失败路径，保留用户已有日志。
 
-使用标准库 `assert` 检查示例行为，无第三方测试框架或覆盖率门槛。行为变更和缺陷修复应配套验证，覆盖有意义的结果及边界条件，避免未定义行为。验证时不要使用 `-DNDEBUG` 禁用断言。提交前运行 `make test` 和 `make lint`，报告所用编译器及缺失特性。
+C 示例使用标准库 `assert` 检查行为，无第三方测试框架或覆盖率门槛。Python 单元测试需要时使用标准库 `unittest`，放在 `tests/python/`；现有端到端脚本仍由专用 Make 目标运行。行为变更和缺陷修复应配套验证，覆盖有意义的结果及边界条件，避免未定义行为。验证 C 断言时不要使用 `-DNDEBUG`。提交前运行 `make test` 和 `make lint`，报告所用 C 编译器、Python 版本及缺失特性。
 
 ## 7. 提交与拉取请求规范
 

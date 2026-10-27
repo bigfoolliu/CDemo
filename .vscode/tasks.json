@@ -518,6 +518,30 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "Python: 运行学习示例",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "python"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: 语法检查",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "lint-python"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
     }
   ]
 }

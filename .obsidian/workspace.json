@@ -212,6 +212,11 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
+    "docs/23_Python入门与项目约定.md",
+    "scripts/check_python_syntax.py",
+    "src/python/basics.py",
+    "src/python",
+    "docs/71_机器学习深度学习大模型补充框架.md",
     "docs/34_K近邻分析.md",
     "docs/33_逻辑回归分析.md",
     "docs/32_线性回归分析.md",
@@ -238,8 +243,6 @@
     "scripts/number_equations.py",
     "docs/57_GRU门控网络.md",
     "docs/55_去噪自编码器.md",
-    "docs/16_贝塞尔曲线编辑器.md",
-    "docs/19_落沙模拟.md",
     "db1.base",
     "Excalidraw",
     "未命名.canvas"

@@ -1,4 +1,4 @@
-"""为 docs 中的行间公式添加每篇文档独立的 MathJax 编号。"""
+"""为 docs/ 中的独立行间公式连续添加 MathJax 编号。"""
 
 from __future__ import annotations
 
@@ -13,7 +13,13 @@ ANY_TAG_RE = re.compile(r"\\tag\b")
 
 
 def number_equations(text: str, name: str) -> tuple[str, int]:
-    """保留原有内容，只在独立的 $$ 公式结束前插入或更新编号。"""
+    """为文档中的行间公式编号，并保留其他原文。
+
+    :param text: Markdown 文档的源文本。
+    :param name: 用于错误信息的文档名称。
+    :return: 更新后的文档文本和公式数量。
+    :raises ValueError: 遇到空公式、未闭合公式块或不支持的编号格式时抛出。
+    """
     lines = text.splitlines(keepends=True)
     output: list[str] = []
     fence: tuple[str, int] | None = None

@@ -1,16 +1,17 @@
-# 现代 C 语言学习示例
+# C 与 Python 学习示例
 
-本项目通过短小、可运行的程序学习 C 语言，以最新正式标准 **C23（ISO/IEC 9899:2024）** 为目标。C2y 是下一版标准的工作名称，相关实验特性应单独讨论。
+本项目使用 C 和 Python 学习编程、机器学习、深度学习与大模型。C 示例以最新正式标准 **C23（ISO/IEC 9899:2024）** 为目标，用来观察内存布局、数值计算与算法细节；Python 示例用于快速实验、数据处理和可视化。C2y 是下一版标准的工作名称，相关实验特性应单独讨论。
 
 ## 1. 快速开始
 
-需要 C 编译器和 Make，无第三方依赖。在仓库根目录运行：
+需要 C 编译器、Make 和 Python 3；基础示例无需第三方依赖。在仓库根目录运行：
 
 ```sh
-make           # 编译所有示例
-make run       # 按编号运行示例
-make test      # 运行示例及其中的行为断言
-make lint      # 严格警告与语法检查
+make           # 编译 C 示例
+make run       # 运行 C 和 Python 学习示例
+make python    # 只运行 Python 学习示例
+make test      # 运行 C/Python 示例及 C 行为断言
+make lint      # C 严格警告检查及 Python 语法检查
 make clean     # 删除示例可执行文件
 make advanced  # 只构建并运行深入示例
 make sanitize  # 对深入示例执行地址与未定义行为检查
@@ -20,9 +21,9 @@ make stdlib    # 构建并运行常用标准库示例
 
 ## 2. 文档阅读顺序
 
-`docs/` 中的文档已按学习路线添加数字前缀。零基础建议从 [文档阅读顺序](docs/00_文档阅读顺序.md) 开始；希望系统学习机器学习、深度学习、大模型与 Agent，可按[分阶段学习路线](docs/70_机器学习到智能体学习路线.md)同步完成数学手算、纯 C 案例和验证。
+`docs/` 中的文档已按学习路线添加数字前缀。零基础建议从 [文档阅读顺序](docs/00_文档阅读顺序.md) 开始；希望系统学习机器学习、深度学习、大模型与 Agent，可按[分阶段学习路线](docs/70_机器学习到智能体学习路线.md)同步完成数学手算、C 核心实现、Python 实验和验证。后续补充专题见[学习框架](docs/71_机器学习深度学习大模型补充框架.md)。
 
-`src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
+`src/*.c` 和 `src/basics/*.c` 都有独立的 `main`；`src/modules/` 演示多个源码链接成一个程序。Python 学习示例位于 `src/python/`，使用 Python 3 标准库，不需要编译。构建结果放在 `build/`。可用 `make CC=clang` 或 `make CC=gcc` 指定编译器；切换编译器或参数前先执行 `make clean`。
 
 Makefile 优先选择 `-std=c23`；不支持此名称时使用 `-std=c2x`。接受标准选项并不代表完整实现 C23。示例使用真正的新语法，缺少支持时会编译失败，以便明确识别工具链限制。macOS 上名为 `gcc` 的命令也可能实际是 Apple Clang。
 
@@ -282,7 +283,11 @@ make snake-ai
 3. C23 标准库：`<stdckdint.h>` 检查整数溢出、`<stdbit.h>` 位操作。标准库支持需要单独验证。
 4. 综合练习：文件处理、错误处理和多文件组织，并使用消毒器检查内存问题。
 
-## 28. 参考资料
+## 28. Python 学习专区
+
+阅读 [Python 入门与本项目约定](docs/23_Python入门与项目约定.md)，从 `src/python/basics.py` 开始。运行 `make python` 执行 Python 示例，`make lint-python` 检查仓库内 Python 源文件语法。需要第三方机器学习库的专题会单独说明依赖，并使用本地 `.venv/` 虚拟环境；C 示例仍可独立构建和运行。
+
+## 29. 参考资料
 
 - [ISO C23 标准信息](https://www.iso.org/standard/82075.html)
 - [WG14 标准委员会与公开文档](https://www.open-std.org/jtc1/sc22/wg14/)

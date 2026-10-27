@@ -1,5 +1,5 @@
-# 现代 C 学习项目的构建入口（在仓库根目录运行 make）。
-# 常用命令：make / make run / make test / make lint / make debug。
+# C 与 Python 学习项目的统一入口（在仓库根目录运行 make）。
+# 常用命令：make / make run / make python / make test / make lint / make debug。
 # 图形窗口需显式运行，例如 make sand；默认构建与测试无需 SDL2。
 # 指定工具链：make CC=clang；切换编译器或参数前先 make clean。
 # 本文件直接将源码编译并链接为可执行文件，不生成中间 .o 文件。
@@ -30,6 +30,8 @@
 
 # 默认使用 cc，覆盖 Make 内置编译器默认值；命令行 CC=clang 仍具有优先级。
 CC = cc
+# Python 解释器只运行教学示例与仓库脚本，不参与 C 可执行文件的编译。
+PYTHON ?= python3
 # 无参数 make 执行 all，不受本文件中图形规则出现顺序影响。
 .DEFAULT_GOAL := all
 # 优先使用正式标准名称，旧编译器可能只接受 c2x。
@@ -43,6 +45,8 @@ CFLAGS = -std=$(CSTD) -Wall -Wextra -Wpedantic -Werror -g
 # 自动收集各独立 main 示例；不包含 modules、games 和 graphics，
 # 这些目录需要多文件链接、特殊依赖或交互入口，分别由专用规则管理。
 SOURCES := $(wildcard src/*.c src/basics/*.c src/advanced/*.c src/ml/*.c src/stdlib/*.c)
+# Python 教学示例按文件名排序运行；每个文件都应提供独立 main 入口。
+PYTHON_EXAMPLES := $(wildcard src/python/*.py)
 # 标准库专区可执行文件清单，例如 src/stdlib/01_stdio.c -> build/stdlib/01_stdio。
 STDLIB_PROGRAMS := $(patsubst src/%.c,build/%,$(wildcard src/stdlib/*.c))
 # 机器学习案例清单，用于批量运行及单独追加数学库 -lm。
@@ -772,10 +776,18 @@ sanitize-word-frequency:
 
 # --- 普通调试构建与编辑器代码提示 ---
 .PHONY: debug compile-commands
-.PHONY: stdlib
+.PHONY: stdlib python lint-python
 # 只构建并运行常用标准库专区；循环中的 $$program 交给 Shell 展开。
 stdlib: $(STDLIB_PROGRAMS)
 	@set -e; for program in $(STDLIB_PROGRAMS); do "$$program"; done
+
+# Python 是解释型语言，无需生成可执行文件；示例使用标准库并从项目根目录运行。
+python:
+	@set -e; for source in $(PYTHON_EXAMPLES); do echo "运行 $$source"; PYTHONPATH=src/python PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$$source"; done
+
+# 检查仓库 Python 源文件语法，不生成 __pycache__，也不要求第三方 lint 工具。
+lint-python:
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check_python_syntax.py
 # 批量构建非窗口调试程序，只构建不执行；VS Code 的普通调试任务使用此目标。
 DEBUG_PROGRAMS += build/debug/cpu/demo
 
@@ -1435,10 +1447,11 @@ build/modules_demo: $(MODULE_SOURCES) src/modules/arithmetic.h Makefile
 	mkdir -p build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODULE_SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
 
-# 先完成默认构建，再按 PROGRAMS 顺序运行非交互示例（通常按路径和编号排序）。
-# 不启动人工蛇、AI 或 SDL 窗口；set -e 保证任一示例失败便停止循环。
+# 先完成 C 构建，再运行 C 与 Python 非交互示例；两段循环均遇错立即停止。
+# 不启动人工蛇、AI 或 SDL 窗口。
 run: all
 	@set -e; for program in $(PROGRAMS); do echo "运行 $$program"; "$$program"; done
+	@set -e; for source in $(PYTHON_EXAMPLES); do echo "运行 $$source"; PYTHONPATH=src/python PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$$source"; done
 
 # 日志记录器为头文件实现，编译单个测试入口；测试验证双输出、前缀与失败路径。
 build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
@@ -1450,8 +1463,8 @@ build/tests/logger_test: tests/logger_test.c src/common/logger.h Makefile
 test-logger: build/tests/logger_test
 	./build/tests/logger_test
 
-# 默认验证入口：先运行普通示例，再执行蛇规则、AI 数值、日志与各纯 C 核心测试。
-# 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
+# 默认验证入口：先运行 C/Python 示例，再执行蛇规则、AI 数值、日志与纯 C 核心测试。
+# C 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
 test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
@@ -1483,9 +1496,9 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 	./build/tests/image_filters_test
 	./build/tests/word_frequency_test
 
-# 以严格警告执行 -fsyntax-only，不链接、不生成可执行文件，也不验证运行行为。
-# 覆盖普通示例、纯 C 图形核心及核心测试，无需 SDL；窗口编译由专用目标验证。
-lint:
+# C 代码以严格警告执行 -fsyntax-only；Python 语法由前置 lint-python 检查。
+# 不链接、不生成 C 可执行文件，也不验证运行行为；SDL 窗口编译由专用目标验证。
+lint: lint-python
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/21_regularization.c tests/regularization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/csv_standardization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/reliability_assessment_test.c

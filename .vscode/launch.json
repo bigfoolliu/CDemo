@@ -2,6 +2,19 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: 基础示例",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/python/basics.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src/python",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "justMyCode": true
+    },
+    {
       "name": "C: ml/22_resnet.c",
       "type": "lldb",
       "request": "launch",

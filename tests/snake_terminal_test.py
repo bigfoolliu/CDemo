@@ -1,4 +1,4 @@
-"""伪终端集成测试：无第三方依赖，不修改用户历史文件。"""
+"""通过伪终端（pseudo-terminal）验证游戏交互，不修改用户历史文件。"""
 
 import os
 from pathlib import Path

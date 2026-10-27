@@ -4,7 +4,7 @@
 
 ## 1. 扩展与代码提示
 
-在扩展面板搜索 `@recommended`，安装 `clangd、CodeLLDB 和 Makefile Tools`。clangd 提供补全、跳转、诊断和格式化；CodeLLDB 提供断点和变量观察；Makefile Tools 方便查看构建目标。配置已关闭 Microsoft C/C++ 扩展的 IntelliSense，避免两套诊断重复运行。
+在扩展面板搜索 `@recommended`，安装 `clangd、CodeLLDB、Makefile Tools 和 Python`。clangd 提供 C 补全、跳转、诊断和格式化；CodeLLDB 调试 C 程序；Python 扩展提供 Python 解释器选择、代码提示和调试；Makefile Tools 方便查看构建目标。配置已关闭 Microsoft C/C++ 扩展的 IntelliSense，避免两套 C 诊断重复运行。
 
 首次运行 `make compile-commands`，或者按 `Cmd+Shift+B` 构建全部。编译数据库位于 `build/compile_commands.json`，通过 Make 的预演命令生成，不会运行示例。它记录实际 C 标准、线程参数和各翻译单元，让编辑器理解多文件模块及测试代码。新增源文件、修改编译参数或切换编译器后重新生成；例如 `make CC=clang compile-commands`。切换正常构建工具链前仍需 `make clean`。
 
@@ -28,6 +28,8 @@
 
 例如打开 `src/basics/06_pointers.c`，选择 `C: basics/06_pointers.c` 再按 F5。仅打开文件不会自动切换调试入口，运行前检查下拉列表。点击行号左侧设置断点，F10 单步跳过，F11 进入函数，在变量或监视面板观察参数、损失和数组。macOS 的功能键可能需要同时按 Fn。
 
+Python 示例使用 `src/python/` 目录。选择 `Python: 基础示例` 后按 F5，可在 `calculate_mean` 设置断点；也可从“终端 → 运行任务”执行 `Python: 运行学习示例` 或 `Python: 语法检查`。Python 扩展首次使用时会要求选择已安装的 Python 3 解释器。
+
 游戏在集成终端运行，以支持方向键和终端输入；先点击终端获取焦点。正常退出优先使用游戏的 `q` 键，人工游戏停止调试时也配置了 SIGTERM 恢复终端。若异常退出后终端状态失常，可运行 `reset`。断点暂停会暂停整个实时游戏。
 
 AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能训练出高分模型。模型与实验产物仍存于 `sessions/snake-ai/`，日志位于 `logs/`；线性回归日志为 `logs/linear_regression.log`。所有配置都以仓库根目录为工作目录。
@@ -38,7 +40,7 @@ AI 调试训练限制为 1500 步或 30 秒，适合观察流程，不代表能�
 
 `.clang-format` 使用四空格缩进、100 列行宽：函数左花括号另起一行，控制流、结构体和枚举的左花括号跟随条件或声明。分支和循环内部语句仍分行；短初始化和参数列表紧凑排列，超长才换行。最多保留一行连续空行，并保留 include 顺序及手工编排的中文注释，让代码清晰但不过于松散。
 
-保存时不自动格式化；在命令面板选择“格式化文档”手动整理当前 C 文件。也可先运行 `clang-format src/目标文件.c` 在终端预览，再用 `clang-format -i src/目标文件.c` 写回。只整理本次修改涉及的代码，避免无关文件的大范围变动。
+保存时不自动格式化；在命令面板选择“格式化文档”手动整理当前 C 文件。也可先运行 `clang-format src/目标文件.c` 在终端预览，再用 `clang-format -i src/目标文件.c` 写回。Python 使用四空格缩进，当前不强制安装特定格式化器；`make lint-python` 检查语法。只整理本次修改涉及的代码，避免无关文件的大范围变动。
 
 格式化工具不能代替教学代码的组织：每条声明只声明一个变量、仅在明显逻辑阶段之间留空行、为控制流补齐花括号，以及将 `@brief`、每个 `@param`、`@return` 逐行说明，仍需主动遵守 [仓库排版规范](../AGENTS.md)。工具不会自动判断逻辑分段，也不会消除所有人为展开的初始化；已有尾逗号可能让短初始化保持多行，不要仅为强制换行添加尾逗号。中文注释继续解释契约、边界和失败行为。
 

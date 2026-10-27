@@ -1,4 +1,6 @@
-"""短训练可重复性、CLI、模型校验和 AI 终端演示；数据只写临时目录。"""
+"""验证短训练可重复性、命令行接口（command-line interface，CLI）、
+模型校验和终端演示。
+"""
 
 import csv
 import os
