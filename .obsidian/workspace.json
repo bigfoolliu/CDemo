@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/50_深度学习学习计划.md",
+                "file": "docs/33_逻辑回归分析.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "50_深度学习学习计划"
+              "title": "33_逻辑回归分析"
             }
           }
         ]
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/50_深度学习学习计划.md",
+                "file": "docs/33_逻辑回归分析.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -212,6 +212,10 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
+    "docs/54_CNN图像分类.md",
+    "docs/images/33_多特征逻辑回归.svg",
+    "docs/50_深度学习学习计划.md",
+    "docs/images/54_多通道卷积.svg",
     "src/python/ml/16_decision_tree.py",
     "src/python/ml/28_model_comparison.py",
     "src/python/ml/10_char_rnn.py",
@@ -222,7 +226,6 @@
     "src/python/ml/23_csv_standardization.py",
     "src/python/ml/22_resnet.py",
     "src/python/ml/21_regularization.py",
-    "src/python/ml/20_cross_validation.py",
     "docs/49_高斯混合模型与期望最大化.md",
     "docs/71_机器学习深度学习大模型补充框架.md",
     "docs/70_机器学习到智能体学习路线.md",
@@ -232,7 +235,6 @@
     "docs/33_逻辑回归分析.md",
     "docs/32_线性回归分析.md",
     "docs/52_XOR多层感知机.md",
-    "docs/50_深度学习学习计划.md",
     "docs/47_梯度提升树.md",
     "docs/46_DBSCAN密度聚类.md",
     "docs/48_公平模型比较.md",

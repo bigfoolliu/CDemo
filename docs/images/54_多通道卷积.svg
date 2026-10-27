@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="330" viewBox="0 0 920 330" role="img" aria-labelledby="title desc">
+  <title id="title">多通道卷积如何融合输入通道</title>
+  <desc id="desc">RGB 三个输入平面分别与同一输出通道对应的核平面做局部乘加，结果相加并加偏置，得到一张输出特征图。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 Z" fill="#526579"/>
+    </marker>
+  </defs>
+  <rect width="920" height="330" rx="16" fill="#f8fafc"/>
+  <g font-family="sans-serif" fill="#243447">
+    <text x="28" y="36" font-size="21" font-weight="700">一个输出通道：跨输入通道求和，再沿空间位置滑动</text>
+    <text x="32" y="69" font-size="15" fill="#596a7b">示意输入为 RGB；教学代码当前使用灰度，ResNet 示例展示多通道卷积。</text>
+
+    <text x="42" y="108" font-size="17" font-weight="700">输入通道</text>
+    <text x="319" y="108" font-size="17" font-weight="700">同一输出通道的核切片</text>
+    <text x="716" y="108" font-size="17" font-weight="700">输出特征图</text>
+
+    <rect x="36" y="123" width="206" height="42" rx="8" fill="#e7f0fb" stroke="#8ba9c5"/>
+    <rect x="36" y="174" width="206" height="42" rx="8" fill="#e7f5ee" stroke="#8caf9a"/>
+    <rect x="36" y="225" width="206" height="42" rx="8" fill="#f9ece8" stroke="#c99b8e"/>
+    <text x="53" y="150" font-size="16" font-weight="700" fill="#315f89">输入通道 0（R）</text>
+    <text x="53" y="201" font-size="16" font-weight="700" fill="#397052">输入通道 1（G）</text>
+    <text x="53" y="252" font-size="16" font-weight="700" fill="#995747">输入通道 2（B）</text>
+    <g fill="#ffffff" stroke="#9aaaba">
+      <rect x="174" y="132" width="22" height="22"/><rect x="196" y="132" width="22" height="22"/>
+      <rect x="174" y="183" width="22" height="22"/><rect x="196" y="183" width="22" height="22"/>
+      <rect x="174" y="234" width="22" height="22"/><rect x="196" y="234" width="22" height="22"/>
+    </g>
+
+    <rect x="315" y="123" width="235" height="42" rx="8" fill="#ffffff" stroke="#a7b2be"/>
+    <rect x="315" y="174" width="235" height="42" rx="8" fill="#ffffff" stroke="#a7b2be"/>
+    <rect x="315" y="225" width="235" height="42" rx="8" fill="#ffffff" stroke="#a7b2be"/>
+    <text x="333" y="150" font-size="16">核切片 K[o, 0] × R 局部窗口</text>
+    <text x="333" y="201" font-size="16">核切片 K[o, 1] × G 局部窗口</text>
+    <text x="333" y="252" font-size="16">核切片 K[o, 2] × B 局部窗口</text>
+
+    <path d="M245 144 C275 144 285 144 310 144" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M245 195 C275 195 285 195 310 195" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M245 246 C275 246 285 246 310 246" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <path d="M555 144 C590 144 590 183 620 183" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M555 195 L615 195" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M555 246 C590 246 590 207 620 207" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+    <circle cx="648" cy="195" r="26" fill="#fff7df" stroke="#c49b43" stroke-width="2"/>
+    <text x="648" y="202" font-size="23" font-weight="700" text-anchor="middle">Σ+b</text>
+    <path d="M676 195 L704 195" fill="none" stroke="#526579" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="718" y="128" width="158" height="132" rx="10" fill="#e6f2ed" stroke="#84a997" stroke-width="2"/>
+    <g fill="#c5dfd2" stroke="#82a594">
+      <rect x="742" y="150" width="30" height="30"/><rect x="772" y="150" width="30" height="30"/><rect x="802" y="150" width="30" height="30"/>
+      <rect x="742" y="180" width="30" height="30"/><rect x="772" y="180" width="30" height="30"/><rect x="802" y="180" width="30" height="30"/>
+      <rect x="742" y="210" width="30" height="30"/><rect x="772" y="210" width="30" height="30"/><rect x="802" y="210" width="30" height="30"/>
+    </g>
+    <rect x="772" y="180" width="30" height="30" fill="#f6c96b" stroke="#a57e2f" stroke-width="2"/>
+    <text x="797" y="283" font-size="14" text-anchor="middle">一个核组产生一张特征图</text>
+
+    <text x="32" y="309" font-size="14" fill="#596a7b">同一组核权重在不同空间位置重复使用；更换输出通道 o 的核组，得到另一张特征图。</text>
+  </g>
+</svg>

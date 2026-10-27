@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="610" viewBox="0 0 1000 610" role="img" aria-labelledby="title desc">
+  <title id="title">多特征逻辑回归的线性决策边界</title>
+  <desc id="desc">示意图使用两个特征和权重 0.8、负 0.4、偏置负 0.2。分数为零的直线把概率小于 0.5 的蓝色区域与概率大于 0.5 的橙色区域分开。散点仅用于说明类别位置，不是训练样本。</desc>
+  <rect width="1000" height="610" rx="16" fill="#f8fafc"/>
+  <g font-family="sans-serif" fill="#1e293b">
+    <text x="34" y="38" font-size="22" font-weight="700">两个特征如何形成一条分类边界</text>
+    <text x="34" y="65" font-size="14" fill="#64748b">示意参数：w₁ = 0.8，w₂ = −0.4，b = −0.2；概率阈值为 0.5</text>
+    <path d="M90 100H620V500H90Z" fill="#eaf1fb"/>
+    <path d="M244 500H620V100H509Z" fill="#fff1e7"/>
+    <g stroke="#dbe3ee" stroke-width="1">
+      <path d="M90 100H620M90 166.7H620M90 233.3H620M90 300H620M90 366.7H620M90 433.3H620M90 500H620"/>
+      <path d="M90 100V500M178.3 100V500M266.7 100V500M355 100V500M443.3 100V500M531.7 100V500M620 100V500"/>
+    </g>
+    <path d="M90 500H628M90 508V92" fill="none" stroke="#64748b" stroke-width="1.5"/>
+    <g font-size="12" fill="#64748b" text-anchor="middle">
+      <text x="90" y="524">−3</text><text x="178.3" y="524">−2</text><text x="266.7" y="524">−1</text>
+      <text x="355" y="524">0</text><text x="443.3" y="524">1</text><text x="531.7" y="524">2</text><text x="620" y="524">3</text>
+    </g>
+    <g font-size="12" fill="#64748b" text-anchor="end">
+      <text x="78" y="504">−3</text><text x="78" y="437">−2</text><text x="78" y="370">−1</text>
+      <text x="78" y="304">0</text><text x="78" y="237">1</text><text x="78" y="170">2</text><text x="78" y="104">3</text>
+    </g>
+    <text x="610" y="549" font-size="14" fill="#475569">特征 x₁</text>
+    <text x="26" y="300" font-size="14" fill="#475569" text-anchor="middle" transform="rotate(-90 26 300)">特征 x₂</text>
+    <path d="M244 500L509 100" fill="none" stroke="#be123c" stroke-width="3.5"/>
+    <g fill="#0f766e" stroke="#ffffff" stroke-width="2">
+      <circle cx="178.3" cy="300" r="7"/><circle cx="266.7" cy="166.7" r="7"/>
+      <circle cx="355" cy="166.7" r="7"/><circle cx="443.3" cy="100" r="7"/>
+    </g>
+    <g fill="#c2410c" stroke="#ffffff" stroke-width="2">
+      <circle cx="355" cy="433.3" r="7"/><circle cx="531.7" cy="233.3" r="7"/>
+      <circle cx="443.3" cy="366.7" r="7"/><circle cx="531.7" cy="366.7" r="7"/>
+    </g>
+    <text x="125" y="135" font-size="16" font-weight="700" fill="#315b91">z &lt; 0</text>
+    <text x="125" y="157" font-size="14" fill="#315b91">p &lt; 0.5</text>
+    <text x="532" y="457" font-size="16" font-weight="700" fill="#9a3412">z &gt; 0</text>
+    <text x="532" y="479" font-size="14" fill="#9a3412">p &gt; 0.5</text>
+    <rect x="641" y="103" width="326" height="394" rx="12" fill="#ffffff" stroke="#dbe3ee"/>
+    <text x="668" y="139" font-size="17" font-weight="700">图例与读图方法</text>
+    <circle cx="680" cy="180" r="7" fill="#0f766e"/><text x="699" y="185" font-size="14">示意负类样本（y = 0）</text>
+    <circle cx="680" cy="218" r="7" fill="#c2410c"/><text x="699" y="223" font-size="14">示意正类样本（y = 1）</text>
+    <path d="M667 257H704" stroke="#be123c" stroke-width="3.5"/><text x="716" y="262" font-size="14">z = 0，即 p = 0.5</text>
+    <text x="668" y="309" font-size="14" fill="#475569">边界来自线性分数：</text>
+    <text x="668" y="337" font-size="15" font-weight="700">z = 0.8x₁ − 0.4x₂ − 0.2</text>
+    <text x="668" y="372" font-size="14" fill="#475569">令 z = 0，可得：</text>
+    <text x="668" y="400" font-size="15" font-weight="700">x₂ = 2x₁ − 0.5</text>
+    <text x="668" y="445" font-size="13" fill="#64748b">点和颜色只帮助理解边界，</text>
+    <text x="668" y="466" font-size="13" fill="#64748b">并非训练数据或模型结果。</text>
+    <text x="34" y="581" font-size="13" fill="#64748b">对两个特征，线性 logit 的等值线是直线；更高维时对应超平面。</text>
+  </g>
+</svg>
