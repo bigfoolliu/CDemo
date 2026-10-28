@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" role="img" aria-labelledby="title desc">
+  <title id="title">同一目标下不同预测的交叉熵</title>
+  <desc id="desc">二分类真实类别为 1，正确自信、均匀预测、错误自信的真实类别概率依次为 0.99、0.5、0.01，对应交叉熵逐步增大。</desc>
+  <rect width="920" height="480" fill="#f7f6f2"/>
+  <text x="48" y="54" font-family="sans-serif" font-size="26" fill="#233e4a">同一个真实类别，预测越偏离，损失越大</text>
+  <text x="48" y="85" font-family="sans-serif" font-size="16" fill="#526775">二分类目标 q = (0, 1)；蓝色为真实类别概率 p₁，灰色为另一类概率 p₀</text>
+  <g font-family="sans-serif" font-size="17" fill="#233e4a">
+    <text x="48" y="155">正确自信</text><text x="48" y="260">不确定</text><text x="48" y="365">错误自信</text>
+  </g>
+  <g fill="#d4dfe1"><rect x="190" y="126" width="6" height="36"/><rect x="190" y="231" width="300" height="36"/><rect x="190" y="336" width="594" height="36"/></g>
+  <g fill="#4b83a6"><rect x="196" y="126" width="594" height="36"/><rect x="490" y="231" width="300" height="36"/><rect x="784" y="336" width="6" height="36"/></g>
+  <g font-family="sans-serif" font-size="16" fill="#34566b">
+    <text x="205" y="190">p₁ = 0.99</text><text x="500" y="295">p₁ = 0.50</text><text x="688" y="400">p₁ = 0.01</text>
+  </g>
+  <g font-family="sans-serif" font-size="17" text-anchor="end" fill="#a05b47">
+    <text x="875" y="153">−ln p₁ ≈ 0.010</text><text x="875" y="258">≈ 0.693</text><text x="875" y="363">≈ 4.605</text>
+  </g>
+  <text x="48" y="448" font-family="sans-serif" font-size="15" fill="#526775">极限：若真实类别概率为 0，损失为 +∞；程序不静默裁剪该概率。</text>
+</svg>

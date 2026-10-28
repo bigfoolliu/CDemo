@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="480" viewBox="0 0 1000 480" role="img" aria-labelledby="title desc">
+  <title id="title">张量计算图和广播偏置的梯度累加</title>
+  <desc id="desc">左侧从 X 和 W 矩阵乘法到偏置广播、误差平方与标量损失；右侧展示两个样本同一输出列的上游梯度汇入一个偏置分量。</desc>
+  <rect width="1000" height="480" fill="#f8f7f3"/>
+  <text x="32" y="43" font-family="sans-serif" font-size="26" fill="#29444e">从标量节点到小型张量图：形状决定梯度去向</text>
+  <rect x="28" y="66" width="615" height="374" rx="8" fill="#fff" stroke="#b8c7c7" stroke-width="2"/>
+  <rect x="665" y="66" width="307" height="374" rx="8" fill="#fff" stroke="#b8c7c7" stroke-width="2"/>
+  <text x="50" y="99" font-family="sans-serif" font-size="19" fill="#29444e">前向节点与形状</text>
+  <g fill="#e7eff1" stroke="#648c9e" stroke-width="2">
+    <rect x="64" y="127" width="105" height="55" rx="6"/>
+    <rect x="207" y="127" width="105" height="55" rx="6"/>
+    <rect x="349" y="127" width="105" height="55" rx="6"/>
+    <rect x="493" y="127" width="105" height="55" rx="6"/>
+    <rect x="101" y="232" width="136" height="58" rx="6"/>
+    <rect x="296" y="232" width="136" height="58" rx="6"/>
+    <rect x="198" y="347" width="143" height="60" rx="6"/>
+  </g>
+  <g font-family="sans-serif" font-size="16" fill="#284653" text-anchor="middle">
+    <text x="116" y="150">X</text><text x="116" y="171">2×2</text>
+    <text x="259" y="150">W</text><text x="259" y="171">2×2</text>
+    <text x="402" y="150">b</text><text x="402" y="171">1×2</text>
+    <text x="545" y="150">−T</text><text x="545" y="171">2×2</text>
+    <text x="169" y="255">XW</text><text x="169" y="278">2×2</text>
+    <text x="364" y="255">Z=XW+b</text><text x="364" y="278">2×2</text>
+    <text x="269" y="370">L=mean(E²)/2</text><text x="269" y="393">1×1</text>
+  </g>
+  <g fill="none" stroke="#668894" stroke-width="2.5" marker-end="url(#arrow)">
+    <path d="M116 184 L155 228"/><path d="M259 184 L186 228"/>
+    <path d="M237 261 L293 261"/><path d="M402 184 L382 228"/>
+    <path d="M545 184 L426 334"/><path d="M364 291 L301 341"/>
+  </g>
+  <text x="687" y="100" font-family="sans-serif" font-size="19" fill="#29444e">反向：沿样本行求和</text>
+  <g font-family="sans-serif" font-size="17" fill="#324f5d">
+    <text x="690" y="155">第 0 行，GZ₀₀ = 0.875</text>
+    <text x="690" y="235">第 1 行，GZ₁₀ = 0.375</text>
+  </g>
+  <g fill="none" stroke="#b2624d" stroke-width="3" marker-end="url(#arrowRed)">
+    <path d="M835 168 L822 295"/><path d="M835 247 L843 295"/>
+  </g>
+  <rect x="720" y="313" width="198" height="73" rx="7" fill="#f4e9e2" stroke="#b2624d" stroke-width="2"/>
+  <text x="819" y="343" text-anchor="middle" font-family="sans-serif" font-size="17" fill="#834735">共享偏置梯度</text>
+  <text x="819" y="369" text-anchor="middle" font-family="sans-serif" font-size="17" fill="#834735">db₀ = 1.25</text>
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M1 1 L8 4.5 L1 8" fill="none" stroke="#668894" stroke-width="1.5"/></marker>
+    <marker id="arrowRed" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M1 1 L8 4.5 L1 8" fill="none" stroke="#b2624d" stroke-width="1.5"/></marker>
+  </defs>
+</svg>

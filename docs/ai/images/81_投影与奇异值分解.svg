@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="410" viewBox="0 0 960 410" role="img" aria-labelledby="title desc">
+  <title id="title">正交投影和二维奇异值分解</title>
+  <desc id="desc">左侧将目标向量 b 分解为列空间内的预测和垂直残差；右侧单位圆经正交换基及两个方向的缩放后形成椭圆。</desc>
+  <rect width="960" height="410" fill="#f8f7f3"/>
+  <text x="35" y="43" font-family="sans-serif" font-size="25" fill="#27424c">最小二乘的投影，与奇异值分解的伸缩</text>
+  <rect x="32" y="65" width="432" height="307" rx="8" fill="#fff" stroke="#a9b8b8" stroke-width="2"/>
+  <rect x="496" y="65" width="432" height="307" rx="8" fill="#fff" stroke="#a9b8b8" stroke-width="2"/>
+  <text x="56" y="98" font-family="sans-serif" font-size="19" fill="#2a4d5b">QR：投影到列空间</text>
+  <path d="M72 298 L395 298 M92 310 L238 180 L415 310" fill="none" stroke="#b9c5c5" stroke-width="2"/>
+  <path d="M112 288 L270 288" stroke="#246f8f" stroke-width="4" marker-end="url(#arrowBlue)"/>
+  <path d="M270 288 L270 139" stroke="#b2634f" stroke-width="4" marker-end="url(#arrowRed)"/>
+  <path d="M112 288 L270 139" stroke="#485c82" stroke-width="4" marker-end="url(#arrowPurple)"/>
+  <circle cx="112" cy="288" r="5" fill="#40515a"/>
+  <path d="M257 288 L257 275 L270 275" fill="none" stroke="#b2634f" stroke-width="2"/>
+  <text x="154" y="276" font-family="sans-serif" font-size="17" fill="#246f8f">预测 Ax̂</text>
+  <text x="279" y="217" font-family="sans-serif" font-size="17" fill="#a3503d">残差 r</text>
+  <text x="170" y="157" font-family="sans-serif" font-size="17" fill="#485c82">目标 b</text>
+  <text x="71" y="345" font-family="sans-serif" font-size="16" fill="#607579">列空间中的预测与残差正交</text>
+  <text x="520" y="98" font-family="sans-serif" font-size="19" fill="#2a4d5b">SVD：换基 → 缩放 → 返回</text>
+  <path d="M545 240 L884 240 M710 110 L710 350" stroke="#c0cccc" stroke-width="2"/>
+  <circle cx="710" cy="240" r="55" fill="none" stroke="#8aa9b5" stroke-width="2" stroke-dasharray="6 5"/>
+  <ellipse cx="710" cy="240" rx="149" ry="50" transform="rotate(-45 710 240)" fill="#e5eff1" stroke="#246f8f" stroke-width="3"/>
+  <path d="M710 240 L815 135" stroke="#246f8f" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <path d="M710 240 L675 205" stroke="#b2634f" stroke-width="3" marker-end="url(#arrowRed)"/>
+  <text x="820" y="134" font-family="sans-serif" font-size="17" fill="#246f8f">σ₀=3</text>
+  <text x="570" y="194" font-family="sans-serif" font-size="17" fill="#a3503d">σ₁=1</text>
+  <text x="535" y="345" font-family="sans-serif" font-size="16" fill="#607579">虚线为单位圆；实线为变换后的椭圆</text>
+  <defs>
+    <marker id="arrowBlue" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M1 1 L8 4.5 L1 8" fill="none" stroke="#246f8f" stroke-width="1.5"/></marker>
+    <marker id="arrowRed" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M1 1 L8 4.5 L1 8" fill="none" stroke="#b2634f" stroke-width="1.5"/></marker>
+    <marker id="arrowPurple" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M1 1 L8 4.5 L1 8" fill="none" stroke="#485c82" stroke-width="1.5"/></marker>
+  </defs>
+</svg>

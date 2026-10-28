@@ -948,6 +948,76 @@ sanitize-scalar-autodiff:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/32_scalar_autodiff.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/32_scalar_autodiff
 	./build/sanitize/ml/32_scalar_autodiff --test
 
+# M04：固定硬币计数、Beta 先验及一维高斯统计量。
+.PHONY: probability-estimation test-probability-estimation sanitize-probability-estimation
+probability-estimation: build/ml/33_probability_estimation
+	./build/ml/33_probability_estimation
+
+test-probability-estimation: build/ml/33_probability_estimation
+	./build/ml/33_probability_estimation --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_probability_estimation.py
+
+sanitize-probability-estimation:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/33_probability_estimation.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/33_probability_estimation
+	./build/sanitize/ml/33_probability_estimation --test
+
+# M05：固定二类/三类分布的信息量、分类损失及高斯负对数似然。
+.PHONY: information-losses test-information-losses sanitize-information-losses
+information-losses: build/ml/34_information_losses
+	./build/ml/34_information_losses
+
+test-information-losses: build/ml/34_information_losses
+	./build/ml/34_information_losses --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_information_losses.py
+
+sanitize-information-losses:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/34_information_losses.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/34_information_losses
+	./build/sanitize/ml/34_information_losses --test
+
+# M06：Softmax 稳定性、中心差分步长与近奇异矩阵的固定实验。
+.PHONY: numerical-stability test-numerical-stability sanitize-numerical-stability
+numerical-stability: build/ml/35_numerical_stability
+	./build/ml/35_numerical_stability
+
+test-numerical-stability: build/ml/35_numerical_stability
+	./build/ml/35_numerical_stability --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_numerical_stability.py
+
+sanitize-numerical-stability:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/35_numerical_stability.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/35_numerical_stability
+	./build/sanitize/ml/35_numerical_stability --test
+
+# M07：两遍正交化的 QR 最小二乘与二维奇异值分解。
+.PHONY: projection-decomposition test-projection-decomposition sanitize-projection-decomposition
+projection-decomposition: build/ml/36_projection_decomposition
+	./build/ml/36_projection_decomposition
+
+test-projection-decomposition: build/ml/36_projection_decomposition
+	./build/ml/36_projection_decomposition --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_projection_decomposition.py
+
+sanitize-projection-decomposition:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/36_projection_decomposition.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/36_projection_decomposition
+	./build/sanitize/ml/36_projection_decomposition --test
+
+# M08：固定容量张量图复现 M02 的两样本全连接层。
+.PHONY: tensor-autodiff test-tensor-autodiff sanitize-tensor-autodiff
+tensor-autodiff: build/ml/37_tensor_autodiff
+	./build/ml/37_tensor_autodiff
+
+test-tensor-autodiff: build/ml/37_tensor_autodiff
+	./build/ml/37_tensor_autodiff --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_tensor_autodiff.py
+
+sanitize-tensor-autodiff:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/37_tensor_autodiff.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/37_tensor_autodiff
+	./build/sanitize/ml/37_tensor_autodiff --test
+
 # 阶段 1 独立入口；固定规模的 XOR 短训练也接入默认测试与调试。
 .PHONY: xor-mlp test-xor-mlp sanitize-xor-mlp
 xor-mlp: build/ml/06_xor_mlp
@@ -1519,7 +1589,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行 C/Python 示例，再执行蛇规则、AI 数值、日志与纯 C 核心测试。
 # C 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1617,6 +1687,11 @@ clean:
 	rm -f build/sanitize/ml/30_matrix_transforms
 	rm -f build/sanitize/ml/31_batch_dense_gradients
 	rm -f build/sanitize/ml/32_scalar_autodiff
+	rm -f build/sanitize/ml/33_probability_estimation
+	rm -f build/sanitize/ml/34_information_losses
+	rm -f build/sanitize/ml/35_numerical_stability
+	rm -f build/sanitize/ml/36_projection_decomposition
+	rm -f build/sanitize/ml/37_tensor_autodiff
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/bezier_demo build/debug/graphics/bezier_demo build/tests/bezier_test build/tests/bezier_window_test build/sanitize/bezier_test
 	rm -f build/graphics/ripple_demo build/debug/graphics/ripple_demo build/tests/ripple_test build/tests/ripple_window_test build/sanitize/ripple_test
