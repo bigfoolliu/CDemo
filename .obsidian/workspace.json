@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/00_学习总览.md",
+                "file": "docs/ai/85_模型持久化与独立推理.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "00_学习总览"
+              "title": "85_模型持久化与独立推理"
             }
           }
         ]
@@ -83,7 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 247.32421875
+    "width": 276.71875
   },
   "right": {
     "id": "f97b41d0a584b34b",
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/00_学习总览.md",
+                "file": "docs/ai/85_模型持久化与独立推理.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -171,23 +171,13 @@
             }
           },
           {
-            "id": "8b3fec4e5bb3092b",
-            "type": "leaf",
-            "state": {
-              "type": "git-view",
-              "state": {},
-              "icon": "lucide-ghost",
-              "title": "git-view"
-            }
-          },
-          {
             "id": "49ee88037aa164cf",
             "type": "leaf",
             "state": {
               "type": "calendar",
               "state": {},
-              "icon": "lucide-ghost",
-              "title": "calendar"
+              "icon": "calendar-with-checkmark",
+              "title": "Calendar"
             }
           }
         ],
@@ -205,30 +195,28 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false,
-      "obsidian-excalidraw-plugin:新建绘图文件": false,
-      "obsidian-git:Open Git source control": false
+      "bases:新建数据库": false
     }
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
+    "tests/python/__pycache__/test_byte_bpe_pipeline.cpython-313.pyc",
+    "src/python/ml/__pycache__/44_byte_bpe_pipeline.cpython-313.pyc",
+    "tests/python/test_byte_bpe_pipeline.py",
+    "src/ml/44_byte_bpe_pipeline.c",
+    "src/python/ml/44_byte_bpe_pipeline.py",
+    "docs/ai/88_一元与二元语言模型.md",
+    "docs/00_学习总览.md",
     "logs/logger-test-S2GjEq",
     "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Resources/Relocations/aarch64/43_ngram_language_model.yml",
     "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Resources/Relocations/aarch64",
     "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Resources/DWARF/43_ngram_language_model",
     "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Resources/Relocations",
     "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Resources/DWARF",
-    "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Resources",
-    "build/sanitize/ml/43_ngram_language_model.dSYM/Contents/Info.plist",
-    "build/sanitize/ml/43_ngram_language_model.dSYM/Contents",
-    "build/sanitize/ml/43_ngram_language_model.dSYM",
-    "build/sanitize/ml/43_ngram_language_model",
     "docs/ai/images/88_一元与二元语言模型.svg",
-    "docs/ai/88_一元与二元语言模型.md",
     "docs/ai/images/87_数据增强与消融流程.svg",
     "docs/ai/85_模型持久化与独立推理.md",
     "docs/ai/55_去噪自编码器.md",
-    "docs/00_学习总览.md",
     "docs/ai/77_标量计算图与自动求导.md",
     "docs/ai/images/77_标量计算图与自动求导.svg",
     "docs/ai/76_批量全连接层与矩阵求导.md",

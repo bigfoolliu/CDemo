@@ -1,7 +1,7 @@
 {
   "cssTheme": "Catppuccin",
   "translucency": false,
-  "theme": "obsidian",
+  "theme": "moonstone",
   "enabledCssSnippets": [
     "swiss-notes"
   ]

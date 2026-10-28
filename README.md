@@ -178,9 +178,9 @@ make build/basics/01_types
 
 ## 23. 机器学习入门案例
 
-`src/ml/` 提供四十三个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
+`src/ml/` 提供四十四个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
 
-每个 C 案例都有标准库 Python 对照：编号 01–28、30–43 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `43_ngram_language_model.c` 对应 `43_ngram_language_model.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
+每个 C 案例都有标准库 Python 对照：编号 01–28、30–44 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `44_byte_bpe_pipeline.c` 对应 `44_byte_bpe_pipeline.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -227,8 +227,11 @@ make build/basics/01_types
 | `41_normalization_residual.c` | D01：LayerNorm、BatchNorm、RMSNorm、初始化方差及残差梯度路径 |
 | `42_data_augmentation.c` | D02：平移/噪声/组合增强、错误标签旋转、同预算消融与固定测试视图 |
 | `43_ngram_language_model.c` | L01：固定词表的一元/二元语言模型、文档级留出评估、平滑和采样 |
+| `44_byte_bpe_pipeline.c` | L02：UTF-8 字节往返、简化 BPE、文档级窗口/批次与版本化词表 |
 
 运行 `make ngram-language-model` 查看文档级留出集的 NLL/PPL 与固定种子采样；`make ngram-language-model-hand` 显示加性平滑和句子概率的逐步手算。`make test-ngram-language-model` 检查计数、条件概率归一、未知词、EOS、采样边界及 C/Python 中间值；`make sanitize-ngram-language-model` 检查 C 内存与未定义行为。完整公式推导、源码映射和流程图见[一元与二元语言模型教程](docs/ai/88_一元与二元语言模型.md)。
+
+运行 `make byte-bpe-pipeline` 查看训练集学习的字节合并、中文 UTF-8 往返和三种数据划分各自的窗口/批次数；`make byte-bpe-pipeline-hand` 展示两轮 BPE 手算。`make test-byte-bpe-pipeline` 检查编码边界、来源文档隔离、PAD 掩码、版本化保存及 C/Python 逐字段一致；`make sanitize-byte-bpe-pipeline` 检查 C 内存和未定义行为。`make byte-bpe-save` 将版本化词表独占保存到 `sessions/tokenizers/l02-bpe-v1.bin`；可用 `BYTE_BPE_MODEL_PATH=...` 指定新路径，已存在文件会被拒绝覆盖。详细推导和示意图见[字节分词与 BPE 数据管线](docs/ai/89_字节分词与BPE数据管线.md)。
 
 运行 `make matrix-transforms` 和 `python3 src/python/ml/30_matrix_transforms.py`，逐行比较基向量及点的坐标；`make test-matrix-transforms` 核对 C/Python 输出与边界，`make sanitize-matrix-transforms` 验证 C 内存和未定义行为。推导、手算及静态坐标图见[二维矩阵变换实验室](docs/ai/75_二维矩阵变换实验室.md)。
 

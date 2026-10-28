@@ -1125,6 +1125,31 @@ sanitize-ngram-language-model:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/43_ngram_language_model.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/43_ngram_language_model
 	./build/sanitize/ml/43_ngram_language_model --test
 
+# L02：UTF-8 字节往返、训练集拟合 BPE、文档级窗口/批次与版本化保存。
+BYTE_BPE_MODEL_PATH ?= sessions/tokenizers/l02-bpe-v1.bin
+.PHONY: byte-bpe-pipeline byte-bpe-pipeline-hand byte-bpe-save
+.PHONY: test-byte-bpe-pipeline sanitize-byte-bpe-pipeline
+byte-bpe-pipeline: build/ml/44_byte_bpe_pipeline
+	./build/ml/44_byte_bpe_pipeline
+
+byte-bpe-pipeline-hand: build/ml/44_byte_bpe_pipeline
+	./build/ml/44_byte_bpe_pipeline --hand
+
+# 独占创建模型文件；如果目标已存在，程序会拒绝覆盖。
+byte-bpe-save: build/ml/44_byte_bpe_pipeline
+	mkdir -p $(dir $(BYTE_BPE_MODEL_PATH))
+	./build/ml/44_byte_bpe_pipeline --save "$(BYTE_BPE_MODEL_PATH)"
+
+# 检查 UTF-8、BPE tie-break、数据划分、填充掩码及 C/Python 逐行一致。
+test-byte-bpe-pipeline: build/ml/44_byte_bpe_pipeline
+	./build/ml/44_byte_bpe_pipeline --test
+	BYTE_BPE_C=build/ml/44_byte_bpe_pipeline PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_byte_bpe_pipeline.py
+
+sanitize-byte-bpe-pipeline:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/44_byte_bpe_pipeline.c $(LDFLAGS) $(LDLIBS) -o build/sanitize/ml/44_byte_bpe_pipeline
+	./build/sanitize/ml/44_byte_bpe_pipeline --test
+
 # 阶段 1 独立入口；固定规模的 XOR 短训练也接入默认测试与调试。
 .PHONY: xor-mlp test-xor-mlp sanitize-xor-mlp
 xor-mlp: build/ml/06_xor_mlp
@@ -1696,7 +1721,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行 C/Python 示例，再执行蛇规则、AI 数值、日志与纯 C 核心测试。
 # C 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff test-optimization-diagnostics test-generalization-bootstrap test-model-persistence test-normalization-residual test-data-augmentation test-ngram-language-model
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff test-optimization-diagnostics test-generalization-bootstrap test-model-persistence test-normalization-residual test-data-augmentation test-ngram-language-model test-byte-bpe-pipeline
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1733,6 +1758,7 @@ lint: lint-python
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/29_gmm_em.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/42_data_augmentation.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/43_ngram_language_model.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/44_byte_bpe_pipeline.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/21_regularization.c tests/regularization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/csv_standardization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/reliability_assessment_test.c
@@ -1769,6 +1795,7 @@ lint: lint-python
 clean:
 	rm -f build/sanitize/ml/41_normalization_residual
 	rm -f build/sanitize/ml/42_data_augmentation
+	rm -f build/sanitize/ml/44_byte_bpe_pipeline
 	rm -f build/tests/regularization_test build/sanitize/ml/regularization_test build/sanitize/ml/21_regularization
 	rm -f build/tests/softmax_regression_test build/sanitize/ml/softmax_regression_test build/sanitize/ml/25_softmax_regression
 	rm -f build/tests/dbscan_test build/sanitize/ml/dbscan_test build/sanitize/ml/26_dbscan

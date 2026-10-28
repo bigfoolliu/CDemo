@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title description">
+  <title id="title">UTF-8 字节、BPE 和文档级数据管线</title>
+  <desc id="description">训练、验证和测试文档先分开；BPE 只从训练文档拟合，再分别编码各篇文档。每篇文档单独生成重叠窗口，最后按划分填充 PAD 并生成掩码。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#50627a" />
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #14263d; }
+      .subtitle { font: 16px sans-serif; fill: #4e6078; }
+      .head { font: 700 19px sans-serif; fill: #182a40; }
+      .body { font: 16px sans-serif; fill: #293b52; }
+      .small { font: 14px sans-serif; fill: #41536a; }
+      .mono { font: 14px monospace; fill: #25364b; }
+      .source { fill: #fbfcfe; stroke: #60728a; stroke-width: 2; }
+      .train { fill: #eaf2ff; stroke: #3d68a3; stroke-width: 2; }
+      .holdout { fill: #f4efff; stroke: #7355a0; stroke-width: 2; }
+      .rule { fill: #e9f6f1; stroke: #39836b; stroke-width: 2; }
+      .window { fill: #fff4df; stroke: #bd8030; stroke-width: 2; }
+      .batch { fill: #eef4f7; stroke: #557181; stroke-width: 2; }
+      .arrow { stroke: #50627a; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .boundary { stroke: #c14e55; stroke-width: 2; stroke-dasharray: 8 7; fill: none; }
+      .boundaryText { font: 700 15px sans-serif; fill: #a43b43; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="800" rx="18" fill="#f7f9fc" />
+  <text x="54" y="54" class="title">从原始文本到可训练的 token 批次</text>
+  <text x="54" y="82" class="subtitle">先按原文档划分；词表只看训练文本；再分别切窗，重叠数据不会跨集合。</text>
+
+  <rect x="58" y="112" width="310" height="88" rx="12" class="train" />
+  <text x="80" y="145" class="head">训练文档 101–103</text>
+  <text x="80" y="175" class="body">UTF-8 字节 → 统计相邻 token 对</text>
+
+  <rect x="445" y="112" width="310" height="88" rx="12" class="holdout" />
+  <text x="467" y="145" class="head">验证文档 201–202</text>
+  <text x="467" y="175" class="body">保留原文，等待应用已学规则</text>
+
+  <rect x="832" y="112" width="310" height="88" rx="12" class="holdout" />
+  <text x="854" y="145" class="head">测试文档 301–302</text>
+  <text x="854" y="175" class="body">只用于独立留出，不参与拟合</text>
+
+  <path d="M213 200 V244" class="arrow" />
+  <path d="M600 200 V230 H760 V244" class="arrow" />
+  <path d="M987 200 V220 H825 V244" class="arrow" />
+
+  <rect x="58" y="252" width="520" height="104" rx="14" class="rule" />
+  <text x="84" y="286" class="head">训练集拟合 BPE</text>
+  <text x="84" y="316" class="body">每轮计数 → 最高频 pair → 固定 tie-break → 合并</text>
+  <text x="84" y="340" class="small">新增 token 保存左右 ID；按 rank 重建词表</text>
+
+  <rect x="622" y="252" width="520" height="104" rx="14" class="source" />
+  <text x="648" y="286" class="head">验证 / 测试只应用规则</text>
+  <text x="648" y="316" class="body">相同字节编码、相同 merge 顺序，不更新词表</text>
+  <text x="648" y="340" class="small">BOS、EOS、PAD 是独立控制 token</text>
+
+  <path d="M578 304 H622" class="arrow" />
+
+  <path d="M318 356 V393 H202 V423" class="arrow" />
+  <path d="M882 356 V393 H600 V423" class="arrow" />
+  <path d="M882 356 V393 H998 V423" class="arrow" />
+
+  <rect x="58" y="430" width="288" height="87" rx="12" class="source" />
+  <text x="80" y="464" class="head">训练文档独立编码</text>
+  <text x="80" y="495" class="mono">[BOS, t₀, t₁, …, EOS]</text>
+  <rect x="456" y="430" width="288" height="87" rx="12" class="source" />
+  <text x="478" y="464" class="head">验证文档独立编码</text>
+  <text x="478" y="495" class="mono">[BOS, t₀, t₁, …, EOS]</text>
+  <rect x="854" y="430" width="288" height="87" rx="12" class="source" />
+  <text x="876" y="464" class="head">测试文档独立编码</text>
+  <text x="876" y="495" class="mono">[BOS, t₀, t₁, …, EOS]</text>
+
+  <path d="M202 517 V551" class="arrow" />
+  <path d="M600 517 V551" class="arrow" />
+  <path d="M998 517 V551" class="arrow" />
+
+  <rect x="58" y="558" width="288" height="72" rx="12" class="window" />
+  <text x="80" y="587" class="head">窗口 L=4，步长=2</text>
+  <text x="80" y="611" class="small">输入与下一 token 目标配对</text>
+  <rect x="456" y="558" width="288" height="72" rx="12" class="window" />
+  <text x="478" y="587" class="head">窗口 L=4，步长=2</text>
+  <text x="478" y="611" class="small">只重叠本集合内的原文</text>
+  <rect x="854" y="558" width="288" height="72" rx="12" class="window" />
+  <text x="876" y="587" class="head">窗口 L=4，步长=2</text>
+  <text x="876" y="611" class="small">单独切窗，不流入训练</text>
+
+  <path d="M202 630 V651" class="arrow" />
+  <path d="M600 630 V651" class="arrow" />
+  <path d="M998 630 V651" class="arrow" />
+
+  <rect x="58" y="660" width="288" height="70" rx="12" class="batch" />
+  <text x="80" y="690" class="head">训练批次</text>
+  <text x="80" y="715" class="small">PAD 填充 + 有效位 mask</text>
+  <rect x="456" y="660" width="288" height="70" rx="12" class="batch" />
+  <text x="478" y="690" class="head">验证批次</text>
+  <text x="478" y="715" class="small">PAD 填充 + 有效位 mask</text>
+  <rect x="854" y="660" width="288" height="70" rx="12" class="batch" />
+  <text x="876" y="690" class="head">测试批次</text>
+  <text x="876" y="715" class="small">PAD 填充 + 有效位 mask</text>
+
+  <text x="255" y="774" class="boundaryText">红色虚线表示集合边界；每条竖向管线只处理本 split 的文档。</text>
+  <path d="M416 414 V742" class="boundary" />
+  <path d="M814 414 V742" class="boundary" />
+</svg>
