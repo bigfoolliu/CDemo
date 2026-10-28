@@ -1106,6 +1106,25 @@ sanitize-data-augmentation:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/42_data_augmentation.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/42_data_augmentation
 	./build/sanitize/ml/42_data_augmentation --test
 
+# L01：固定词表的一元/二元语言模型、文档级留出评估与有界采样。
+.PHONY: ngram-language-model ngram-language-model-hand
+.PHONY: test-ngram-language-model sanitize-ngram-language-model
+ngram-language-model: build/ml/43_ngram_language_model
+	./build/ml/43_ngram_language_model
+
+ngram-language-model-hand: build/ml/43_ngram_language_model
+	./build/ml/43_ngram_language_model --hand
+
+# 检查平滑概率行、未见上下文、EOS 计分、采样边界和 C/Python 数值一致性。
+test-ngram-language-model: build/ml/43_ngram_language_model
+	./build/ml/43_ngram_language_model --test
+	NGRAM_LANGUAGE_MODEL_C=build/ml/43_ngram_language_model PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_ngram_language_model.py
+
+sanitize-ngram-language-model:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/43_ngram_language_model.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/43_ngram_language_model
+	./build/sanitize/ml/43_ngram_language_model --test
+
 # 阶段 1 独立入口；固定规模的 XOR 短训练也接入默认测试与调试。
 .PHONY: xor-mlp test-xor-mlp sanitize-xor-mlp
 xor-mlp: build/ml/06_xor_mlp
@@ -1677,7 +1696,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行 C/Python 示例，再执行蛇规则、AI 数值、日志与纯 C 核心测试。
 # C 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff test-optimization-diagnostics test-generalization-bootstrap test-model-persistence test-normalization-residual test-data-augmentation
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff test-optimization-diagnostics test-generalization-bootstrap test-model-persistence test-normalization-residual test-data-augmentation test-ngram-language-model
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1713,6 +1732,7 @@ test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/re
 lint: lint-python
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/29_gmm_em.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/42_data_augmentation.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/43_ngram_language_model.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only src/ml/21_regularization.c tests/regularization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/csv_standardization_test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fsyntax-only tests/reliability_assessment_test.c
