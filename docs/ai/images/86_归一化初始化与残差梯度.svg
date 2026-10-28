@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title description">
+  <title id="title">归一化统计轴、初始化方差与残差梯度路径</title>
+  <desc id="description">用 2×3 小批量比较 LayerNorm、BatchNorm、RMSNorm 的统计轴，并展示恒等捷径如何参与反向梯度。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#365d74" />
+    </marker>
+    <style>
+      .bg { fill: #f5f7f8; }
+      .panel { fill: #ffffff; stroke: #c9d5dc; stroke-width: 2; }
+      .card { fill: #fbfcfd; stroke: #d6e0e5; stroke-width: 1.5; }
+      .title { font: 700 30px sans-serif; fill: #19384a; }
+      .subtitle { font: 16px sans-serif; fill: #506977; }
+      .heading { font: 700 19px sans-serif; fill: #234b60; }
+      .label { font: 15px sans-serif; fill: #304b5a; }
+      .small { font: 13px sans-serif; fill: #58707c; }
+      .formula { font: 16px sans-serif; fill: #203f50; }
+      .number { font: 700 18px sans-serif; fill: #17394c; }
+      .grid { stroke: #95aab5; stroke-width: 1.4; }
+      .ln { fill: #f8e5e1; stroke: #bf7669; stroke-width: 2; }
+      .bn { fill: #e1eef5; stroke: #5485a0; stroke-width: 2; }
+      .rms { fill: #f6efd9; stroke: #aa8b3c; stroke-width: 2; }
+      .main { fill: #e8eff4; stroke: #55778b; stroke-width: 2; }
+      .skip { fill: none; stroke: #c07858; stroke-width: 3; }
+      .line { fill: none; stroke: #365d74; stroke-width: 2.4; marker-end: url(#arrow); }
+      .barplain { fill: #e6c5bd; stroke: #b36f61; stroke-width: 1; }
+      .barres { fill: #b8d9ce; stroke: #5c947e; stroke-width: 1; }
+      .note { fill: #f4f0e7; stroke: #d8c89c; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="780" />
+  <text id="title" class="title" x="42" y="48">D01｜归一化、初始化与残差梯度</text>
+  <text class="subtitle" x="43" y="77">同一个固定 2×3 批次：先看哪些值共享统计量，再看反向梯度经过哪条路径</text>
+
+  <rect class="panel" x="35" y="105" width="590" height="365" rx="16" />
+  <text class="heading" x="58" y="139">一、归一化的统计轴</text>
+  <text class="small" x="58" y="162">输入 X = [1, 2, 3; 2, 4, 6]，列是特征，行是样本</text>
+
+  <rect class="card" x="52" y="180" width="177" height="270" rx="12" />
+  <text class="heading" x="70" y="211">LayerNorm</text>
+  <text class="small" x="70" y="233">每行独立统计</text>
+  <rect class="ln" x="69" y="250" width="142" height="52" rx="8" />
+  <rect class="ln" x="69" y="312" width="142" height="52" rx="8" />
+  <text class="label" x="84" y="271">1　2　3</text>
+  <text class="small" x="84" y="291">均值 2，方差 2/3</text>
+  <text class="label" x="84" y="333">2　4　6</text>
+  <text class="small" x="84" y="353">均值 4，方差 8/3</text>
+  <text class="small" x="70" y="400">统计轴：特征维</text>
+  <text class="small" x="70" y="422">训练 / 推理公式相同</text>
+
+  <rect class="card" x="241" y="180" width="177" height="270" rx="12" />
+  <text class="heading" x="259" y="211">BatchNorm</text>
+  <text class="small" x="259" y="233">每列跨样本统计</text>
+  <rect class="bn" x="258" y="250" width="42" height="114" rx="7" />
+  <rect class="bn" x="306" y="250" width="42" height="114" rx="7" />
+  <rect class="bn" x="354" y="250" width="42" height="114" rx="7" />
+  <text class="label" x="268" y="281">1</text>
+  <text class="label" x="268" y="337">2</text>
+  <text class="label" x="316" y="281">2</text>
+  <text class="label" x="316" y="337">4</text>
+  <text class="label" x="364" y="281">3</text>
+  <text class="label" x="364" y="337">6</text>
+  <text class="small" x="259" y="388">均值：(1.5, 3, 4.5)</text>
+  <text class="small" x="259" y="412">推理使用运行统计</text>
+
+  <rect class="card" x="430" y="180" width="177" height="270" rx="12" />
+  <text class="heading" x="448" y="211">RMSNorm</text>
+  <text class="small" x="448" y="233">每行统计均方根</text>
+  <rect class="rms" x="447" y="250" width="142" height="52" rx="8" />
+  <rect class="rms" x="447" y="312" width="142" height="52" rx="8" />
+  <text class="label" x="462" y="281">1　2　3</text>
+  <text class="small" x="462" y="291">r ≈ 0.4624</text>
+  <text class="label" x="462" y="343">2　4　6</text>
+  <text class="small" x="462" y="353">不减去均值</text>
+  <text class="small" x="448" y="400">统计轴：特征维</text>
+  <text class="small" x="448" y="422">推理不依赖批次</text>
+
+  <rect class="panel" x="645" y="105" width="520" height="365" rx="16" />
+  <text class="heading" x="670" y="139">二、残差块的反向路径</text>
+  <rect class="main" x="687" y="217" width="137" height="62" rx="12" />
+  <text class="label" x="717" y="254">主分支 F(x)</text>
+  <rect class="main" x="958" y="217" width="102" height="62" rx="12" />
+  <text class="label" x="988" y="254">相加</text>
+  <rect class="main" x="1080" y="217" width="62" height="62" rx="12" />
+  <text class="label" x="1095" y="254">y</text>
+  <circle cx="936" cy="248" r="17" fill="#fff" stroke="#55778b" stroke-width="2" />
+  <text class="number" x="930" y="255">+</text>
+  <text class="label" x="668" y="255">x</text>
+  <path class="line" d="M668 248 L687 248" />
+  <path class="line" d="M825 248 L916 248" />
+  <path class="line" d="M953 248 L958 248" />
+  <path class="line" d="M1060 248 L1080 248" />
+  <path class="skip" d="M681 240 L681 184 L936 184 L936 229" marker-end="url(#arrow)" />
+  <text class="small" x="786" y="176">恒等捷径：直接把 x 加到主分支</text>
+  <text class="formula" x="688" y="326">y = x + F(x)</text>
+  <text class="formula" x="688" y="355">∂L/∂x = ∂L/∂y + J<tspan baseline-shift="sub" font-size="11">F</tspan><tspan baseline-shift="super" font-size="11">T</tspan> ∂L/∂y</text>
+  <text class="small" x="688" y="389">单位项来自恒等路径；主分支梯度仍会参与相加。</text>
+  <text class="small" x="688" y="414">残差连接不能保证任意网络都不消失或爆炸。</text>
+
+  <rect class="panel" x="35" y="490" width="1130" height="250" rx="16" />
+  <text class="heading" x="58" y="526">三、八层标量梯度对照</text>
+  <text class="small" x="58" y="551">每层主分支导数 F′ = −0.1；输入和上游梯度都设为 1</text>
+  <text class="label" x="62" y="600">无残差</text>
+  <rect class="barplain" x="175" y="580" width="14" height="28" rx="5" />
+  <text class="number" x="205" y="600">(−0.1)⁸ = 1 × 10⁻⁸</text>
+  <text class="label" x="62" y="657">有残差</text>
+  <rect class="barres" x="175" y="637" width="585" height="28" rx="5" />
+  <text class="number" x="780" y="657">0.9⁸ = 0.4305</text>
+  <rect class="note" x="950" y="565" width="185" height="123" rx="12" />
+  <text class="label" x="967" y="594">初始化方差</text>
+  <text class="small" x="967" y="620">He：2 / fan-in</text>
+  <text class="small" x="967" y="643">Glorot：2 / (fan-in +</text>
+  <text class="small" x="967" y="661">fan-out)</text>
+  <text class="small" x="58" y="711">对照用于看清路径和尺度，不是网络性能结论；归一化会改变梯度，也不代表梯度总会增大。</text>
+</svg>

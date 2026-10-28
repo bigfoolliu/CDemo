@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/ai/55_去噪自编码器.md",
+                "file": "docs/00_学习总览.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "55_去噪自编码器"
+              "title": "00_学习总览"
             }
           }
         ]
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/ai/55_去噪自编码器.md",
+                "file": "docs/00_学习总览.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
@@ -212,18 +212,22 @@
   },
   "active": "75a1cfee392fbd42",
   "lastOpenFiles": [
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Resources/Relocations/aarch64/42_data_augmentation.yml",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Resources/Relocations/aarch64",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Resources/DWARF/42_data_augmentation",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Resources/Relocations",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Resources/DWARF",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Resources",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents/Info.plist",
+    "build/sanitize/ml/42_data_augmentation.dSYM/Contents",
+    "build/sanitize/ml/42_data_augmentation.dSYM",
+    "build/sanitize/ml/42_data_augmentation",
+    "docs/ai/images/87_数据增强与消融流程.svg",
+    "tests/python/test_data_augmentation.py",
+    "docs/ai/85_模型持久化与独立推理.md",
+    "docs/ai/55_去噪自编码器.md",
     "docs/00_学习总览.md",
     "docs/ai/77_标量计算图与自动求导.md",
-    "logs/logger-test-sxyLLF",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Resources/Relocations/aarch64/32_scalar_autodiff.yml",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Resources/Relocations/aarch64",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Resources/DWARF/32_scalar_autodiff",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Resources/Relocations",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Resources/DWARF",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Resources",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents/Info.plist",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM/Contents",
-    "build/sanitize/ml/32_scalar_autodiff.dSYM",
     "docs/ai/images/77_标量计算图与自动求导.svg",
     "docs/ai/76_批量全连接层与矩阵求导.md",
     "docs/ai/75_二维矩阵变换实验室.md",
@@ -242,7 +246,6 @@
     "docs/ai/images/59_变分自编码器.svg",
     "docs/ai/images/58_小型Transformer.svg",
     "docs/ai/images/57_GRU门控网络.svg",
-    "docs/ai/images/56_字符循环神经网络.svg",
     "docs/71_机器学习深度学习大模型补充框架.md",
     "docs/ai/74_现代Transformer组件对照.md",
     "docs/ai/73_数据增强与可靠性.md",
@@ -254,9 +257,7 @@
     "docs/ai/58_小型Transformer.md",
     "docs/ai/56_字符循环神经网络.md",
     "docs/ai/57_GRU门控网络.md",
-    "docs/ai/55_去噪自编码器.md",
     "docs/ai/54_CNN图像分类.md",
-    "docs/ai/52_XOR多层感知机.md",
     "未命名.canvas"
   ]
 }

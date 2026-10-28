@@ -178,9 +178,9 @@ make build/basics/01_types
 
 ## 23. 机器学习入门案例
 
-`src/ml/` 提供四十个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
+`src/ml/` 提供四十二个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
 
-每个 C 案例都有标准库 Python 对照：编号 01–28、30–40 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `40_model_persistence.c` 对应 `40_model_persistence.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
+每个 C 案例都有标准库 Python 对照：编号 01–28、30–42 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `42_data_augmentation.c` 对应 `42_data_augmentation.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -224,6 +224,8 @@ make build/basics/01_types
 | `38_optimization_diagnostics.c` | M09：同一二次曲率上的 SGD、动量与 Adam，以及 MLP 训练诊断 |
 | `39_generalization_bootstrap.c` | M10：多项式偏差方差、训练随机性、成对测试损失自助区间与分布偏移 |
 | `40_model_persistence.c` | M11：版本化模型文件、标准化状态持久化、失败安全加载与独立推理 |
+| `41_normalization_residual.c` | D01：LayerNorm、BatchNorm、RMSNorm、初始化方差及残差梯度路径 |
+| `42_data_augmentation.c` | D02：平移/噪声/组合增强、错误标签旋转、同预算消融与固定测试视图 |
 
 运行 `make matrix-transforms` 和 `python3 src/python/ml/30_matrix_transforms.py`，逐行比较基向量及点的坐标；`make test-matrix-transforms` 核对 C/Python 输出与边界，`make sanitize-matrix-transforms` 验证 C 内存和未定义行为。推导、手算及静态坐标图见[二维矩阵变换实验室](docs/ai/75_二维矩阵变换实验室.md)。
 
@@ -266,6 +268,10 @@ GMM 与 EM 的 Python 版本同样使用纯标准库。运行 `make gmm` 和 `ma
 运行 `make csv-standardization` 从 `data/ml/study_outcomes.csv` 加载小型二分类数据，以训练集拟合均值和标准差，用验证集选择训练轮次，再独立评估测试集。阅读 [CSV 标准化技术分析](docs/ai/43_CSV标准化与独立测试评估.md)；`make test-csv-standardization` 验证解析失败安全、训练统计量隔离和测试集评估，`make sanitize-csv-standardization` 运行消毒器版本。
 
 运行 `make model-persistence` 观察训练统计量和逻辑回归权重如何组成推理状态。`make model-persistence-train MODEL_PATH=sessions/ml-models/study-v1.bin` 独占创建新模型文件，再用 `make model-persistence-predict MODEL_PATH=sessions/ml-models/study-v1.bin FEATURE_0=5.2 FEATURE_1=64` 在新进程加载并预测；已有路径不会被覆盖。`make test-model-persistence` 验证截断/错误版本/维度/非有限参数、CRC、C/Python 共享夹具和跨进程结果；`make sanitize-model-persistence` 检查 C 实现。格式推导、手算和训练检查点区别见[模型持久化与独立推理](docs/ai/85_模型持久化与独立推理.md)。
+
+运行 `make normalization-residual` 与 `python3 src/python/ml/41_normalization_residual.py`，观察同一 `2×3` 输入在 LayerNorm、BatchNorm 和 RMSNorm 下的输出与输入梯度范数，并比较 He/Glorot 初始化方差及八层残差梯度路径。`make test-normalization-residual` 检查三种方法的输入/参数梯度中心差分、BN 训练与推理统计、单元素/零方差输入和 C/Python 逐字段结果；`make sanitize-normalization-residual` 检查 C 边界。完整推导、手算与图示见[训练稳定性与归一化](docs/ai/72_训练稳定性与归一化.md)。
+
+运行 `make augmentation-ablation` 与 `python3 src/python/ml/42_data_augmentation.py`，对照无增强、平移、噪声、组合和错误旋转五种同预算实验；`make augmentation-ablation-hand` 展示实际变换、交叉熵、梯度和一次更新。`make test-data-augmentation` 验证变换边界、195 个中心差分梯度、数据划分、固定种子和 C/Python 逐种子评估，`make sanitize-data-augmentation` 检查 C 内存与未定义行为。数学推导、标签不变性、手算和结果限制见[数据增强与可靠性](docs/ai/73_数据增强与可靠性.md)。
 
 运行 `make reliability-assessment` 学习不平衡分类的准确率陷阱、类别加权、验证集阈值选择，以及验证集拟合的 Platt 概率校准。终端会输出混淆矩阵、精确率、召回率、F1、平衡准确率、Brier、BCE、ECE 和 ASCII 可靠性图；这些是固定测试样本上的点估计。阅读[可靠性评估技术分析](docs/ai/44_类别不平衡与概率校准.md)，统计不确定性另见[M10 泛化与可靠性教程](docs/ai/84_泛化与统计可靠性.md)；运行 `make test-reliability-assessment` 和 `make sanitize-reliability-assessment` 验证实现。
 

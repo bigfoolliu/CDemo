@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="850" viewBox="0 0 1280 850" role="img" aria-labelledby="title description">
+  <title id="title">D02 数据增强、消融与可靠性评估</title>
+  <desc id="description">按原始样本分组后只增强训练图像；不同增强设置保持相同训练预算；所有模型评估同一组固定测试视图。</desc>
+  <defs>
+    <style>
+      .bg { fill: #f3f6f7; }
+      .panel { fill: #ffffff; stroke: #bfccd3; stroke-width: 2; }
+      .subpanel { fill: #f8fafb; stroke: #d4dee3; stroke-width: 1.5; }
+      .navy { fill: #18394b; }
+      .muted { fill: #536b78; }
+      .blue { fill: #deedf4; stroke: #5e92ad; stroke-width: 1.5; }
+      .green { fill: #e1f1e9; stroke: #69a58a; stroke-width: 1.5; }
+      .amber { fill: #fff0d2; stroke: #c69136; stroke-width: 1.5; }
+      .red { fill: #f8e5e1; stroke: #c87968; stroke-width: 1.5; }
+      .dark { fill: #284958; }
+      .white { fill: #ffffff; }
+      .stroke { stroke: #62808e; stroke-width: 2.5; fill: none; }
+      .arrow { stroke: #47788f; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #8299a4; stroke-width: 2; stroke-dasharray: 7 6; fill: none; }
+      .title { font: 700 34px sans-serif; }
+      .subtitle { font: 20px sans-serif; }
+      .heading { font: 700 22px sans-serif; }
+      .label { font: 600 17px sans-serif; }
+      .body { font: 16px sans-serif; }
+      .small { font: 14px sans-serif; }
+      .metric { font: 700 22px sans-serif; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#47788f"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1280" height="850"/>
+  <text x="38" y="53" class="title navy">D02｜数据增强、消融与可靠性评估</text>
+  <text x="40" y="86" class="subtitle muted">先按原始来源切分；增强只发生在训练环节；每种方法都评估同一组固定视图</text>
+
+  <rect x="30" y="112" width="355" height="370" rx="18" class="panel"/>
+  <text x="54" y="151" class="heading navy">一、原始图形与来源分组</text>
+  <text x="55" y="179" class="small muted">每个来源样本只属于一个集合</text>
+
+  <rect x="52" y="197" width="94" height="106" rx="12" class="subpanel"/>
+  <rect x="167" y="197" width="94" height="106" rx="12" class="subpanel"/>
+  <rect x="282" y="197" width="80" height="106" rx="12" class="subpanel"/>
+  <rect x="82" y="222" width="34" height="34" rx="3" fill="#5487a0"/>
+  <rect x="196" y="217" width="12" height="44" rx="2" fill="#5487a0"/>
+  <rect x="211" y="217" width="12" height="44" rx="2" fill="#5487a0"/>
+  <rect x="299" y="230" width="44" height="12" rx="2" fill="#5487a0"/>
+  <rect x="299" y="245" width="44" height="12" rx="2" fill="#5487a0"/>
+  <text x="99" y="279" text-anchor="middle" class="small navy">方块</text>
+  <text x="214" y="279" text-anchor="middle" class="small navy">竖条</text>
+  <text x="322" y="279" text-anchor="middle" class="small navy">横条</text>
+
+  <rect x="53" y="324" width="307" height="40" rx="9" class="blue"/>
+  <text x="68" y="350" class="label navy">训练组</text>
+  <text x="337" y="350" text-anchor="end" class="label navy">72 张原图</text>
+  <rect x="53" y="374" width="307" height="40" rx="9" class="green"/>
+  <text x="68" y="400" class="label navy">验证组</text>
+  <text x="337" y="400" text-anchor="end" class="label navy">36 张原图</text>
+  <rect x="53" y="424" width="307" height="40" rx="9" class="amber"/>
+  <text x="68" y="450" class="label navy">测试组</text>
+  <text x="337" y="450" text-anchor="end" class="label navy">36 张原图</text>
+
+  <path d="M 385 296 L 411 296" class="arrow"/>
+
+  <rect x="420" y="112" width="430" height="370" rx="18" class="panel"/>
+  <text x="444" y="151" class="heading navy">二、只对训练图即时变换</text>
+  <text x="445" y="179" class="small muted">每张原图每轮抽一个视图；验证和测试不进入梯度</text>
+
+  <rect x="445" y="199" width="178" height="43" rx="10" class="subpanel"/>
+  <text x="464" y="226" class="label navy">无增强</text>
+  <text x="602" y="226" text-anchor="end" class="small muted">原图</text>
+  <rect x="639" y="199" width="185" height="43" rx="10" class="blue"/>
+  <text x="658" y="226" class="label navy">随机平移</text>
+  <text x="804" y="226" text-anchor="end" class="small navy">dx,dy∈{-1,0,1}</text>
+
+  <rect x="445" y="253" width="178" height="43" rx="10" class="blue"/>
+  <text x="464" y="280" class="label navy">像素噪声</text>
+  <text x="602" y="280" text-anchor="end" class="small navy">幅度 0.12</text>
+  <rect x="639" y="253" width="185" height="43" rx="10" class="green"/>
+  <text x="658" y="280" class="label navy">平移 + 噪声</text>
+  <text x="804" y="280" text-anchor="end" class="small navy">标签保持时</text>
+
+  <rect x="445" y="307" width="379" height="48" rx="10" class="red"/>
+  <text x="464" y="337" class="label navy">错误旋转 90°</text>
+  <text x="804" y="337" text-anchor="end" class="small navy">竖条 ↔ 横条，标签未改</text>
+
+  <rect x="445" y="374" width="379" height="82" rx="12" class="subpanel"/>
+  <text x="463" y="401" class="label navy">公平控制</text>
+  <text x="463" y="425" class="body muted">120 轮 × 8 批/轮 = 960 次更新</text>
+  <text x="463" y="447" class="body muted">相同初始化、拆分、洗牌种子和训练预算</text>
+
+  <path d="M 850 296 L 876 296" class="arrow"/>
+
+  <rect x="885" y="112" width="365" height="370" rx="18" class="panel"/>
+  <text x="909" y="151" class="heading navy">三、固定测试视图</text>
+  <text x="910" y="179" class="small muted">相同测试原图、相同索引扰动，跨条件复用</text>
+
+  <rect x="910" y="201" width="145" height="91" rx="12" class="subpanel"/>
+  <rect x="1074" y="201" width="151" height="91" rx="12" class="blue"/>
+  <text x="927" y="230" class="label navy">干净</text>
+  <text x="927" y="259" class="small muted">原始测试分布</text>
+  <text x="1091" y="230" class="label navy">平移</text>
+  <text x="1091" y="259" class="small muted">9 种固定位移</text>
+
+  <rect x="910" y="308" width="145" height="91" rx="12" class="green"/>
+  <rect x="1074" y="308" width="151" height="91" rx="12" class="amber"/>
+  <text x="927" y="337" class="label navy">噪声</text>
+  <text x="927" y="366" class="small muted">固定随机序列</text>
+  <text x="1091" y="337" class="label navy">平移 + 噪声</text>
+  <text x="1091" y="366" class="small muted">组合受扰视图</text>
+  <rect x="910" y="420" width="315" height="37" rx="9" class="subpanel"/>
+  <text x="1067" y="444" text-anchor="middle" class="small navy">测试集只用于报告，不选增强强度或轮数</text>
+
+  <rect x="30" y="505" width="1220" height="314" rx="18" class="panel"/>
+  <text x="55" y="546" class="heading navy">四、五种子结果：增强能改善目标扰动，但不保证所有视图一起变好</text>
+  <text x="57" y="575" class="small muted">五个训练种子的均值 ± 总体标准差；同一测试集只用于固定条件比较，不是置信区间</text>
+
+  <rect x="56" y="598" width="267" height="100" rx="13" class="blue"/>
+  <text x="75" y="627" class="label navy">平移测试准确率</text>
+  <text x="75" y="663" class="metric navy">52.8% → 77.2%</text>
+  <text x="75" y="685" class="small muted">无增强 → 平移增强</text>
+
+  <rect x="342" y="598" width="267" height="100" rx="13" class="green"/>
+  <text x="361" y="627" class="label navy">组合受扰测试准确率</text>
+  <text x="361" y="663" class="metric navy">52.8% → 73.9%</text>
+  <text x="361" y="685" class="small muted">无增强 → 平移 + 噪声</text>
+
+  <rect x="628" y="598" width="267" height="100" rx="13" class="red"/>
+  <text x="647" y="627" class="label navy">错误旋转后的干净准确率</text>
+  <text x="647" y="663" class="metric navy">100% → 33.3%</text>
+  <text x="647" y="685" class="small muted">标签错配接近三分类随机猜测</text>
+
+  <rect x="914" y="598" width="309" height="100" rx="13" class="amber"/>
+  <text x="933" y="627" class="label navy">干净视图的取舍</text>
+  <text x="933" y="654" class="body navy">平移增强模型干净准确率 61.1%</text>
+  <text x="933" y="681" class="small muted">像素线性模型不具备卷积特征共享</text>
+
+  <path d="M 58 728 L 1222 728" class="dash"/>
+  <text x="58" y="764" class="label navy">解释范围：</text>
+  <text x="162" y="764" class="body muted">这是用线性分类器隔离变换效应的合成教学实验；不代表既有 CNN 或真实图像任务的性能结论。</text>
+  <text x="58" y="792" class="small muted">训练变换视图可以重采样；验证/测试视图固定；所有增强副本继承原样本来源，只用于训练集合。</text>
+</svg>
