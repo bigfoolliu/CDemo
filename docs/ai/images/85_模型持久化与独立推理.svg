@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="560" viewBox="0 0 1120 560" role="img" aria-labelledby="title desc">
+  <title id="title">训练、模型文件与独立推理闭环</title>
+  <desc id="desc">训练数据只计算一次均值和标准差并拟合权重；版本化文件保存这些参数；新进程验证文件后使用原统计量预测，失败时不替换有效模型。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#456b86"/>
+    </marker>
+    <style>
+      .title { font: 700 26px sans-serif; fill: #203746; }
+      .heading { font: 700 18px sans-serif; fill: #24475c; }
+      .body { font: 15px sans-serif; fill: #354c5a; }
+      .small { font: 13px sans-serif; fill: #526878; }
+      .code { font: 14px monospace; fill: #263f50; }
+    </style>
+  </defs>
+  <rect width="1120" height="560" rx="18" fill="#f5f8fa"/>
+  <text id="title" x="40" y="48" class="title">M11：把训练坐标系与模型参数一起带到推理进程</text>
+
+  <rect x="38" y="90" width="220" height="180" rx="12" fill="#e4eff4" stroke="#7195a8" stroke-width="2"/>
+  <text x="58" y="124" class="heading">训练进程</text>
+  <text x="58" y="158" class="body">训练划分的 CSV</text>
+  <text x="58" y="187" class="code">mean, scale</text>
+  <text x="58" y="216" class="code">weights, bias</text>
+  <text x="58" y="248" class="small">只用 train 行拟合</text>
+
+  <path d="M270 180H326" fill="none" stroke="#456b86" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="340" y="90" width="270" height="180" rx="12" fill="#fff" stroke="#668799" stroke-width="2"/>
+  <text x="362" y="124" class="heading">版本化模型文件</text>
+  <text x="362" y="158" class="code">magic | version | dims</text>
+  <text x="362" y="187" class="code">mean | scale | weights</text>
+  <text x="362" y="216" class="code">bias | CRC-32</text>
+  <text x="362" y="248" class="small">独占创建；拒绝覆盖旧文件</text>
+
+  <path d="M622 180H678" fill="none" stroke="#456b86" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="692" y="90" width="220" height="180" rx="12" fill="#e7f2e9" stroke="#71987a" stroke-width="2"/>
+  <text x="714" y="124" class="heading">新推理进程</text>
+  <text x="714" y="158" class="body">读取完整文件</text>
+  <text x="714" y="187" class="body">校验版本、维度</text>
+  <text x="714" y="216" class="body">校验和、有限参数</text>
+  <text x="714" y="248" class="small">验证后一次性提交状态</text>
+
+  <path d="M924 180H978" fill="none" stroke="#456b86" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="990" y="90" width="92" height="180" rx="12" fill="#f0eaf7" stroke="#9580aa" stroke-width="2"/>
+  <text x="1036" y="130" text-anchor="middle" class="heading">预测</text>
+  <text x="1036" y="170" text-anchor="middle" class="code">x</text>
+  <text x="1036" y="202" text-anchor="middle" class="code">→ z</text>
+  <text x="1036" y="234" text-anchor="middle" class="code">→ p</text>
+
+  <rect x="95" y="326" width="430" height="150" rx="12" fill="#fff" stroke="#9c875f" stroke-width="2"/>
+  <text x="120" y="362" class="heading">推理必须复用训练坐标</text>
+  <text x="120" y="399" class="code">zⱼ = (xⱼ − μⱼ) / sⱼ</text>
+  <text x="120" y="432" class="body">μ、s 与权重属于同一个推理状态</text>
+  <text x="120" y="458" class="small">重新拟合会让相同 x 得到不同预测</text>
+
+  <rect x="592" y="326" width="430" height="150" rx="12" fill="#fff1ef" stroke="#ba766c" stroke-width="2"/>
+  <text x="618" y="362" class="heading">文件无效时保护当前状态</text>
+  <text x="618" y="399" class="body">截断、版本/维度错误、CRC 错误</text>
+  <text x="618" y="428" class="body">或 NaN / ∞ 参数 → 拒绝加载</text>
+  <text x="618" y="458" class="small">临时解析失败，不改写已有模型</text>
+
+  <text x="40" y="526" class="small">推理文件保存预测必需参数；训练检查点还需优化器、步数、随机状态等恢复训练所需状态。</text>
+</svg>

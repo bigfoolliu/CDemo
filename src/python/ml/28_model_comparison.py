@@ -1,8 +1,41 @@
 """在共享 CSV 划分和训练集标准化上比较四种分类器。"""
 
 import csv
-from math import dist, exp
+from math import dist, exp, isfinite
 from pathlib import Path
+
+BOOTSTRAP_REPLICATE_COUNT = 1000
+
+
+def paired_bootstrap(loss_differences: list[float], seed: int
+                     ) -> tuple[float, float, float]:
+    """对逐测试样本损失差进行百分位成对自助重采样。
+
+    :param loss_differences: 同一测试记录上模型 A 减模型 B 的有限损失。
+    :param seed: 非零 32 位伪随机种子。
+    :return: 原始均值差、95% 区间下界和上界。
+    :raises ValueError: 输入为空、含非有限数或种子无效时抛出。
+    """
+    if (not loss_differences or len(loss_differences) > 64 or seed <= 0 or
+            seed > 0xFFFFFFFF or any(not isfinite(value) for value in loss_differences)):
+        raise ValueError("成对自助法输入无效")
+    state = seed
+    estimates = []
+    for _ in range(BOOTSTRAP_REPLICATE_COUNT):
+        total = 0.0
+        for _ in loss_differences:
+            value = state
+            value ^= (value << 13) & 0xFFFFFFFF
+            value ^= value >> 17
+            value ^= (value << 5) & 0xFFFFFFFF
+            state = value & 0xFFFFFFFF
+            total += loss_differences[state % len(loss_differences)]
+        estimates.append(total / len(loss_differences))
+    estimates.sort()
+    mean = sum(loss_differences) / len(loss_differences)
+    lower = estimates[int(0.025 * (len(estimates) - 1))]
+    upper = estimates[int(0.975 * (len(estimates) - 1))]
+    return mean, lower, upper
 
 
 def balanced_accuracy(labels: list[int], predictions: list[int]) -> float:
@@ -128,6 +161,13 @@ def main() -> None:
         "决策树桩": [stump_labels[0 if point[stump_feature] <= stump_threshold else 1]
                     for point in test_x],
     }
+    knn_name = next(name for name in test_predictions if name.startswith("KNN("))
+    paired_differences = [
+        float(prediction_a != label) - float(prediction_b != label)
+        for label, prediction_a, prediction_b in zip(
+            test_y, test_predictions["逻辑回归"], test_predictions[knn_name])
+    ]
+    mean_difference, lower, upper = paired_bootstrap(paired_differences, 0x28B007)
     print("CSV={} 划分 train/validation/test={}/{}/{}".format(
         path, len(train_x), len(validation_x), len(test_x)))
     print("预处理均值={} 标准差={}；选择 lambda={}、k={}".format(
@@ -137,7 +177,11 @@ def main() -> None:
         accuracy = sum(a == b for a, b in zip(predictions, test_y)) / len(test_y)
         balanced = balanced_accuracy(test_y, predictions)
         print("{}: accuracy={:.1%}, balanced_accuracy={:.1%}".format(name, accuracy, balanced))
+    print("逻辑回归 - {} 的成对测试 0/1 损失差：均值={:.3f}，"
+          "95% 百分位区间=[{:.3f}, {:.3f}]（{} 条测试样本）".format(
+              knn_name, mean_difference, lower, upper, len(test_y)))
     print("所有模型共享数据划分和训练集标准化参数；测试集不参与选参。")
+    print("该自助区间条件于已拟合模型，只表达测试样本抽样波动；区间重叠不是显著性检验。")
 
 
 if __name__ == "__main__":

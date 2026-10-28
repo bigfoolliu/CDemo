@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="760" viewBox="0 0 1120 760" role="img" aria-labelledby="title description">
+  <title id="title">泛化误差中的训练波动与测试样本不确定性</title>
+  <desc id="description">上半部分展示重复生成训练集与拟合不同次数多项式估计偏差和方差；下半部分展示固定测试集上的两个模型复用相同样本编号进行成对 bootstrap，并与训练随机性和分布偏移区分。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#526579"/>
+    </marker>
+    <style>
+      .bg { fill: #f4f7fb; }
+      .title { font: 700 27px sans-serif; fill: #15283e; }
+      .subtitle { font: 16px sans-serif; fill: #53677d; }
+      .section { font: 700 19px sans-serif; fill: #20364d; }
+      .label { font: 700 16px sans-serif; fill: #1c324a; }
+      .body { font: 14px sans-serif; fill: #334a61; }
+      .small { font: 12px sans-serif; fill: #4d6278; }
+      .box { stroke-width: 2; rx: 14; }
+      .line { stroke: #526579; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 7 6; }
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="760"/>
+  <text class="title" x="48" y="48">泛化评估要区分两种波动</text>
+  <text class="subtitle" x="48" y="76">训练数据变化会改变模型；固定模型的测试估计也会随抽样变化。</text>
+
+  <text class="section" x="48" y="121">A. 训练随机性：偏差—方差</text>
+  <rect class="box" x="48" y="145" width="205" height="102" fill="#e7f1ff" stroke="#5b8fc5"/>
+  <text class="label" x="68" y="177">重复生成训练集</text>
+  <text class="body" x="68" y="203">D₁、D₂、…、D₄₀</text>
+  <text class="small" x="68" y="225">每次 12 个含噪样本</text>
+
+  <path class="line" d="M253 196 L306 196"/>
+  <rect class="box" x="310" y="145" width="215" height="102" fill="#eaf7f0" stroke="#5eaa7e"/>
+  <text class="label" x="332" y="177">每份数据拟合</text>
+  <text class="body" x="337" y="203">次数 1 / 3 / 5</text>
+  <text class="small" x="332" y="225">模型容量逐步增加</text>
+
+  <path class="line" d="M525 196 L578 196"/>
+  <rect class="box" x="582" y="145" width="225" height="102" fill="#fff4df" stroke="#d5a348"/>
+  <text class="label" x="603" y="177">固定探针点比较</text>
+  <text class="body" x="603" y="203">平均预测与真实函数</text>
+  <text class="small" x="603" y="225">计算偏差平方、预测方差</text>
+
+  <path class="line" d="M807 196 L860 196"/>
+  <rect class="box" x="864" y="145" width="208" height="102" fill="#f4eafa" stroke="#9b75b5"/>
+  <text class="label" x="884" y="177">偏差—方差分解</text>
+  <text class="body" x="884" y="203">偏差² + 方差 + 噪声</text>
+  <text class="small" x="884" y="225">反映换训练集后的模型变化</text>
+
+  <rect class="box" x="215" y="270" width="690" height="56" fill="#ffffff" stroke="#8a9aad"/>
+  <text class="body" x="245" y="294">训练集不用于最终误差报告；测试集不参与次数选择或任何数据变换拟合。</text>
+  <text class="small" x="310" y="314">次数在实验前固定，训练波动通过重复生成训练数据观察。</text>
+
+  <text class="section" x="48" y="375">B. 固定模型：测试样本不确定性</text>
+  <rect class="box" x="48" y="400" width="210" height="112" fill="#e7f1ff" stroke="#5b8fc5"/>
+  <text class="label" x="69" y="432">固定测试集</text>
+  <text class="body" x="69" y="458">样本 0、1、…、n−1</text>
+  <text class="small" x="69" y="482">保留真实标签和配对关系</text>
+
+  <path class="line" d="M258 456 L307 456"/>
+  <rect class="box" x="311" y="400" width="218" height="112" fill="#eaf7f0" stroke="#5eaa7e"/>
+  <text class="label" x="332" y="432">逐样本损失差</text>
+  <text class="body" x="332" y="458">dᵢ = loss(Aᵢ) − loss(Bᵢ)</text>
+  <text class="small" x="332" y="482">同一个样本同时比较 A 和 B</text>
+
+  <path class="line" d="M529 456 L578 456"/>
+  <rect class="box" x="582" y="400" width="220" height="112" fill="#fff4df" stroke="#d5a348"/>
+  <text class="label" x="603" y="432">共同编号有放回抽样</text>
+  <text class="body" x="603" y="458">[0,0,2,…] 同时取 A、B</text>
+  <text class="small" x="603" y="482">重复 1000 次，形成差值分布</text>
+
+  <path class="line" d="M802 456 L851 456"/>
+  <rect class="box" x="855" y="400" width="217" height="112" fill="#f4eafa" stroke="#9b75b5"/>
+  <text class="label" x="876" y="432">百分位置信区间</text>
+  <text class="body" x="876" y="458">报告均值差与 95% 区间</text>
+  <text class="small" x="876" y="482">区间以已拟合模型为条件</text>
+
+  <rect class="box" x="48" y="548" width="485" height="136" fill="#eef7f2" stroke="#5eaa7e"/>
+  <text class="label" x="70" y="580">能回答</text>
+  <text class="body" x="70" y="608">若从目标总体重新抽取类似测试样本，</text>
+  <text class="body" x="70" y="632">这两个已拟合模型的平均损失差会有多大抽样波动？</text>
+  <text class="small" x="70" y="660">配对差值保留每条测试样本对两个模型的共同难度。</text>
+
+  <rect class="box" x="558" y="548" width="514" height="136" fill="#fff0ee" stroke="#ca776b"/>
+  <text class="label" x="580" y="580">不能回答</text>
+  <text class="body" x="580" y="608">不包含重新训练和调参的随机性；也不保证分布偏移后的性能。</text>
+  <text class="body" x="580" y="632">两个独立区间重叠与否，不等于对配对差值做显著性检验。</text>
+  <text class="small" x="580" y="660">若部署分布从 P 变成 Q，需要在目标环境重新评估风险。</text>
+
+  <path class="line dashed" d="M980 247 C1090 300 1090 355 1000 394"/>
+  <text class="small" x="884" y="348">另测偏移分布 Q</text>
+</svg>

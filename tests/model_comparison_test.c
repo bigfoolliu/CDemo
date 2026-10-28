@@ -150,6 +150,38 @@ static void test_stump_split_by_hand(void)
 }
 
 /**
+ * @brief 验证共同测试下标的手算差值和固定模型自助区间。
+ */
+static void test_paired_bootstrap(void)
+{
+    double differences[] = {3.0, 0.0, 8.0};
+    size_t indices[] = {0, 0, 2};
+    double resampled_mean = 0.0;
+    assert(resampled_mean_difference(differences, 3, indices, 3, &resampled_mean));
+    assert(resampled_mean == 14.0 / 3.0);
+    size_t invalid_indices[] = {0, 3, 2};
+    assert(!resampled_mean_difference(differences, 3, invalid_indices, 3, &resampled_mean));
+
+    Dataset source = {0};
+    assert(dataset_load_csv(DEFAULT_CSV_PATH, &source, nullptr));
+    RunResult run = {0};
+    assert(run_single_comparison(&source, RUN_SEEDS[0], &run));
+    double paired_losses[MAX_SAMPLE_COUNT] = {0};
+    size_t paired_count = 0;
+    assert(collect_paired_test_losses(&source, &run, MODEL_LOGISTIC_REGRESSION, MODEL_KNN,
+                                      paired_losses, &paired_count));
+    assert(paired_count == source.split_counts[SPLIT_TEST]);
+    BootstrapInterval first = {0};
+    BootstrapInterval second = {0};
+    assert(paired_bootstrap(paired_losses, paired_count, UINT32_C(0x28b007), &first));
+    assert(paired_bootstrap(paired_losses, paired_count, UINT32_C(0x28b007), &second));
+    assert(memcmp(&first, &second, sizeof(first)) == 0);
+    assert(first.lower <= first.upper);
+    assert(isfinite(first.mean_difference));
+    assert(!paired_bootstrap(paired_losses, 0, UINT32_C(0x28b007), &second));
+}
+
+/**
  * @brief 验证重复结果有限，且测试数据变化不会影响选参。
  */
 static void test_comparison_and_test_isolation(void)
@@ -234,6 +266,7 @@ int main(void)
     test_repeated_split_is_reproducible_and_shared();
     test_standardizer_uses_training_rows_only();
     test_stump_split_by_hand();
+    test_paired_bootstrap();
     test_comparison_and_test_isolation();
     puts("公平模型比较测试通过");
     return EXIT_SUCCESS;

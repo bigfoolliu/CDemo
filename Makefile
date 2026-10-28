@@ -1018,6 +1018,60 @@ sanitize-tensor-autodiff:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/37_tensor_autodiff.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/37_tensor_autodiff
 	./build/sanitize/ml/37_tensor_autodiff --test
 
+# M09：同一二维曲率上的优化器轨迹，以及小 MLP 的训练状态诊断。
+.PHONY: optimization-diagnostics test-optimization-diagnostics sanitize-optimization-diagnostics
+optimization-diagnostics: build/ml/38_optimization_diagnostics
+	./build/ml/38_optimization_diagnostics
+
+test-optimization-diagnostics: build/ml/38_optimization_diagnostics
+	./build/ml/38_optimization_diagnostics --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_optimization_diagnostics.py
+
+sanitize-optimization-diagnostics:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/38_optimization_diagnostics.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/38_optimization_diagnostics
+	./build/sanitize/ml/38_optimization_diagnostics --test
+
+# M10：重复多项式拟合估计偏差方差，并对同一测试样本的模型损失差做 bootstrap。
+.PHONY: generalization-bootstrap test-generalization-bootstrap sanitize-generalization-bootstrap
+generalization-bootstrap: build/ml/39_generalization_bootstrap
+	./build/ml/39_generalization_bootstrap
+
+test-generalization-bootstrap: build/ml/39_generalization_bootstrap
+	./build/ml/39_generalization_bootstrap --test
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_generalization_bootstrap.py
+
+sanitize-generalization-bootstrap:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/39_generalization_bootstrap.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/39_generalization_bootstrap
+	./build/sanitize/ml/39_generalization_bootstrap --test
+
+# M11：保存标准化状态与模型权重；模型文件使用版本、维度和 CRC 校验。
+.PHONY: model-persistence model-persistence-train model-persistence-predict
+.PHONY: test-model-persistence sanitize-model-persistence
+MODEL_PATH ?= sessions/ml-models/study-v1.bin
+FEATURE_0 ?= 5.2
+FEATURE_1 ?= 64
+
+model-persistence: build/ml/40_model_persistence
+	./build/ml/40_model_persistence demo
+
+model-persistence-train: build/ml/40_model_persistence
+	@mkdir -p "$(dir $(MODEL_PATH))"
+	./build/ml/40_model_persistence train "$(MODEL_PATH)"
+
+model-persistence-predict: build/ml/40_model_persistence
+	./build/ml/40_model_persistence predict "$(MODEL_PATH)" "$(FEATURE_0)" "$(FEATURE_1)"
+
+test-model-persistence: build/ml/40_model_persistence
+	./build/ml/40_model_persistence --test
+	MODEL_PERSISTENCE_C=build/ml/40_model_persistence PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests/python/test_model_persistence.py
+
+sanitize-model-persistence:
+	mkdir -p build/sanitize/ml
+	$(CC) $(CPPFLAGS) $(CFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer src/ml/40_model_persistence.c $(LDFLAGS) $(LDLIBS) -lm -o build/sanitize/ml/40_model_persistence
+	./build/sanitize/ml/40_model_persistence --test
+
 # 阶段 1 独立入口；固定规模的 XOR 短训练也接入默认测试与调试。
 .PHONY: xor-mlp test-xor-mlp sanitize-xor-mlp
 xor-mlp: build/ml/06_xor_mlp
@@ -1589,7 +1643,7 @@ test-logger: build/tests/logger_test
 
 # 默认验证入口：先运行 C/Python 示例，再执行蛇规则、AI 数值、日志与纯 C 核心测试。
 # C 断言必须保持启用；不打开窗口，也不包含长训练、伪终端及 SDL 窗口集成测试。
-test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff
+test: build/tests/decision_tree_test build/tests/naive_bayes_test build/tests/regularization_test build/tests/csv_standardization_test build/tests/reliability_assessment_test build/tests/softmax_regression_test build/tests/dbscan_test build/tests/gradient_boosting_test build/tests/model_comparison_test build/tests/resnet_test build/tests/word_frequency_test build/tests/image_filters_test build/tests/cpu_test run $(GAME_PROGRAM) build/tests/snake_ai_test build/tests/logger_test build/tests/graphics_test build/tests/particles_test build/tests/life_test build/tests/bmp_test build/tests/memory_pool_test build/tests/maze_test build/tests/pathfinding_test build/tests/sorting_test build/tests/mandelbrot_test build/tests/bezier_test build/tests/ripple_test build/tests/sand_test build/tests/rose3d_test test-matrix-transforms test-batch-dense-gradients test-scalar-autodiff test-probability-estimation test-information-losses test-numerical-stability test-projection-decomposition test-tensor-autodiff test-optimization-diagnostics test-generalization-bootstrap test-model-persistence
 	./build/tests/decision_tree_test
 	./build/tests/naive_bayes_test
 	./build/tests/regularization_test
@@ -1692,6 +1746,9 @@ clean:
 	rm -f build/sanitize/ml/35_numerical_stability
 	rm -f build/sanitize/ml/36_projection_decomposition
 	rm -f build/sanitize/ml/37_tensor_autodiff
+	rm -f build/sanitize/ml/38_optimization_diagnostics
+	rm -f build/sanitize/ml/39_generalization_bootstrap
+	rm -f build/sanitize/ml/40_model_persistence
 	rm -f build/graphics/mandelbrot_demo build/debug/graphics/mandelbrot_demo build/tests/mandelbrot_test build/tests/mandelbrot_window_test build/sanitize/mandelbrot_test
 	rm -f build/graphics/bezier_demo build/debug/graphics/bezier_demo build/tests/bezier_test build/tests/bezier_window_test build/sanitize/bezier_test
 	rm -f build/graphics/ripple_demo build/debug/graphics/ripple_demo build/tests/ripple_test build/tests/ripple_window_test build/sanitize/ripple_test

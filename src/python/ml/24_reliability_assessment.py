@@ -27,6 +27,7 @@ def main() -> None:
     print("Brier={:.4f} 两箱 ECE={:.4f} 正类基准率={:.1%}".format(
         brier, ece, sum(labels) / len(labels)))
     print("阈值改变分类决策；Brier/ECE 检查概率质量，准确率不能替代它们。")
+    print("以上是固定样本上的点估计，没有计算置信区间；可靠性示例见 M10 教程。")
 
 
 if __name__ == "__main__":

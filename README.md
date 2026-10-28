@@ -178,9 +178,9 @@ make build/basics/01_types
 
 ## 23. 机器学习入门案例
 
-`src/ml/` 提供三十七个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
+`src/ml/` 提供四十个纯 C 案例，无第三方依赖；大多数使用内置数据，CSV 学习案例读取仓库中的 `data/ml/study_outcomes.csv`。数学函数通过 `-lm` 链接。运行 `make ml`，配合 [中文机器学习说明](docs/00_学习总览.md#chapter-ml-overview) 阅读算法步骤和练习。
 
-每个 C 案例都有标准库 Python 对照：编号 01–28、30–37 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `37_tensor_autodiff.c` 对应 `37_tensor_autodiff.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
+每个 C 案例都有标准库 Python 对照：编号 01–28、30–40 在 `src/python/ml/` 中使用相同编号和文件主题名，例如 `40_model_persistence.c` 对应 `40_model_persistence.py`；`src/ml/29_gmm_em.c` 对应 `src/python/gmm_em.py`。运行 `make python` 会执行这些案例和 Python 基础示例，也可直接运行单个脚本。Python 案例优先展示算法主线；部分深度学习示例缩小了模型或聚焦关键计算，完整训练步骤和 C 实现细节仍以对应专题与源码为准。
 
 | 文件 | 学习目标 |
 | --- | --- |
@@ -221,6 +221,9 @@ make build/basics/01_types
 | `35_numerical_stability.c` | M06：稳定 Softmax、中心差分步长扫描与近奇异系统扰动 |
 | `36_projection_decomposition.c` | M07：QR 最小二乘、二维 SVD 与病态正规方程比较 |
 | `37_tensor_autodiff.c` | M08：固定容量张量图、广播反向、矩阵梯度与 M02 一轮更新 |
+| `38_optimization_diagnostics.c` | M09：同一二次曲率上的 SGD、动量与 Adam，以及 MLP 训练诊断 |
+| `39_generalization_bootstrap.c` | M10：多项式偏差方差、训练随机性、成对测试损失自助区间与分布偏移 |
+| `40_model_persistence.c` | M11：版本化模型文件、标准化状态持久化、失败安全加载与独立推理 |
 
 运行 `make matrix-transforms` 和 `python3 src/python/ml/30_matrix_transforms.py`，逐行比较基向量及点的坐标；`make test-matrix-transforms` 核对 C/Python 输出与边界，`make sanitize-matrix-transforms` 验证 C 内存和未定义行为。推导、手算及静态坐标图见[二维矩阵变换实验室](docs/ai/75_二维矩阵变换实验室.md)。
 
@@ -237,6 +240,10 @@ make build/basics/01_types
 运行 `make projection-decomposition` 和 `python3 src/python/ml/36_projection_decomposition.py` 对照投影解、残差、奇异值及病态误差；`make test-projection-decomposition` 检查正交、重建、秩亏与跨语言结果，`make sanitize-projection-decomposition` 检查 C 实现。完整手算与示意图见[正交投影、最小二乘与矩阵分解](docs/ai/81_正交投影最小二乘与矩阵分解.md)。
 
 运行 `make tensor-autodiff` 与 `python3 src/python/ml/37_tensor_autodiff.py` 对照 M02 的前向、十项梯度及一次更新；`make test-tensor-autodiff` 检查手算、中心差分、共享节点和图生命周期，`make sanitize-tensor-autodiff` 检查 C 实现。推导与图示见[张量计算图与反向传播](docs/ai/82_张量计算图与反向传播.md)。
+
+运行 `make optimization-diagnostics` 与 `python3 src/python/ml/38_optimization_diagnostics.py` 比较同一二维目标上的 SGD、动量和 Adam，并观察固定小 MLP 的损失、激活范围、梯度范数与更新量。`make test-optimization-diagnostics` 检查前两步手算、九个中心差分梯度、过大学习率振荡、失败时状态不变及 C/Python 数值对照；`make sanitize-optimization-diagnostics` 检查 C 实现。推导、L2 与解耦权重衰减对比及限制见[优化器、曲率与训练诊断](docs/ai/83_优化器与训练诊断.md)。
+
+运行 `make generalization-bootstrap` 与 `python3 src/python/ml/39_generalization_bootstrap.py`，观察重复训练多项式的偏差平方、方差、固定测试误差和输入分布偏移。`make test-generalization-bootstrap` 验证最小二乘手算、秩亏/非有限边界、共用测试下标与 C/Python 数值一致性；`make sanitize-generalization-bootstrap` 检查 C 实现。公式推导、逐步手算、统计区间假设和示意图见[泛化、偏差方差与统计可靠性](docs/ai/84_泛化与统计可靠性.md)。
 
 GMM 与 EM 的 Python 版本同样使用纯标准库。运行 `make gmm` 和 `make gmm-python` 对比两种语言对同一二维数据的训练过程；完整推导和源码地图见 [GMM 与 EM 教程](docs/ai/49_高斯混合模型与期望最大化.md)。
 
@@ -258,7 +265,9 @@ GMM 与 EM 的 Python 版本同样使用纯标准库。运行 `make gmm` 和 `ma
 
 运行 `make csv-standardization` 从 `data/ml/study_outcomes.csv` 加载小型二分类数据，以训练集拟合均值和标准差，用验证集选择训练轮次，再独立评估测试集。阅读 [CSV 标准化技术分析](docs/ai/43_CSV标准化与独立测试评估.md)；`make test-csv-standardization` 验证解析失败安全、训练统计量隔离和测试集评估，`make sanitize-csv-standardization` 运行消毒器版本。
 
-运行 `make reliability-assessment` 学习不平衡分类的准确率陷阱、类别加权、验证集阈值选择，以及验证集拟合的 Platt 概率校准。终端会输出混淆矩阵、精确率、召回率、F1、平衡准确率、Brier、BCE、ECE 和 ASCII 可靠性图。阅读 [可靠性评估技术分析](docs/ai/44_类别不平衡与概率校准.md)；运行 `make test-reliability-assessment` 和 `make sanitize-reliability-assessment` 验证实现。
+运行 `make model-persistence` 观察训练统计量和逻辑回归权重如何组成推理状态。`make model-persistence-train MODEL_PATH=sessions/ml-models/study-v1.bin` 独占创建新模型文件，再用 `make model-persistence-predict MODEL_PATH=sessions/ml-models/study-v1.bin FEATURE_0=5.2 FEATURE_1=64` 在新进程加载并预测；已有路径不会被覆盖。`make test-model-persistence` 验证截断/错误版本/维度/非有限参数、CRC、C/Python 共享夹具和跨进程结果；`make sanitize-model-persistence` 检查 C 实现。格式推导、手算和训练检查点区别见[模型持久化与独立推理](docs/ai/85_模型持久化与独立推理.md)。
+
+运行 `make reliability-assessment` 学习不平衡分类的准确率陷阱、类别加权、验证集阈值选择，以及验证集拟合的 Platt 概率校准。终端会输出混淆矩阵、精确率、召回率、F1、平衡准确率、Brier、BCE、ECE 和 ASCII 可靠性图；这些是固定测试样本上的点估计。阅读[可靠性评估技术分析](docs/ai/44_类别不平衡与概率校准.md)，统计不确定性另见[M10 泛化与可靠性教程](docs/ai/84_泛化与统计可靠性.md)；运行 `make test-reliability-assessment` 和 `make sanitize-reliability-assessment` 验证实现。
 
 运行 `make softmax-regression` 学习多分类概率和交叉熵梯度，阅读 [Softmax 分析](docs/ai/45_Softmax多分类回归.md)；运行 `make test-softmax-regression` 与 `make sanitize-softmax-regression` 验证稳定 Softmax 和手算更新。
 
@@ -266,7 +275,7 @@ GMM 与 EM 的 Python 版本同样使用纯标准库。运行 `make gmm` 和 `ma
 
 运行 `make gradient-boosting` 观察回归树桩逐轮拟合残差，并由验证集选择轮数；阅读 [梯度提升分析](docs/ai/47_梯度提升树.md)。`make test-gradient-boosting` 检查手算切分、测试集隔离，`make sanitize-gradient-boosting` 检查内存与未定义行为。
 
-运行 `make model-comparison` 在相同 CSV、分层训练/验证划分和训练集标准化下比较多数类基线、逻辑回归、K 近邻与决策树桩。程序用五个固定种子保留单轮指标并汇总测试集均值与波动；选参只看验证集。阅读 [公平模型比较分析](docs/ai/48_公平模型比较.md)，运行 `make test-model-comparison` 和 `make sanitize-model-comparison` 验证数据隔离、指标与边界。
+运行 `make model-comparison` 在相同 CSV、分层训练/验证划分和训练集标准化下比较多数类基线、逻辑回归、K 近邻与决策树桩。程序用五个固定种子保留单轮指标并汇总测试集均值与波动，再对第一轮逻辑回归和 K 近邻在相同测试记录上的 0/1 损失差给出成对自助区间；选参只看验证集。阅读[公平模型比较分析](docs/ai/48_公平模型比较.md)，运行 `make test-model-comparison` 和 `make sanitize-model-comparison` 验证数据隔离、指标、配对重采样与边界。
 
 运行 `make regularization` 比较 24 条含噪样本训练出的 MLP 在不同 L2 强度下的训练/验证损失、权重范数和多种子独立测试结果；系数只按验证集选择。阅读 [正则化教程](docs/ai/42_神经网络正则化.md)，学习目标函数、权重梯度与过拟合；`make test-regularization` 检查全部参数梯度，`make sanitize-regularization` 检查内存和未定义行为。
 

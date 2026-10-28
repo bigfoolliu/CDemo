@@ -12,15 +12,15 @@
 
 | 概念 | 实现位置 | 主要字段或变量 | 作用 |
 | --- | --- | --- | --- |
-| 样本与划分 | [`Sample`、`Dataset`、`DataSplit`](../../src/ml/23_csv_standardization.c#L23) | `features`、`label`、`split` | 保存两个特征、类别标签和所属数据集。 |
-| CSV 读取和解析 | [`csv_read_record`](../../src/ml/23_csv_standardization.c#L80)、[`parse_sample_record`](../../src/ml/23_csv_standardization.c#L130) | `line`、`fields`、`parsed` | 限长读取一行，校验四个字段并转换数值。 |
-| 整体数据校验 | [`dataset_is_valid`](../../src/ml/23_csv_standardization.c#L189)、[`dataset_load_stream`](../../src/ml/23_csv_standardization.c#L233) | `loaded`、`split_counts` | 验证划分非空、训练集有两个类别，成功后才替换输出。 |
-| 文件生命周期 | [`dataset_load_csv`](../../src/ml/23_csv_standardization.c#L298) | `stream`、`close_result` | 打开文件、读取、关闭；失败时不提交部分数据。 |
-| 标准化参数 | [`standardizer_fit`](../../src/ml/23_csv_standardization.c#L329) | `mean`、`scale`、`training_count` | 只扫描训练样本，计算每列均值和总体标准差。 |
-| 单样本变换 | [`standardize_sample`](../../src/ml/23_csv_standardization.c#L381) | `transformed` | 用已拟合参数处理训练、验证或测试样本。 |
-| 预测和评估 | [`model_predict`](../../src/ml/23_csv_standardization.c#L432)、[`evaluate_split`](../../src/ml/23_csv_standardization.c#L490) | `logit`、`probability`、`Metrics` | 计算正类概率、交叉熵、准确率和混淆矩阵。 |
-| 训练与选轮次 | [`model_train`](../../src/ml/23_csv_standardization.c#L553) | `current`、`best_model`、`validation_metrics` | 批量梯度下降，并根据验证损失保留检查点。 |
-| 程序入口 | [`main`](../../src/ml/23_csv_standardization.c#L670) | `path`、`standardizer`、`model` | 按读取、拟合、训练、验证和最终测试的顺序串接流程。 |
+| 样本与划分 | [`Sample`、`Dataset`、`DataSplit`](../../src/ml/study_dataset.h#L36) | `features`、`label`、`split` | 保存两个特征、类别标签和所属数据集。 |
+| CSV 读取和解析 | [`csv_read_record`](../../src/ml/study_dataset.h#L59)、[`parse_sample_record`](../../src/ml/study_dataset.h#L109) | `line`、`fields`、`parsed` | 限长读取一行，校验四个字段并转换数值。 |
+| 整体数据校验 | [`dataset_is_valid`](../../src/ml/study_dataset.h#L168)、[`dataset_load_stream`](../../src/ml/study_dataset.h#L212) | `loaded`、`split_counts` | 验证划分非空、训练集有两个类别，成功后才替换输出。 |
+| 文件生命周期 | [`dataset_load_csv`](../../src/ml/study_dataset.h#L277) | `stream`、`close_result` | 打开文件、读取、关闭；失败时不提交部分数据。 |
+| 标准化参数 | [`standardizer_fit`](../../src/ml/study_dataset.h#L308) | `mean`、`scale`、`training_count` | 只扫描训练样本，计算每列均值和总体标准差。 |
+| 单样本变换 | [`standardize_sample`](../../src/ml/study_dataset.h#L360) | `transformed` | 用已拟合参数处理训练、验证或测试样本。 |
+| 预测和评估 | [`model_predict`](../../src/ml/23_csv_standardization.c#L66)、[`evaluate_split`](../../src/ml/23_csv_standardization.c#L124) | `logit`、`probability`、`Metrics` | 计算正类概率、交叉熵、准确率和混淆矩阵。 |
+| 训练与选轮次 | [`model_train`](../../src/ml/23_csv_standardization.c#L187) | `current`、`best_model`、`validation_metrics` | 批量梯度下降，并根据验证损失保留检查点。 |
+| 程序入口 | [`main`](../../src/ml/23_csv_standardization.c#L304) | `path`、`standardizer`、`model` | 按读取、拟合、训练、验证和最终测试的顺序串接流程。 |
 
 ## 2. 从 CSV 行到样本结构体
 
@@ -52,7 +52,7 @@ s_j=\sqrt{\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(x_
 \tag{2}
 $$
 
-这里 $\mu_j$ 和 $s_j$ 分别对应 `Standardizer.mean[j]` 与 `Standardizer.scale[j]`。源代码先累加训练样本，再除以训练样本数；第二遍累加平方差后再开平方，见 [`standardizer_fit`](../../src/ml/23_csv_standardization.c#L329)。若某列标准差小于或等于 `DBL_EPSILON`，函数返回失败，不覆盖调用者的旧参数。
+这里 $\mu_j$ 和 $s_j$ 分别对应 `Standardizer.mean[j]` 与 `Standardizer.scale[j]`。源代码先累加训练样本，再除以训练样本数；第二遍累加平方差后再开平方，见 [`standardizer_fit`](../../src/ml/study_dataset.h#L308)。若某列标准差小于或等于 `DBL_EPSILON`，函数返回失败，不覆盖调用者的旧参数。
 
 标准化的目的，是让数值量级不同的特征处在可比较的坐标尺度上。本例一个特征用小时计，另一个是题目数量；若直接训练，后者较大的原始数值会放大它对线性分数和梯度的贡献。中心化使训练特征均值为 $0$，除以标准差使训练特征的典型变化量约为 $1$。这不等于保证模型更准确，也不意味着验证集和测试集恰好有均值 $0$、标准差 $1$。
 
@@ -112,7 +112,7 @@ $$
 \tag{7}
 $$
 
-其中 $\ell_i$ 是样本损失，$y_i$ 是真实标签，$|a_i|$ 是分数绝对值。该式对应 [`binary_cross_entropy`](../../src/ml/23_csv_standardization.c#L476)。某个数据划分的 BCE 是该划分内各样本损失的算术平均。
+其中 $\ell_i$ 是样本损失，$y_i$ 是真实标签，$|a_i|$ 是分数绝对值。该式对应 [`binary_cross_entropy`](../../src/ml/23_csv_standardization.c#L110)。某个数据划分的 BCE 是该划分内各样本损失的算术平均。
 
 ## 5. 从零参数走完第一轮更新
 
@@ -134,7 +134,7 @@ g_b&=\frac{1}{N_{\mathrm{train}}}\sum_{i\in\mathcal{I}_{\mathrm{train}}}(p_i-y_i
 \tag{9}
 $$
 
-$g_{w_j}$ 和 $g_b$ 分别对应 `weight_gradients[j] / training_count` 与 `bias_gradient / training_count`。代码在 [`model_train` 的训练循环](../../src/ml/23_csv_standardization.c#L553)中逐行累加，随后执行梯度下降：
+$g_{w_j}$ 和 $g_b$ 分别对应 `weight_gradients[j] / training_count` 与 `bias_gradient / training_count`。代码在 [`model_train` 的训练循环](../../src/ml/23_csv_standardization.c#L187)中逐行累加，随后执行梯度下降：
 
 $$
 \begin{aligned}
@@ -195,7 +195,13 @@ $$
 - CSV 必须使用指定表头和四个未加引号字段；本案例拒绝空值及非有限数，没有实现缺失值填充、类别编码、引号转义或随机划分。
 - 标准差为零或接近零时无法缩放，该特征会使拟合失败；测试断言验证失败不会覆盖旧的 `Standardizer`。
 - 验证与测试样本可以落在训练均值和标准差范围之外。实现照常使用训练集参数变换，不裁剪标准化值。
-- 模型与标准化参数目前只保存在进程内存中，没有写入或加载模型文件；参数持久化和新进程推理留作后续学习。
+- 本案例的训练循环仍只在内存中保存 `best_model`；如何把推理必需的预处理与权重保存到文件，见 [M11 模型持久化与独立推理](85_模型持久化与独立推理.md)。
 - CSV 加载失败会显示路径或错误行；运行本例不写日志或其他持久产物。
 
 验证命令：`make csv-standardization` 运行完整训练与评估；`make test-csv-standardization` 使用仓库数据和临时 CSV 检查行数、手算标准化、无效输入失败安全及独立测试计数；`make sanitize-csv-standardization` 检查测试入口中的内存和未定义行为。通过这些检查不等于模型已在真实数据上验证。
+
+## 8. 把训练结果交给新进程（M11）
+
+`23_csv_standardization.c` 展示“训练集拟合预处理—验证集选轮次—测试集评估”；进程结束后，内存中的 `Standardizer` 和 `LogisticModel` 随之消失。M11 复用相同的 `study_dataset.h` 读取与标准化模块，新增 [`40_model_persistence.c`](../../src/ml/40_model_persistence.c) 和 Python 对照，将均值、标准差、权重与偏置一起编码，再由独立命令加载。推理程序只接收模型文件和原始特征，不需要 CSV。
+
+先运行 `make model-persistence-train MODEL_PATH=sessions/ml-models/study-v1.bin`，再在另一个进程运行 `make model-persistence-predict MODEL_PATH=sessions/ml-models/study-v1.bin FEATURE_0=5.2 FEATURE_1=64`。模型路径采用独占创建；需要重复实验时选择新文件名，避免覆盖旧文件。完整字节布局、手算、损坏文件验证与训练检查点差别见[M11 教程](85_模型持久化与独立推理.md)。

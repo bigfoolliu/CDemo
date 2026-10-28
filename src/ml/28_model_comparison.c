@@ -13,7 +13,8 @@ enum {
     RUN_COUNT = 5,
     LOGISTIC_CONFIG_COUNT = 3,
     KNN_CONFIG_COUNT = 3,
-    LOGISTIC_EPOCH_COUNT = 500
+    LOGISTIC_EPOCH_COUNT = 500,
+    BOOTSTRAP_REPLICATE_COUNT = 1000
 };
 
 static const uint32_t RUN_SEEDS[RUN_COUNT] = {11, 29, 47, 71, 101};
@@ -84,6 +85,12 @@ typedef struct {
     size_t sample_index;
     int label;
 } Neighbor;
+
+typedef struct {
+    double mean_difference;
+    double lower;
+    double upper;
+} BootstrapInterval;
 
 /**
  * @brief 推进用于划分的确定性 xorshift 伪随机数生成器。
@@ -804,6 +811,143 @@ static bool run_single_comparison(const Dataset *source, uint32_t seed, RunResul
 }
 
 /**
+ * @brief 将一组共同测试样本索引映射为平均分类损失差。
+ * @param loss_differences 有效逐样本损失差数组，定义为模型 A 减模型 B。
+ * @param count 非零测试样本数。
+ * @param indices 有放回抽取的测试样本索引。
+ * @param resample_count 非零重采样样本数。
+ * @param output 可写有限均值；索引无效时保持不变。
+ * @return 所有索引有效且结果有限时为 true。
+ */
+static bool resampled_mean_difference(const double *loss_differences, size_t count,
+                                      const size_t *indices, size_t resample_count,
+                                      double *output)
+{
+    if (loss_differences == nullptr || count == 0 || count > MAX_SAMPLE_COUNT ||
+        indices == nullptr || resample_count == 0 || resample_count > MAX_SAMPLE_COUNT ||
+        output == nullptr) {
+        return false;
+    }
+
+    double sum = 0.0;
+    for (size_t sample = 0; sample < resample_count; ++sample) {
+        size_t index = indices[sample];
+        if (index >= count || !isfinite(loss_differences[index])) {
+            return false;
+        }
+        sum += loss_differences[index];
+    }
+    double result = sum / (double)resample_count;
+    if (!isfinite(result)) {
+        return false;
+    }
+    *output = result;
+    return true;
+}
+
+/**
+ * @brief 从同一固定测试集收集两个已拟合模型的成对 0/1 损失差。
+ * @param source 原始数据集；测试行只用于预测评估，不参与数据划分拟合。
+ * @param run 已在对应训练/验证划分上完成拟合和选参的一轮结果。
+ * @param model_a 第一个模型，损失差中取正号。
+ * @param model_b 第二个模型，损失差中取负号。
+ * @param output 可写逐测试样本差数组；失败时保持不变。
+ * @param output_count 可写测试样本数量；失败时保持不变。
+ * @return 重建训练划分并对每个测试样本成功预测时为 true。
+ */
+static bool collect_paired_test_losses(const Dataset *source, const RunResult *run,
+                                       ModelKind model_a, ModelKind model_b,
+                                       double output[MAX_SAMPLE_COUNT], size_t *output_count)
+{
+    if (!dataset_is_valid(source) || run == nullptr || output == nullptr ||
+        output_count == nullptr || model_a < MODEL_MAJORITY_BASELINE || model_a >= MODEL_COUNT ||
+        model_b < MODEL_MAJORITY_BASELINE || model_b >= MODEL_COUNT) {
+        return false;
+    }
+
+    Dataset split = {0};
+    if (!repeated_stratified_split(source, run->seed, &split)) {
+        return false;
+    }
+    double differences[MAX_SAMPLE_COUNT] = {0};
+    size_t count = 0;
+    for (size_t index = 0; index < source->count; ++index) {
+        const Sample *sample = &source->samples[index];
+        if (sample->split != SPLIT_TEST) {
+            continue;
+        }
+        int prediction_a = 0;
+        int prediction_b = 0;
+        if (!model_predict(&run->models[model_a], &split, &run->standardizer, sample,
+                           &prediction_a) ||
+            !model_predict(&run->models[model_b], &split, &run->standardizer, sample,
+                           &prediction_b) || count >= MAX_SAMPLE_COUNT) {
+            return false;
+        }
+        double loss_a = prediction_a == sample->label ? 0.0 : 1.0;
+        double loss_b = prediction_b == sample->label ? 0.0 : 1.0;
+        differences[count] = loss_a - loss_b;
+        ++count;
+    }
+    if (count != source->split_counts[SPLIT_TEST]) {
+        return false;
+    }
+    memcpy(output, differences, count * sizeof(*output));
+    *output_count = count;
+    return true;
+}
+
+/**
+ * @brief 对固定模型的配对损失差计算百分位自助区间。
+ * @param loss_differences 同一测试行上模型 A 减模型 B 的有限逐样本损失。
+ * @param count 固定测试集的非零样本数。
+ * @param seed 可复现的非零伪随机种子。
+ * @param output 可写均值及 95% 百分位区间；失败时保持不变。
+ * @return 区间计算成功时为 true；区间仅条件于当前已拟合模型。
+ */
+static bool paired_bootstrap(const double *loss_differences, size_t count, uint32_t seed,
+                             BootstrapInterval *output)
+{
+    if (loss_differences == nullptr || count == 0 || count > MAX_SAMPLE_COUNT || seed == 0 ||
+        output == nullptr) {
+        return false;
+    }
+
+    for (size_t index = 0; index < count; ++index) {
+        if (!isfinite(loss_differences[index])) {
+            return false;
+        }
+    }
+    double estimates[BOOTSTRAP_REPLICATE_COUNT] = {0};
+    size_t indices[MAX_SAMPLE_COUNT] = {0};
+    uint32_t state = seed;
+    for (size_t replicate = 0; replicate < BOOTSTRAP_REPLICATE_COUNT; ++replicate) {
+        for (size_t sample = 0; sample < count; ++sample) {
+            indices[sample] = random_next(&state) % (uint32_t)count;
+        }
+        if (!resampled_mean_difference(loss_differences, count, indices, count,
+                                       &estimates[replicate])) {
+            return false;
+        }
+    }
+
+    qsort(estimates, BOOTSTRAP_REPLICATE_COUNT, sizeof(*estimates), compare_doubles);
+    BootstrapInterval interval = {0};
+    for (size_t index = 0; index < count; ++index) {
+        interval.mean_difference += loss_differences[index];
+    }
+    interval.mean_difference /= (double)count;
+    interval.lower = estimates[(size_t)(0.025 * (BOOTSTRAP_REPLICATE_COUNT - 1))];
+    interval.upper = estimates[(size_t)(0.975 * (BOOTSTRAP_REPLICATE_COUNT - 1))];
+    if (!isfinite(interval.mean_difference) || !isfinite(interval.lower) ||
+        !isfinite(interval.upper)) {
+        return false;
+    }
+    *output = interval;
+    return true;
+}
+
+/**
  * @brief 返回比较模型的可读名称。
  * @param kind 有效的模型枚举值。
  * @return 静态模型名称；枚举值无效时返回“未知模型”。
@@ -997,6 +1141,22 @@ int main(int argc, char *argv[])
                recall_deviation, f1_mean, f1_deviation);
     }
 
-    puts("\n测试集每轮都只用于最终评估；小样本结果仅用于学习流程，不代表现实泛化能力。");
+    double paired_losses[MAX_SAMPLE_COUNT] = {0};
+    size_t paired_count = 0;
+    BootstrapInterval interval = {0};
+    if (!collect_paired_test_losses(&source, &results[0], MODEL_LOGISTIC_REGRESSION, MODEL_KNN,
+                                    paired_losses, &paired_count) ||
+        !paired_bootstrap(paired_losses, paired_count, UINT32_C(0x28b007), &interval)) {
+        fprintf(stderr, "无法计算固定测试集的成对自助区间\n");
+        return EXIT_FAILURE;
+    }
+    printf("seed=%u 的固定模型成对比较（逻辑回归 - K 近邻，0/1 损失）："
+           "均值差=%.3f，95%% 百分位区间=[%.3f, %.3f]（%zu 个测试样本）\n",
+           results[0].seed, interval.mean_difference, interval.lower, interval.upper,
+           paired_count);
+
+    puts("测试集每轮都只用于最终评估；重复划分标准差反映训练/选参波动，"
+         "成对自助区间只反映固定模型的测试样本不确定性。");
+    puts("小样本结果仅用于学习流程，不代表现实泛化能力；区间重叠不是显著性检验。");
     return EXIT_SUCCESS;
 }
